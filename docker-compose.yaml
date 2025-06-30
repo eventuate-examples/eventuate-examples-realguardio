@@ -1,0 +1,76 @@
+services:
+  jaeger:
+    image: jaegertracing/jaeger:2.6.0
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    environment:
+      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+
+  realguardio-iam-service:
+    build:
+      context: ./realguardio-iam-service
+      args:
+        baseImageVersion: 0.1.0.RELEASE
+        serviceImageVersion: 0.1.0-SNAPSHOT
+    ports:
+      - "9000:9000"
+    environment:
+      SPRING_PROFILES_ACTIVE: realguardio
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      OTEL_PROPAGATORS: tracecontext
+    depends_on:
+      - jaeger
+
+  realguardio-security-system-service:
+    build:
+      context: ./realguardio-security-system-service
+      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      args:
+        baseImageVersion: 0.1.0.RELEASE
+        serviceImageVersion: 0.1.0-SNAPSHOT
+    ports:
+      - "3001:3001"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      OTEL_PROPAGATORS: tracecontext
+    depends_on:
+      - jaeger
+      - realguardio-iam-service
+
+  realguardio-bff:
+    build:
+      context: ./realguardio-bff
+    ports:
+      - "3000:3000"
+    environment:
+      OAUTH_CLIENT_ID: realguardio-client
+      OAUTH_CLIENT_SECRET: secret-rg
+
+      OAUTH_AUTHORIZATION_URL: http://localhost:9000/oauth2/authorize
+
+      OAUTH_USER_INFO_URL: http://realguardio-iam-service:9000/oauth2/userinfo
+      OAUTH_TOKEN_URL: http://realguardio-iam-service:9000/oauth2/token
+      OAUTH_ISSUER_URL: http://realguardio-iam-service:9000
+      OAUTH_JWKS_URL: http://realguardio-iam-service:9000/oauth2/jwks
+
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: dummy_secret_key_for_testing_purposes_only
+
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_SERVICE_NAME: realguardio-bff
+      OTEL_PROPAGATORS: tracecontext
+
+      SECURITY_SYSTEMS_API_URL: http://realguardio-security-system-service:3001
+      NEXT_OTEL_VERBOSE: 1
+      OTEL_TRACES_SAMPLER: always_on
+      OTEL_LOG_LEVEL: info
+
+    depends_on:
+      - realguardio-iam-service
+      - realguardio-security-system-service

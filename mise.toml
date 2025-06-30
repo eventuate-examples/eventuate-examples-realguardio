@@ -1,0 +1,120 @@
+[tools]
+node = '22'
+java = 'corretto-17'
+
+[tasks.bff-test-all]
+description = "Test the BFF"
+depends = ["bff-unit-test"]
+run = ["mise run bff-e2e-test"]
+
+[tasks.e2e-test]
+description = "Test the application"
+depends = ["compose-up-and-wait"]
+dir = "./realguardio-bff"
+run = """
+DISABLE_MOCK_BACKEND=yes npm run e2e-test
+"""
+
+[tasks.bff-unit-test]
+dir = "./realguardio-bff"
+run = "npm run unit-test"
+
+[tasks.bff-e2e-test]
+depends = ["iam-service-compose-up", "bff-dev-run", "security-system-service-compose-down"]
+dir = "./realguardio-bff"
+run = "npm run e2e-test"
+
+[tasks.assemble]
+dir = "./realguardio-security-system-service"
+run = "./gradlew assemble"
+
+[tasks.compose-up]
+depends = ["assemble", "bff-dev-stop"]
+run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build}"
+
+[tasks.compose-down]
+run = "docker compose down"
+
+[tasks.compose-up-and-wait]
+depends = ["compose-up"]
+run = ["mise run wait-all"]
+
+[tasks.wait-all]
+run = ["mise run security-system-service-wait", 
+    "mise run bff-dev-wait", 
+    "mise run iam-service-wait"]
+
+
+[tasks.bff-e2e-test-only]
+dir = "./realguardio-bff"
+run = "npm run e2e-test"
+
+[tasks.iam-service-compose-up]
+run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build} realguardio-iam-service"
+
+[tasks.bff-compose-down]
+run = "docker compose down realguardio-bff"
+
+[tasks.security-system-service-compose-down]
+run = "docker compose down realguardio-security-system-service"
+
+[tasks.security-system-service-compose-up]
+depends = ["assemble"]
+run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build} realguardio-security-system-service"
+
+[tasks.e2e-test-only]
+dir = "./realguardio-bff"
+run = "DISABLE_MOCK_BACKEND=yes npm run e2e-test"
+
+[tasks.bff-dev-wait]
+run = "npx wait-on@8.0.3 --timeout 30s http://localhost:3000"
+
+[tasks.iam-service-wait]
+run = "npx wait-on@8.0.3 --timeout 10s http://localhost:9000/actuator/health"
+
+[tasks.security-system-service-wait]
+run = "npx wait-on@8.0.3 --timeout 40s http://localhost:3001/actuator/health"
+
+[tasks.jaeger-restart]
+run = ["docker compose down jaeger", 
+    "docker compose up -d jaeger",
+    "npx wait-on@8.0.3 --timeout 10s http://localhost:16686"]
+
+[tasks.go]
+run = """
+mise compose-up
+mise jaeger-restart
+mise run e2e-test-only
+echo
+echo http://localhost:16686/dependencies
+echo
+echo "http://localhost:16686/search?operation=manual-span-check&service=realguardio-bff"
+echo
+"""
+
+[tasks.go-local]
+depends = ["iam-service-compose-up", "bff-dev-run"]
+run = """
+mise jaeger-restart
+JWT_ISSUER_HOST=localhost mise security-system-service-compose-up
+mise run e2e-test-only
+echo
+echo http://localhost:16686/dependencies
+echo
+echo "http://localhost:16686/search?operation=manual-span-check&service=realguardio-bff"
+echo
+"""
+
+[tasks.node-version]
+run = "node --version"
+
+[tasks.java-version]
+run = "java -version"
+
+[tasks.bff-npm-install]
+dir = "./realguardio-bff"
+run = "npm install"
+
+[tasks.security-system-service-build]
+dir = "./realguardio-security-system-service"
+run = "./gradlew build"

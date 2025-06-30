@@ -1,0 +1,81 @@
+= An Eventuate project
+
+image::https://eventuate.io/i/logo.gif[]
+
+This project is part of http://eventuate.io[Eventuate], which is a microservices collaboration platform.
+
+= RealGuardIO - a fictional commercial real estate security system platform.
+
+This project is a fictional commercial real estate security system platform. 
+It's the sample application for a series of articles about authentication and authorization in microservices:
+
+1. https://microservices.io/post/architecture/2025/04/25/microservices-authn-authz-part-1-introduction.html[Overview of authentication and authorization in a microservice architecture]
+2. https://microservices.io/post/architecture/2025/05/28/microservices-authn-authz-part-2-authentication.html[Implementing authentication]
+3. Implementing simple authorization
+4. Developing complex authorization
+5. Implementing complex authorization using Oso Cloud - part 1
+6. Implementing complex authorization using Oso Cloud - part 2
+
+== Application architecture
+
+image::https://microservices.io/i/microservices-auth/part-2/Security-Architecture.png[]
+
+The key elements of the RealGuardIO architecture are as follows:
+
+* React-based UI - runs in the browser and implements the RealGuardIO UI.
+* `BFF`  - the NextJS/Typescript-based Backend for front-end, which plays the role of an OAuth 2.0 client. It manages the user's session, forwards requests from the React UI to the backend services and implements security using the `next-auth` library.
+* `IAM service` - handles authentication including the login page and issues access tokens and ID tokens to BFF.
+* `Security System Service` - manages `SecuritySystems`
+
+In addition, there's https://www.jaegertracing.io/[`jaeger`] for distributed tracing.
+
+== Code tours
+
+Coming soon.
+
+== Running the application
+
+The application uses Docker Compose to run the services.
+
+To run the application, you simply need to install the following prerequisites: Docker.
+
+You can run the application using the following command:
+
+[source, shell]
+----
+docker compose up -d --build
+----
+
+You can stop the application using the following command:
+
+[source, shell]
+----
+docker compose down
+----
+
+== Using the application
+
+You can access the application at http://localhost:3000.
+
+The credentials are `user1/password`.
+
+== Jaeger distributed tracing
+
+Jaeger is used for distributed tracing in this application. 
+It allows you to trace requests as they flow through services.
+
+You can access the https://www.jaegertracing.io/[Jaeger UI] at http://localhost:16686.
+
+Here are the http://localhost:16686/search?service=realguardio-bff&&tags=%7B%22span.kind%22%3A%22client%22%7D[outbound requests from the BFF].
+
+== Developing the application
+
+The application is written in Java, Typescript and React.
+To do development, you simply need to install and setup the following prerequisite: https://mise.jdx.dev/getting-started.html[Mise].
+Mise will then install Java 17 and Node.js v22.x for you.
+
+== Contributing
+
+Contributions are welcome.
+
+Please sign a https://chrisrichardson.net/legal/[contributor license agreement].

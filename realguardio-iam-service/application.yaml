@@ -1,0 +1,76 @@
+spring.application.name: iam-service
+
+server:
+  port: 9000
+
+logging:
+  level:
+    org.springframework.security: trace
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+      access: unrestricted
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - prometheus
+          - env
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  observations:
+    key-values:
+      application: ${spring.application.name}
+
+spring:
+  security:
+    user:
+      name: user1
+      password: password
+      roles: USER,ADMIN
+    oauth2:
+      authorizationserver:
+        client:
+          realguardio-client:
+            token:
+              access-token-time-to-live: 20s 
+              refresh-token-time-to-live: 60m
+            registration:
+              client-id: "realguardio-client"
+              client-secret: "{noop}secret-rg"
+              client-authentication-methods:
+                - "client_secret_basic"
+              authorization-grant-types:
+                - "authorization_code"
+                - "refresh_token"
+                - "client_credentials"
+                - "password"
+              redirect-uris:
+                - "http://127.0.0.1:8080/login/oauth2/code/realguardio-client-oidc"
+                - "http://127.0.0.1:8080/authorized"
+                - "http://localhost:3000/api/auth/callback/oauth2-pkce"
+              post-logout-redirect-uris:
+                - "http://127.0.0.1:8080/logged-out"
+              scopes:
+                - "openid"
+                - "profile"
+                - "email"
+                - "message.read"
+                - "message.write"
+            require-authorization-consent: true
+            require-proof-key: true

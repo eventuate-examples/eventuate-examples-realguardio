@@ -1,0 +1,22 @@
+# OAuth2 Configuration
+OAUTH_CLIENT_ID=realguardio-client
+OAUTH_CLIENT_SECRET=secret-rg
+
+#OAUTH_WELL_KNOWN_URL=http://localhost:9000/.well-known/openid-configuration
+
+OAUTH_AUTHORIZATION_URL=http://localhost:9000/oauth2/authorize
+OAUTH_USER_INFO_URL=http://localhost:9000/oauth2/userinfo
+OAUTH_TOKEN_URL=http://localhost:9000/oauth2/token
+OAUTH_ISSUER_URL=http://localhost:9000
+OAUTH_JWKS_URL=http://localhost:9000/oauth2/jwks
+
+
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=dummy_secret_key_for_testing_purposes_only
+NODE_DEBUG=http,http2,net
+
+OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
+OTEL_TRACES_EXPORTER: otlp
+OTEL_SERVICE_NAME: realguardio-bff
+OTEL_PROPAGATORS: tracecontext
+OTEL_TRACES_SAMPLER: always_on

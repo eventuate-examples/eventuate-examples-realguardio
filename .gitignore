@@ -1,0 +1,7 @@
+logs
+pids
+.next
+repomix-output.xml
+.idea
+
+.DS_Store

@@ -1,0 +1,14 @@
+#! /bin/bash -e
+#MISE depends=["bff-compose-down"]
+
+DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+
+cd ./realguardio-bff
+
+if [ ! -f .env.local ] ; then
+  echo missing .env.local
+  exit 1
+fi
+
+SECURITY_SYSTEMS_API_URL=http://localhost:3001 $DIR/_run.sh bff-dev npm run dev --foreground-scripts -- --port 3000

@@ -1,0 +1,120 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Cache npm dependencies
+      uses: actions/setup-node@v4
+      with:
+        cache: 'npm'
+        cache-dependency-path: 'realguardio-bff/package.json'
+
+    - uses: jdx/mise-action@v2
+      with:
+        version: 2025.3.0
+
+    - name: mise node-version
+      run: mise node-version
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        cache-read-only: false
+
+    - name: Build security-system-service
+      run: mise security-system-service-build
+
+    - name: Create logs
+      run: mkdir -p logs
+
+    - name: Install dependencies (ignoring package lock)
+      working-directory: ./realguardio-bff
+      run: |
+        rm -f package-lock.json
+        mise bff-npm-install
+
+    - name: Setup .env.local
+      working-directory: ./realguardio-bff
+      run: cp template-dotenv-local .env.local
+
+    - name: Run Unit Tests
+      run: mise bff-unit-test
+
+    - name: Run E2E Tests
+      run: mise bff-e2e-test
+
+    - name: BFF stop dev
+      run: mise bff-dev-stop
+
+    - name: Run E2E Tests with real service
+      run: mise go-local
+
+    - name: BFF stop dev
+      run: mise bff-dev-stop
+
+    - name: Run E2E Tests with containers
+      run: mise go
+
+    - name: Get container logs
+      if: always() 
+      run: ./print-container-logs.sh
+
+    - name: Upload Logs
+      if: always() 
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs
+        path: ./logs
+
+  test-compose-up:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Compose up
+      run: docker compose up -d --build 
+
+    - uses: jdx/mise-action@v2
+      with:
+        version: 2025.3.0
+
+    - name: Cache npm dependencies
+      uses: actions/setup-node@v4
+      with:
+        cache: 'npm'
+        cache-dependency-path: 'realguardio-bff/package.json'
+
+    - name: Install dependencies (ignoring package lock)
+      working-directory: ./realguardio-bff
+      run: |
+        rm -f package-lock.json
+        mise bff-npm-install
+
+    - name: Setup .env.local
+      working-directory: ./realguardio-bff
+      run: cp template-dotenv-local .env.local
+
+    - name: Run E2E Tests with containers
+      run: |
+        mise wait-all
+        mise run e2e-test-only
+
+    - name: Get container logs
+      if: always() 
+      run: ./print-container-logs.sh
+
