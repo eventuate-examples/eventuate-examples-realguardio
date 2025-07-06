@@ -30,10 +30,24 @@ export class HomePage {
         return element ? (await element.evaluate(el => el.textContent)) || '' : '';
     }
 
+    async waitForAuthenticationToComplete(): Promise<void> {
+        // Wait for loading state to disappear and either user name or sign-in button to appear
+        await this.page.waitForFunction(
+            () => {
+                const loading = document.querySelector('.loading');
+                const userName = document.querySelector('.user-name');
+                const signInButton = document.querySelector('button[data-provider="oauth2-pkce"]');
+                
+                return !loading && (userName || signInButton);
+            },
+            { timeout: 10000 }
+        );
+    }
+
     async getSignInStatus(): Promise<string> {
         try {
-            // Wait a moment for the page to stabilize
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Wait for authentication to complete
+            await this.waitForAuthenticationToComplete();
             
             // Check if signed in (user name is present)
             const userNameElement = await this.page.$(this.userNameSelector);
@@ -46,12 +60,6 @@ export class HomePage {
             const signInButton = await this.page.$(this.signInButtonSelector);
             if (signInButton) {
                 return 'Not signed in';
-            }
-            
-            // Check if loading state
-            const loadingElement = await this.page.$('.loading');
-            if (loadingElement) {
-                return 'Loading...';
             }
             
             return 'Unknown status';
