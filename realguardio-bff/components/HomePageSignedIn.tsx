@@ -13,7 +13,7 @@ const HomePageSignedIn: React.FC = () => {
         <SecuritySystemTable />
       </div>
 
-      <style jsx>{`
+      <style jsx="true">{`
         .container {
           background: white;
           border-radius: 12px;

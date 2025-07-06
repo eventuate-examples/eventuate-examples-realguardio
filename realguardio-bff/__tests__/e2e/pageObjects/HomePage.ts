@@ -8,8 +8,9 @@ export class HomePage {
 
     // Selectors
     private readonly welcomeGreetingSelector = '#welcome-greeting';
-    private readonly signinStatusSelector = '#signin-status';
+    private readonly userNameSelector = '.user-name';
     private readonly signInButtonSelector = 'button[data-provider="oauth2-pkce"]';
+    private readonly signOutButtonSelector = '.sign-out';
     private readonly securitySystemsTableSelector = '.securitySystems-table';
     private readonly loadingSelector = 'text/Loading securitySystems...';
     private readonly errorSelector = '.error';
@@ -25,18 +26,39 @@ export class HomePage {
     }
 
     async getWelcomeText(): Promise<string> {
-        const element = await this.page.$('h1');
+        const element = await this.page.$(this.welcomeGreetingSelector);
         return element ? (await element.evaluate(el => el.textContent)) || '' : '';
-    }
-
-    async waitForSignInStatus(): Promise<void> {
-        await this.page.waitForSelector(this.signinStatusSelector, { timeout: 10000 });
     }
 
     async getSignInStatus(): Promise<string> {
-        await this.waitForSignInStatus();
-        const element = await this.page.$(this.signinStatusSelector);
-        return element ? (await element.evaluate(el => el.textContent)) || '' : '';
+        try {
+            // Wait a moment for the page to stabilize
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Check if signed in (user name is present)
+            const userNameElement = await this.page.$(this.userNameSelector);
+            if (userNameElement) {
+                const userName = await userNameElement.evaluate(el => el.textContent);
+                return userName || '';
+            }
+            
+            // Check if sign in button is present (not signed in)
+            const signInButton = await this.page.$(this.signInButtonSelector);
+            if (signInButton) {
+                return 'Not signed in';
+            }
+            
+            // Check if loading state
+            const loadingElement = await this.page.$('.loading');
+            if (loadingElement) {
+                return 'Loading...';
+            }
+            
+            return 'Unknown status';
+        } catch (error) {
+            console.error('Error getting sign-in status:', error);
+            return 'Error checking status';
+        }
     }
 
     async clickSignIn(): Promise<void> {
@@ -46,7 +68,7 @@ export class HomePage {
 
     async isSignedIn(): Promise<boolean> {
         const status = await this.getSignInStatus();
-        return status.includes('Signed in as user1');
+        return status.includes('Welcome, user1');
     }
 
     async expectWelcomeTextToBe(expectedText: string): Promise<void> {
@@ -60,7 +82,7 @@ export class HomePage {
     }
 
     async expectToBeSignedIn() : Promise<void> {
-        return this.expectSignInStatusToBe('Signed in as user1');
+        return this.expectSignInStatusToBe('Welcome, user1');
     }
 
     async waitForSecuritySystemsTable(): Promise<void> {

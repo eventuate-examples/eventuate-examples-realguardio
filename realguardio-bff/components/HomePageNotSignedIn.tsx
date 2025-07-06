@@ -26,7 +26,7 @@ const HomePageNotSignedIn: React.FC = () => {
                 <p className="signin-prompt">Please sign in to access your dashboard</p>
             </div>
 
-            <style jsx>{`
+            <style jsx="true">{`
                 .container {
                     background: white;
                     border-radius: 12px;

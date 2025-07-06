@@ -74,6 +74,6 @@ describe('Home', () => {
 
     render(<Home />);
 
-    expect(screen.getByText('Login')).toBeInTheDocument();
+    expect(screen.getByText('Please sign in to access your dashboard')).toBeInTheDocument();
   });
 });

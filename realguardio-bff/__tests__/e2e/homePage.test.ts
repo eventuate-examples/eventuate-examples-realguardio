@@ -80,7 +80,7 @@ describe('Home Page', () => {
   it('should display the home page', async () => {
     await homePage.navigate();
 
-    await homePage.expectWelcomeTextToBe('Welcome to RealguardIO!');
+    await homePage.expectWelcomeTextToBe('Welcome to RealGuardIO!');
     await homePage.expectSignInStatusToBe('Not signed in');
   });
 

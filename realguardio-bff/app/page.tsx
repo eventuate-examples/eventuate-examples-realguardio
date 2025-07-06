@@ -36,7 +36,7 @@ const Home: React.FC = () => {
       {/* Add error message container for E2E tests */}
       <div className="error-message" style={{ display: 'none' }}></div>
 
-      <style jsx>{`
+      <style jsx="true">{`
         .main-content {
           min-height: calc(100vh - 80px);
           background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);

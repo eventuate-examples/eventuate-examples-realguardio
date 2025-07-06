@@ -73,7 +73,7 @@ const SecuritySystemTable: React.FC = () => {
         </table>
       )}
 
-      <style jsx>{`
+      <style jsx="true">{`
         .securitySystems-section {
           margin-top: 2rem;
         }
