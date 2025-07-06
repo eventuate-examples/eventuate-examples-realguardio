@@ -19,39 +19,75 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="container">
-      <h1 id="welcome-greeting" style={{ fontSize: '3rem', fontWeight: 'bold', margin: '2rem 0' }}>Welcome to RealguardIO!</h1>
+    <main className="main-content">
+      <div className="hero-section">
+        <h1 id="welcome-greeting" className="hero-title">Welcome to RealGuardIO!</h1>
+        <p className="hero-subtitle">Guarding your real estate since 2025</p>
+      </div>
 
-       <p>Guarding your real estate since 2025</p>
-
-      {status === 'authenticated' ? (
-        <HomePageSignedIn />
-      ) : (
-        <HomePageNotSignedIn />
-      )}
+      <div className="content-section">
+        {status === 'authenticated' ? (
+          <HomePageSignedIn />
+        ) : (
+          <HomePageNotSignedIn />
+        )}
+      </div>
 
       {/* Add error message container for E2E tests */}
       <div className="error-message" style={{ display: 'none' }}></div>
 
       <style jsx>{`
-        .container {
-          padding: 2rem;
+        .main-content {
+          min-height: calc(100vh - 80px);
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .hero-section {
           text-align: center;
+          padding: 4rem 2rem 2rem;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
         }
-        .button {
-          padding: 0.5rem 1rem;
-          margin: 1rem;
-          background-color: #0070f3;
-          color: white;
-          bsecuritySystem: none;
-          bsecuritySystem-radius: 4px;
-          cursor: pointer;
+        
+        .hero-title {
+          font-size: 3.5rem;
+          font-weight: 800;
+          margin: 0 0 1rem 0;
+          background: linear-gradient(45deg, #667eea, #764ba2);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .button:hover {
-          background-color: #0051cc;
+        
+        .hero-subtitle {
+          font-size: 1.2rem;
+          color: #666;
+          margin: 0;
+          font-weight: 300;
+        }
+        
+        .content-section {
+          padding: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        
+        @media (max-width: 768px) {
+          .hero-title {
+            font-size: 2.5rem;
+          }
+          
+          .hero-section {
+            padding: 2rem 1rem 1rem;
+          }
+          
+          .content-section {
+            padding: 1rem;
+          }
         }
       `}</style>
-    </div>
+    </main>
   );
 };
 

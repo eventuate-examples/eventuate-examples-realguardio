@@ -9,37 +9,21 @@ const HomePageSignedIn: React.FC = () => {
 
     return (
     <div className="container">
-      <div className="header">
-        <p id="signin-status">Signed in as {session?.user?.name}</p>
-        <br/>
-        <button
-          onClick={() => signOut()}
-          className="button"
-        >
-          Sign out
-        </button>
+      <div className="content">
+        <SecuritySystemTable />
       </div>
-
-      <SecuritySystemTable />
 
       <style jsx>{`
         .container {
+          background: white;
+          border-radius: 12px;
           padding: 2rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+          margin: 2rem 0;
         }
-        .header {
-          margin-bottom: 2rem;
-        }
-        .button {
-          padding: 0.5rem 1rem;
-          margin: 1rem 0;
-          background-color: #0070f3;
-          color: white;
-          bsecuritySystem: none;
-          bsecuritySystem-radius: 4px;
-          cursor: pointer;
-        }
-        .button:hover {
-          background-color: #0051cc;
+        
+        .content {
+          max-width: 100%;
         }
       `}</style>
     </div>
