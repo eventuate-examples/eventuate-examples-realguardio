@@ -7,7 +7,7 @@ export class HomePage {
     private readonly apiUrl: string;
 
     // Selectors
-    private readonly welcomeGreetingSelector = '#welcome-greeting';
+    private readonly headerSelector = '.header';
     private readonly userNameSelector = '.user-name';
     private readonly signInButtonSelector = 'button[data-provider="oauth2-pkce"]';
     private readonly signOutButtonSelector = '.sign-out';
@@ -22,11 +22,12 @@ export class HomePage {
 
     async navigate(): Promise<void> {
         await this.page.goto(this.url);
-        await this.page.waitForSelector(this.welcomeGreetingSelector);
+        await this.page.waitForSelector(this.headerSelector);
     }
 
     async getWelcomeText(): Promise<string> {
-        const element = await this.page.$(this.welcomeGreetingSelector);
+        // Get the header title which should be "RealGuardIO"
+        const element = await this.page.$('.header .logo h1');
         return element ? (await element.evaluate(el => el.textContent)) || '' : '';
     }
 
