@@ -7,6 +7,11 @@ description = "Test the BFF"
 depends = ["bff-unit-test"]
 run = ["mise run bff-e2e-test"]
 
+[tasks.bff-test-all-no-build]
+description = "Test the BFF"
+depends = ["bff-unit-test"]
+run = ["COMPOSE_OPTS=--quiet-pull mise run bff-e2e-test"]
+
 [tasks.e2e-test]
 description = "Test the application"
 depends = ["compose-up-and-wait"]
