@@ -18,5 +18,5 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - ~~Header.test.tsx~~
 - ~~HomePageNotSignedIn.test.tsx~~
 - ~~HomePageSignedIn.test.tsx~~
-- providers.test.tsx
+- ~~providers.test.tsx~~
 - layout.test.tsx
