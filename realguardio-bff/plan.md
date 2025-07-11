@@ -6,10 +6,17 @@ If during implementation you notice a test is needed that is not in the list, ad
 
 Each commit should have all the tests passing. Under no circumstances should you erase or alter tests just to get a commit to pass. If there is a genuine bug in a test, fix the test, but note that in the commit message.
 
+Run the tests with mise bff-test-all-no-build
+
+Use "Written by Claude Code" in the commit message instead of "
+Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
 # Tests to Write
 
 - ~~Header.test.tsx~~
-- HomePageNotSignedIn.test.tsx
+- ~~HomePageNotSignedIn.test.tsx~~
 - HomePageSignedIn.test.tsx
 - providers.test.tsx
 - layout.test.tsx
