@@ -19,4 +19,4 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - ~~HomePageNotSignedIn.test.tsx~~
 - ~~HomePageSignedIn.test.tsx~~
 - ~~providers.test.tsx~~
-- layout.test.tsx
+- ~~layout.test.tsx~~
