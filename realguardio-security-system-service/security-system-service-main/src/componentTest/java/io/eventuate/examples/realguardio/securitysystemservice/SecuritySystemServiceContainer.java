@@ -22,7 +22,7 @@ public class SecuritySystemServiceContainer extends GenericContainer<SecuritySys
     
     public SecuritySystemServiceContainer(PostgreSQLContainer<?> postgres, GenericContainer<?> iamService) {
         super(new ImageFromDockerfile()
-                .withDockerfile(Paths.get("../Dockerfile-local"))
+                .withDockerfile(Paths.get("./Dockerfile-local"))
                 .withBuildArg("baseImageVersion", "0.1.0.RELEASE")
                 .withBuildArg("serviceImageVersion", System.getProperty("project.version", "0.1.0-SNAPSHOT")));
         this.postgres = postgres;
