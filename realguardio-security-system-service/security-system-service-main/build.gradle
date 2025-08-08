@@ -1,0 +1,41 @@
+apply plugin: ComponentTestsPlugin
+apply plugin: IntegrationTestsPlugin
+
+dependencies {
+    implementation project(':security-system-service-domain')
+    implementation project(':security-system-service-persistence')
+    implementation project(':security-system-service-restapi')
+    
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    
+    runtimeOnly 'org.postgresql:postgresql'
+    
+    // Micrometer and OpenTelemetry dependencies for distributed tracing
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.micrometer:micrometer-registry-otlp'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.2.0'
+    
+    // AspectJ dependencies for custom tracing
+    implementation 'org.aspectj:aspectjweaver'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    
+    componentTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    componentTestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+    componentTestImplementation 'org.postgresql:postgresql'
+    componentTestImplementation 'org.testcontainers:postgresql'
+    componentTestImplementation 'org.testcontainers:junit-jupiter'
+    
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+    integrationTestImplementation 'org.postgresql:postgresql'
+    integrationTestImplementation 'org.testcontainers:postgresql'
+    integrationTestImplementation 'org.testcontainers:junit-jupiter'
+}

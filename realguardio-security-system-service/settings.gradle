@@ -1,1 +1,6 @@
-rootProject.name = 'security-system-service'
+rootProject.name = 'realguardio-security-system-service'
+
+include 'security-system-service-domain'
+include 'security-system-service-persistence'
+include 'security-system-service-restapi'
+include 'security-system-service-main'
