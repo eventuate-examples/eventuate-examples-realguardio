@@ -19,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -27,7 +26,6 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
@@ -40,8 +38,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 class SecuritySystemServiceIntegrationTest {
-    
-    private static final Logger logger = LoggerFactory.getLogger(SecuritySystemServiceIntegrationTest.class);
 
     @LocalServerPort
     private int port;
@@ -123,7 +119,7 @@ class SecuritySystemServiceIntegrationTest {
     @Test 
     void shouldReturnSecuritySystemsWithValidToken() {
         // Get JWT token from IAM service
-        String token = getJwtToken();
+        String token = JwtTokenHelper.getJwtToken(iamService.getMappedPort(9000));
         
         // Make request with token
         HttpHeaders headers = new HttpHeaders();
@@ -162,28 +158,5 @@ class SecuritySystemServiceIntegrationTest {
         assertThat(mainEntrance.getState()).isEqualTo(SecuritySystemState.ALARMED);
         assertThat(mainEntrance.getActions()).containsExactlyInAnyOrder(
                 SecuritySystemAction.ACKNOWLEDGE, SecuritySystemAction.DISARM);
-    }
-    
-    private String getJwtToken() {
-        logger.info("Requesting JWT token from IAM service at port {}", iamService.getMappedPort(9000));
-        WebClient webClient = WebClient.create();
-        
-        // Try to get JWT token with correct client credentials
-        String tokenResponseBody = webClient.post()
-                .uri("http://localhost:" + iamService.getMappedPort(9000) + "/oauth2/token")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Authorization", "Basic " + java.util.Base64.getEncoder()
-                        .encodeToString("realguardio-client:secret-rg".getBytes()))
-                .bodyValue("grant_type=client_credentials")
-                .retrieve()
-                .bodyToMono(String.class)
-                .block(Duration.ofSeconds(10));
-        
-        logger.info("Token response: {}", tokenResponseBody);
-        
-        // Extract token from JSON response
-        // Simple parsing - in production use proper JSON library
-        String token = tokenResponseBody.split("\"access_token\":\"")[1].split("\"")[0];
-        return token;
     }
 }

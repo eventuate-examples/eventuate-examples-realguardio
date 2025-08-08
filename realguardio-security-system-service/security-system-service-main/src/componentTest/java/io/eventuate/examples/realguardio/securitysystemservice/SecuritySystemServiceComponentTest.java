@@ -61,29 +61,8 @@ class SecuritySystemServiceComponentTest {
 	
 	@Test
 	void shouldReturn200WithValidJwtToken() {
-		// TODO: This test will pass once SecuritySystemController is updated to use SecuritySystemService with JPA
-		// First, get a JWT token from the IAM service
-		String iamServiceUrl = String.format("http://localhost:%d", iamService.getMappedPort(9000));
-		WebClient iamClient = WebClient.builder()
-				.baseUrl(iamServiceUrl)
-				.build();
-		
-		// Get JWT token using client credentials flow
-		// The client_id and client_secret are configured in the IAM service
-		// Use Host header to ensure JWT issuer matches what the service expects
-		String tokenResponse = iamClient.post()
-				.uri("/oauth2/token")
-				.header("Content-Type", "application/x-www-form-urlencoded")
-				.header("Authorization", "Basic " + java.util.Base64.getEncoder().encodeToString("realguardio-client:secret-rg".getBytes()))
-				.header("Host", "iam-service:9000")
-				.bodyValue("grant_type=client_credentials")
-				.retrieve()
-				.bodyToMono(String.class)
-				.block(Duration.ofSeconds(10));
-		
-		// Extract the access token from response
-		// Simple extraction - in production use proper JSON parsing
-		String accessToken = tokenResponse.split("\"access_token\":\"")[1].split("\"")[0];
+		// Get JWT token using the helper with Host header for component tests
+		String accessToken = JwtTokenHelper.getJwtTokenWithHostHeader(iamService.getMappedPort(9000));
 		
 		// Now make request to our service with the JWT token
 		WebClient webClient = serviceContainer.createWebClient();
