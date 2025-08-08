@@ -1,5 +1,7 @@
 package io.eventuate.examples.realguardio.securitysystemservice;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -12,6 +14,7 @@ public class JwtTokenHelper {
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenHelper.class);
     private static final String CLIENT_CREDENTIALS = "realguardio-client:secret-rg";
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     
     /**
      * Get JWT token for integration tests (no Host header needed)
@@ -51,9 +54,12 @@ public class JwtTokenHelper {
         
         logger.info("Token response: {}", tokenResponseBody);
         
-        // Extract token from JSON response
-        // Simple parsing - in production use proper JSON library
-        String token = tokenResponseBody.split("\"access_token\":\"")[1].split("\"")[0];
-        return token;
+        // Parse JSON response using ObjectMapper
+        try {
+            TokenResponse tokenResponse = objectMapper.readValue(tokenResponseBody, TokenResponse.class);
+            return tokenResponse.accessToken();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse token response", e);
+        }
     }
 }
