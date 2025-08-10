@@ -34,8 +34,8 @@ services:
 
   realguardio-security-system-service:
     build:
-      context: ./realguardio-security-system-service
-      dockerfile: ${DOCKERFILE_PATH:-Dockerfile-multi-stage}
+      context: ./realguardio-security-system-service/security-system-service-main
+      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
       args:
         baseImageVersion: 0.1.0.RELEASE
         serviceImageVersion: 0.1.0-SNAPSHOT
