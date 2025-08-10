@@ -123,3 +123,15 @@ run = "npm install"
 [tasks.security-system-service-build]
 dir = "./realguardio-security-system-service"
 run = "./gradlew build"
+
+[tasks.reset-db]
+description = "Reset PostgreSQL database by recreating the container"
+run = [
+    "docker compose rm -f -s -v postgres",
+    "docker compose up -d postgres",
+    "npx wait-on@8.0.3 --timeout 10s tcp:5432"
+]
+
+[tasks.db-query-security-systems]
+description = "Query all records from security_system table"
+run = "docker compose exec postgres psql -U postgres -d securitysystem -c 'SELECT * FROM security_system;'"

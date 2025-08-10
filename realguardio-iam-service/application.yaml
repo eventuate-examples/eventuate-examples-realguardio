@@ -48,7 +48,7 @@ spring:
         client:
           realguardio-client:
             token:
-              access-token-time-to-live: 20s 
+              access-token-time-to-live: 2m 
               refresh-token-time-to-live: 60m
             registration:
               client-id: "realguardio-client"

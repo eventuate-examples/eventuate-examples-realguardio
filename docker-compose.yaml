@@ -1,4 +1,13 @@
 services:
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: securitysystem
+
   jaeger:
     image: jaegertracing/jaeger:2.6.0
     ports:
@@ -26,7 +35,7 @@ services:
   realguardio-security-system-service:
     build:
       context: ./realguardio-security-system-service
-      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      dockerfile: ${DOCKERFILE_PATH:-Dockerfile-multi-stage}
       args:
         baseImageVersion: 0.1.0.RELEASE
         serviceImageVersion: 0.1.0-SNAPSHOT
@@ -34,11 +43,16 @@ services:
       - "3001:3001"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/securitysystem
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
       OTEL_PROPAGATORS: tracecontext
     depends_on:
+      - postgres
       - jaeger
       - realguardio-iam-service
 

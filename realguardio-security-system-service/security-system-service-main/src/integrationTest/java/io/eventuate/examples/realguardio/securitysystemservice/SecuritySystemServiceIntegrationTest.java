@@ -2,16 +2,12 @@ package io.eventuate.examples.realguardio.securitysystemservice;
 
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAction;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemRepository;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystems;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -29,9 +25,6 @@ import org.testcontainers.utility.DockerImageName;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,14 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 class SecuritySystemServiceIntegrationTest {
 
-    @LocalServerPort
-    private int port;
-
     @Autowired
     private TestRestTemplate restTemplate;
-    
-    @Autowired
-    private SecuritySystemRepository securitySystemRepository;
     
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"))
@@ -81,27 +68,6 @@ class SecuritySystemServiceIntegrationTest {
             () -> "http://localhost:" + iamService.getMappedPort(9000));
         registry.add("spring.security.oauth2.resourceserver.jwt.jwk-set-uri",
             () -> "http://localhost:" + iamService.getMappedPort(9000) + "/oauth2/jwks");
-    }
-    
-    @BeforeEach
-    void setUp() {
-        // Clear and populate test data
-        securitySystemRepository.deleteAll();
-        
-        SecuritySystem system1 = new SecuritySystem("Office Front Door", 
-                SecuritySystemState.ARMED, 
-                Set.of(SecuritySystemAction.DISARM));
-        securitySystemRepository.save(system1);
-        
-        SecuritySystem system2 = new SecuritySystem("Office Back Door", 
-                SecuritySystemState.DISARMED, 
-                Set.of(SecuritySystemAction.ARM));
-        securitySystemRepository.save(system2);
-        
-        SecuritySystem system3 = new SecuritySystem("Main Entrance", 
-                SecuritySystemState.ALARMED, 
-                Set.of(SecuritySystemAction.ACKNOWLEDGE, SecuritySystemAction.DISARM));
-        securitySystemRepository.save(system3);
     }
 
     @Test
