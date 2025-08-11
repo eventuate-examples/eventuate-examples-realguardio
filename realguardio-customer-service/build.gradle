@@ -42,7 +42,7 @@ subprojects {
 	}
 }
 
-project(':security-system-service-main') {
+project(':customer-service-main') {
 	apply plugin: 'org.springframework.boot'
 	
 	bootJar {

@@ -30,8 +30,15 @@ dir = "./realguardio-bff"
 run = "npm run e2e-test"
 
 [tasks.assemble]
-dir = "./realguardio-security-system-service"
-run = "./gradlew assemble"
+description = "Assemble all realguardio services with Gradle"
+run = """
+for dir in realguardio-*/; do
+  if [ -f "$dir/build.gradle" ]; then
+    echo "Assembling $dir..."
+    (cd "$dir" && ./gradlew assemble) || exit 1
+  fi
+done
+"""
 
 [tasks.compose-up]
 depends = ["assemble", "bff-dev-stop"]
@@ -120,9 +127,16 @@ run = "java -version"
 dir = "./realguardio-bff"
 run = "npm install"
 
-[tasks.security-system-service-build]
-dir = "./realguardio-security-system-service"
-run = "./gradlew build"
+[tasks.build]
+description = "Build all realguardio services with Gradle"
+run = """
+for dir in realguardio-*/; do
+  if [ -f "$dir/build.gradle" ]; then
+    echo "Building $dir..."
+    (cd "$dir" && ./gradlew build) || exit 1
+  fi
+done
+"""
 
 [tasks.reset-db]
 description = "Reset PostgreSQL database by recreating the container"

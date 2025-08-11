@@ -31,7 +31,7 @@ jobs:
         cache-read-only: false
 
     - name: Build security-system-service
-      run: mise security-system-service-build
+      run: mise build
 
     - name: Create logs
       run: mkdir -p logs
