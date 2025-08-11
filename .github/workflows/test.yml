@@ -33,6 +33,9 @@ jobs:
     - name: Build IAM service container
       run: mise iam-service-compose-build
 
+    - name: List images
+      run: docker images
+
     - name: Build Java services
       run: mise build
 
