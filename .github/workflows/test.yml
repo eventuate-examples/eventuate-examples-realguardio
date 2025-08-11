@@ -133,7 +133,7 @@ jobs:
       if: ${{ always() }}
       uses: actions/upload-artifact@v4
       with:
-        name: test-reports
+        name: compose-up-test-reports
         path: |
           **/build/reports
           **/build/test-results
@@ -142,5 +142,5 @@ jobs:
       if: always() 
       uses: actions/upload-artifact@v4
       with:
-        name: logs
+        name: compose-up-logs
         path: ./logs

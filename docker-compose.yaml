@@ -32,7 +32,7 @@ services:
       - jaeger
   realguardio-security-system-service:
     build:
-      context: ./realguardio-security-system-service/security-system-service-main
+      context: ./realguardio-security-system-service
       dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
       args:
         baseImageVersion: 0.1.0.RELEASE
@@ -81,7 +81,7 @@ services:
       - realguardio-security-system-service
   realguardio-customer-service:
     build:
-      context: ./realguardio-customer-service/customer-service-main
+      context: ./realguardio-customer-service
       dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
       args:
         baseImageVersion: 0.1.0.RELEASE
