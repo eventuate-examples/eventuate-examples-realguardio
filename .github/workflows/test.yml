@@ -4,13 +4,16 @@ on:
   push:
   pull_request:
 
+env:
+  MISE_VERSION: 2025.8.7
+
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Cache npm dependencies
       uses: actions/setup-node@v4
@@ -20,7 +23,7 @@ jobs:
 
     - uses: jdx/mise-action@v2
       with:
-        version: 2025.8.7
+        version: ${{ env.MISE_VERSION }}
 
     - name: mise node-version
       run: mise node-version
@@ -95,14 +98,14 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Compose up
       run: docker compose up -d --build 
 
     - uses: jdx/mise-action@v2
       with:
-        version: 2025.3.0
+        version: ${{ env.MISE_VERSION }}
 
     - name: Cache npm dependencies
       uses: actions/setup-node@v4
