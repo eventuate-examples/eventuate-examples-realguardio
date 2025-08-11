@@ -64,6 +64,15 @@ jobs:
     - name: Run E2E Tests with containers
       run: mise go
 
+    - name: Save test results
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: |
+          **/build/reports
+          **/build/test-results
+
     - name: Get container logs
       if: always() 
       run: ./print-container-logs.sh
@@ -114,3 +123,18 @@ jobs:
       if: always() 
       run: ./print-container-logs.sh
 
+    - name: Save test results
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: |
+          **/build/reports
+          **/build/test-results
+
+    - name: Upload Logs
+      if: always() 
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs
+        path: ./logs
