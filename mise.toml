@@ -64,6 +64,9 @@ run = "npm run e2e-test"
 [tasks.iam-service-compose-up]
 run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build} realguardio-iam-service"
 
+[tasks.iam-service-compose-build]
+run = "DOCKERFILE_SUFFIX=-local docker build realguardio-iam-service"
+
 [tasks.bff-compose-down]
 run = "docker compose down realguardio-bff"
 

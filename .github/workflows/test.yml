@@ -30,7 +30,10 @@ jobs:
       with:
         cache-read-only: false
 
-    - name: Build security-system-service
+    - name: Build IAM service container
+      run: mise iam-service-compose-build
+
+    - name: Build Java services
       run: mise build
 
     - name: Create logs
