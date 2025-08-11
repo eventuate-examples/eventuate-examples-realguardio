@@ -20,7 +20,7 @@ jobs:
 
     - uses: jdx/mise-action@v2
       with:
-        version: 2025.3.0
+        version: 2025.8.7
 
     - name: mise node-version
       run: mise node-version
