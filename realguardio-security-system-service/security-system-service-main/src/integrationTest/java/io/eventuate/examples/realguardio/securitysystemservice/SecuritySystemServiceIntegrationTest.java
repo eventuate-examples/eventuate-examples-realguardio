@@ -1,5 +1,6 @@
 package io.eventuate.examples.realguardio.securitysystemservice;
 
+import io.eventuate.examples.realguardio.securitysystemservice.db.DBInitializer;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAction;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
@@ -107,22 +108,24 @@ class SecuritySystemServiceIntegrationTest {
         // Verify the data
         var systems = response.getBody().securitySystems();
         assertThat(systems).extracting(SecuritySystem::getLocationName)
-                .containsExactlyInAnyOrder("Office Front Door", "Office Back Door", "Main Entrance");
+                .containsExactlyInAnyOrder(DBInitializer.LOCATION_OAKLAND_OFFICE, 
+                        DBInitializer.LOCATION_BERKELEY_OFFICE, 
+                        DBInitializer.LOCATION_HAYWARD_OFFICE);
         
         // Verify specific system details
-        var frontDoor = systems.stream()
-                .filter(s -> s.getLocationName().equals("Office Front Door"))
+        var oaklandOffice = systems.stream()
+                .filter(s -> s.getLocationName().equals(DBInitializer.LOCATION_OAKLAND_OFFICE))
                 .findFirst()
                 .orElseThrow();
-        assertThat(frontDoor.getState()).isEqualTo(SecuritySystemState.ARMED);
-        assertThat(frontDoor.getActions()).containsExactly(SecuritySystemAction.DISARM);
+        assertThat(oaklandOffice.getState()).isEqualTo(SecuritySystemState.ARMED);
+        assertThat(oaklandOffice.getActions()).containsExactly(SecuritySystemAction.DISARM);
         
-        var mainEntrance = systems.stream()
-                .filter(s -> s.getLocationName().equals("Main Entrance"))
+        var haywardOffice = systems.stream()
+                .filter(s -> s.getLocationName().equals(DBInitializer.LOCATION_HAYWARD_OFFICE))
                 .findFirst()
                 .orElseThrow();
-        assertThat(mainEntrance.getState()).isEqualTo(SecuritySystemState.ALARMED);
-        assertThat(mainEntrance.getActions()).containsExactlyInAnyOrder(
+        assertThat(haywardOffice.getState()).isEqualTo(SecuritySystemState.ALARMED);
+        assertThat(haywardOffice.getActions()).containsExactlyInAnyOrder(
                 SecuritySystemAction.ACKNOWLEDGE, SecuritySystemAction.DISARM);
     }
 }

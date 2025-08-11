@@ -17,6 +17,10 @@ public class DBInitializer {
     
     private static final Logger logger = LoggerFactory.getLogger(DBInitializer.class);
     
+    public static final String LOCATION_OAKLAND_OFFICE = "Oakland office";
+    public static final String LOCATION_BERKELEY_OFFICE = "Berkeley office";
+    public static final String LOCATION_HAYWARD_OFFICE = "Hayward office";
+    
     @Bean
     CommandLineRunner initDatabase(SecuritySystemRepository repository) {
         return args -> {
@@ -28,19 +32,19 @@ public class DBInitializer {
             
             logger.info("Initializing database with sample security systems");
             
-            SecuritySystem system1 = new SecuritySystem("Oakland office",
+            SecuritySystem system1 = new SecuritySystem(LOCATION_OAKLAND_OFFICE,
                     SecuritySystemState.ARMED, 
                     Set.of(SecuritySystemAction.DISARM));
             repository.save(system1);
             logger.info("Created security system: {}", system1.getLocationName());
             
-            SecuritySystem system2 = new SecuritySystem("Berkeley office",
+            SecuritySystem system2 = new SecuritySystem(LOCATION_BERKELEY_OFFICE,
                     SecuritySystemState.DISARMED, 
                     Set.of(SecuritySystemAction.ARM));
             repository.save(system2);
             logger.info("Created security system: {}", system2.getLocationName());
             
-            SecuritySystem system3 = new SecuritySystem("Hayward office",
+            SecuritySystem system3 = new SecuritySystem(LOCATION_HAYWARD_OFFICE,
                     SecuritySystemState.ALARMED, 
                     Set.of(SecuritySystemAction.ACKNOWLEDGE, SecuritySystemAction.DISARM));
             repository.save(system3);
