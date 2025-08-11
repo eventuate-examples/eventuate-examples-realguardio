@@ -65,7 +65,7 @@ run = "npm run e2e-test"
 run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build} realguardio-iam-service"
 
 [tasks.iam-service-compose-build]
-run = "DOCKERFILE_SUFFIX=-local docker build realguardio-iam-service"
+run = "DOCKERFILE_SUFFIX=-local docker compose build realguardio-iam-service"
 
 [tasks.bff-compose-down]
 run = "docker compose down realguardio-bff"
@@ -152,3 +152,6 @@ run = [
 [tasks.db-query-security-systems]
 description = "Query all records from security_system table"
 run = "docker compose exec postgres psql -U postgres -d securitysystem -c 'SELECT * FROM security_system;'"
+
+[tasks.gh-download] 
+run = "rm -fr _download && gh run download --dir _download -n logs -n test-reports"
