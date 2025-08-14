@@ -1,8 +1,8 @@
 package io.eventuate.examples.realguardio.customerservice;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.Customers;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -10,48 +10,37 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
-
-import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
 class CustomerServiceIntegrationTest {
 
   @Autowired
   private TestRestTemplate restTemplate;
 
-  @Container
   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"))
       .withDatabaseName("testdb")
       .withUsername("testuser")
-      .withPassword("testpass");
+      .withPassword("testpass")
+      .withReuse(true);
 
   static GenericContainer<?> iamService;
 
   static {
-    // Start containers in static block to ensure they're ready for DynamicPropertySource
-    postgres.start();
 
-    // IAM service is a mock authorization server - doesn't need PostgreSQL
-    iamService = new GenericContainer<>(DockerImageName.parse("eventuate-examples-realguardio-realguardio-iam-service:latest"))
-        .withExposedPorts(9000)
-        .withEnv("SPRING_PROFILES_ACTIVE", "realguardio")
-        .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("IAM-SERVICE")))
-        .waitingFor(Wait.forHttp("/actuator/health").forPort(9000).forStatusCode(200))
-        .withStartupTimeout(Duration.ofSeconds(60));
-    iamService.start();
+    iamService = IamServiceFactory.makeIamService()
+        .withReuse(true)
+    ;
+    Startables.deepStart(iamService, postgres).join();
   }
 
   @DynamicPropertySource
@@ -81,10 +70,7 @@ class CustomerServiceIntegrationTest {
 
   @Test
   void shouldReturnCustomersWithValidToken() {
-    String token = JwtTokenHelper.getJwtToken(iamService.getMappedPort(9000));
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", "Bearer " + token);
+    HttpHeaders headers = makeHeadersWithJwt();
     HttpEntity<Void> entity = new HttpEntity<>(headers);
 
     ResponseEntity<Customers> response = restTemplate.exchange(
@@ -98,7 +84,72 @@ class CustomerServiceIntegrationTest {
     Customers customers = response.getBody();
     assertThat(customers).isNotNull();
     assertThat(customers.customers()).isNotNull();
-    assertThat(customers.customers()).hasSize(1);
+    assertThat(customers.customers()).hasSizeGreaterThan(0);
+  }
+
+  private static @NotNull HttpHeaders makeHeadersWithJwt() {
+    String token = JwtTokenHelper.getJwtTokenForUser(iamService.getMappedPort(9000));
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Authorization", "Bearer " + token);
+    return headers;
+  }
+
+  @Test
+  public void anonymousRequestShouldNotCreateCustomer() {
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    HttpEntity<String> entity = new HttpEntity<>("""
+        {
+            "name": "New Customer",
+            "initialAdministrator": {
+                "name": {
+                    "firstName": "Admin",
+                    "lastName": "User"
+                },
+                "emailAddress": {
+                    "email": "admin@example.com"
+                }
+            }
+        }
+        """, httpHeaders);
+    ResponseEntity<Customers> response = restTemplate.exchange(
+        "/customers",
+        HttpMethod.POST,
+        entity,
+        Customers.class
+    );
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
+  }
+
+  @Test
+  public void shouldCreateCustomer() {
+    HttpHeaders httpHeaders = makeHeadersWithJwt();
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    HttpEntity<String> entity = new HttpEntity<>("""
+        {
+            "name": "New Customer",
+            "initialAdministrator": {
+                "name": {
+                    "firstName": "Admin",
+                    "lastName": "User"
+                },
+                "emailAddress": {
+                    "email": "admin@example.com"
+                }
+            }
+        }
+        """, httpHeaders);
+    ResponseEntity<Customers> response = restTemplate.exchange(
+        "/customers",
+        HttpMethod.POST,
+        entity,
+        Customers.class
+    );
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
   }
 
 

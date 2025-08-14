@@ -42,7 +42,7 @@ spring:
     user:
       name: user1
       password: password
-      roles: USER,ADMIN
+      roles: USER,ADMIN,REALGUARDIO_ADMIN
     oauth2:
       authorizationserver:
         client:
