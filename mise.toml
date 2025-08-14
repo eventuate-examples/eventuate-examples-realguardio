@@ -52,9 +52,7 @@ depends = ["compose-up"]
 run = ["mise run wait-all"]
 
 [tasks.wait-all]
-run = ["mise run security-system-service-wait", 
-    "mise run bff-dev-wait", 
-    "mise run iam-service-wait"]
+depends = ["customer-service-wait", "security-system-service-wait", "bff-dev-wait", "iam-service-wait"]
 
 
 [tasks.bff-e2e-test-only]
@@ -89,6 +87,9 @@ run = "npx wait-on@8.0.3 --timeout 10s http://localhost:9000/actuator/health"
 
 [tasks.security-system-service-wait]
 run = "npx wait-on@8.0.3 --timeout 40s http://localhost:3001/actuator/health"
+
+[tasks.customer-service-wait]
+run = "npx wait-on@8.0.3 --timeout 40s http://localhost:3002/actuator/health"
 
 [tasks.jaeger-restart]
 run = ["docker compose down jaeger", 
