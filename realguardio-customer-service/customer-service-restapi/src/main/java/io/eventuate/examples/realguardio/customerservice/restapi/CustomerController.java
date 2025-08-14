@@ -1,7 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.restapi;
 
-import io.eventuate.examples.realguardio.customerservice.domain.CustomerService;
-import io.eventuate.examples.realguardio.customerservice.domain.Customers;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.Customers;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,7 +14,7 @@ public class CustomerController {
     this.customerService = customerService;
   }
 
-  @GetMapping("/securitysystems")
+  @GetMapping("/customers")
   public Customers getCustomers() {
     return new Customers(customerService.findAll());
   }

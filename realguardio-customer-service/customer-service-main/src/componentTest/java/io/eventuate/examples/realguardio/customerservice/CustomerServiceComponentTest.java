@@ -52,7 +52,7 @@ class CustomerServiceComponentTest {
 		WebClient webClient = serviceContainer.createWebClient();
 		
 		ClientResponse response = webClient.get()
-				.uri("/securitysystems")
+				.uri("/customers")
 				.exchangeToMono(Mono::just)
 				.block(Duration.ofSeconds(10));
 		
@@ -61,14 +61,12 @@ class CustomerServiceComponentTest {
 	
 	@Test
 	void shouldReturn200WithValidJwtToken() {
-		// Get JWT token using the helper with Host header for component tests
 		String accessToken = JwtTokenHelper.getJwtTokenWithHostHeader(iamService.getMappedPort(9000));
 		
-		// Now make request to our service with the JWT token
 		WebClient webClient = serviceContainer.createWebClient();
 		
 		ClientResponse response = webClient.get()
-				.uri("/securitysystems")
+				.uri("/customers")
 				.header("Authorization", "Bearer " + accessToken)
 				.exchangeToMono(Mono::just)
 				.block(Duration.ofSeconds(10));

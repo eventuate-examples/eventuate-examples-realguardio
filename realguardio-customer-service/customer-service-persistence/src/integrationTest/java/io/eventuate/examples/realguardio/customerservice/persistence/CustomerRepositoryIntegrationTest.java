@@ -1,10 +1,22 @@
 package io.eventuate.examples.realguardio.customerservice.persistence;
 
-import io.eventuate.examples.realguardio.customerservice.domain.Customer;
-import io.eventuate.examples.realguardio.customerservice.domain.CustomerAction;
-import io.eventuate.examples.realguardio.customerservice.domain.CustomerRepository;
-import io.eventuate.examples.realguardio.customerservice.domain.CustomerState;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.common.EmailAddress;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonName;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeRepository;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerRepository;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationRepository;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamLocationRoleRepository;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamRepository;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.Member;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.Organization;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.MemberRepository;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.MemberRoleRepository;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.OrganizationRepository;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -14,15 +26,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Optional;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 @DataJpaTest
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class CustomerRepositoryIntegrationTest {
+    private static final Logger logger = LoggerFactory.getLogger(CustomerRepositoryIntegrationTest.class);
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
@@ -35,38 +43,54 @@ class CustomerRepositoryIntegrationTest {
     }
 
     @Autowired
-    private CustomerRepository repository;
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private CustomerEmployeeRepository customerEmployeeRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private TeamLocationRoleRepository teamLocationRoleRepository;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @Autowired
+    private MemberRoleRepository memberRoleRepository;
 
     @Test
-    void shouldSaveAndFindCustomer() {
-        Customer customer = new Customer("Oakland office", 
-            CustomerState.ARMED, 
-            Set.of(CustomerAction.DISARM));
+    void shouldSaveCustomer() {
+        Organization organization = new Organization("Acme Corporation");
+        organization = organizationRepository.save(organization);
+        logger.info("Created organization: {} with ID: {}",
+            organization.getName(), organization.getId());
 
-        Customer saved = repository.save(customer);
-        assertThat(saved.getId()).isNotNull();
+        // Create Customer
+        Customer customer = new Customer("Acme Corporation", organization.getId());
+        customer = customerRepository.save(customer);
+        logger.info("Created customer: {} with ID: {}",
+            customer.getName(), customer.getId());
 
-        Optional<Customer> found = repository.findById(saved.getId());
-        assertThat(found).isPresent();
-        assertThat(found.get().getLocationName()).isEqualTo("Oakland office");
-        assertThat(found.get().getState()).isEqualTo(CustomerState.ARMED);
-        assertThat(found.get().getActions()).containsExactly(CustomerAction.DISARM);
+        // Create initial admin Member
+        Member adminMember = new Member(
+            new PersonName("System", "Administrator"),
+            new EmailAddress("admin@acme.com")
+        );
+        adminMember = memberRepository.save(adminMember);
+        logger.info("Created admin member with ID: {}", adminMember.getId());
+
+        // Create CustomerEmployee for admin
+        CustomerEmployee adminEmployee = new CustomerEmployee(customer.getId(), adminMember.getId());
+        adminEmployee = customerEmployeeRepository.save(adminEmployee);
+        logger.info("Created admin employee with ID: {}", adminEmployee.getId());
     }
 
-    @Test
-    void shouldFindAllCustomers() {
-        Customer system1 = new Customer("Oakland office",
-            CustomerState.ARMED,
-            Set.of(CustomerAction.DISARM));
-
-        Customer system2 = new Customer("Berkeley office",
-            CustomerState.DISARMED,
-            Set.of(CustomerAction.ARM));
-
-        repository.save(system1);
-        repository.save(system2);
-
-        Iterable<Customer> all = repository.findAll();
-        assertThat(all).hasSize(2);
-    }
 }

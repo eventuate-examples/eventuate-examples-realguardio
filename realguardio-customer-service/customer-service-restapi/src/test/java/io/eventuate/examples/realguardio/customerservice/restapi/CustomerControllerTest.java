@@ -1,9 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.restapi;
 
-import io.eventuate.examples.realguardio.customerservice.domain.Customer;
-import io.eventuate.examples.realguardio.customerservice.domain.CustomerAction;
-import io.eventuate.examples.realguardio.customerservice.domain.CustomerService;
-import io.eventuate.examples.realguardio.customerservice.domain.CustomerState;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -13,7 +11,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -32,27 +29,23 @@ class CustomerControllerTest {
 
     @Test
     void shouldReturnCustomers() throws Exception {
-        Customer system1 = new Customer("Office Front Door", CustomerState.ARMED,
-                new HashSet<>(Arrays.asList(CustomerAction.ARM)));
-        setId(system1, 1L);
+        Customer customer1 = new Customer("Acme, Inc", 1L);
+        setId(customer1, 1L);
         
-        Customer system2 = new Customer("Office Back Door", CustomerState.DISARMED,
-                new HashSet<>());
-        setId(system2, 2L);
+        Customer customer2 = new Customer("Big Co, Inc", 2L);
+        setId(customer2, 2L);
         
-        List<Customer> systems = Arrays.asList(system1, system2);
+        List<Customer> customers = Arrays.asList(customer1, customer2);
         
-        when(customerService.findAll()).thenReturn(systems);
+        when(customerService.findAll()).thenReturn(customers);
         
-        mockMvc.perform(get("/securitysystems"))
+        mockMvc.perform(get("/customers"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customers[0].id").value(1))
-                .andExpect(jsonPath("$.customers[0].locationName").value("Office Front Door"))
-                .andExpect(jsonPath("$.customers[0].state").value("ARMED"))
-                .andExpect(jsonPath("$.customers[0].actions[0]").value("ARM"))
-                .andExpect(jsonPath("$.customers[1].id").value(2))
-                .andExpect(jsonPath("$.customers[1].locationName").value("Office Back Door"))
-                .andExpect(jsonPath("$.customers[1].state").value("DISARMED"));
+                .andExpect(jsonPath("$.customers[0].id").value(customer1.getId()))
+                .andExpect(jsonPath("$.customers[0].name").value(customer1.getName()))
+                .andExpect(jsonPath("$.customers[1].id").value(customer2.getId()))
+                .andExpect(jsonPath("$.customers[1].name").value(customer2.getName()))
+        ;
     }
     
     private void setId(Customer system, Long id) throws Exception {

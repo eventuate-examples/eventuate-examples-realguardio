@@ -41,10 +41,15 @@ class IntegrationTestsPlugin implements Plugin<Project> {
             if (integrationTestTask) {
                 project.configurations.implementation.getAllDependencies().each { dep ->
                     if (dep.hasProperty('dependencyProject')) {
+                        // System.out.println("Configuring :${project}:integrationTest task to run after :${dep.name}:integrationTest task")
                         def depProject = dep.dependencyProject
                         def depIntegrationTest = depProject.tasks.findByName("integrationTest")
                         if (depIntegrationTest) {
                             integrationTestTask.shouldRunAfter(depIntegrationTest)
+                        }
+                        def depTest = depProject.tasks.findByName("test")
+                        if (depTest) {
+                            integrationTestTask.shouldRunAfter(depTest)
                         }
                     }
                 }

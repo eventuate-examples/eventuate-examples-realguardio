@@ -38,13 +38,41 @@ class ComponentTestsPlugin implements Plugin<Project> {
         project.task("componentTest", type: Test) {
             testClassesDirs = project.sourceSets.componentTest.output.classesDirs
             classpath = project.sourceSets.componentTest.runtimeClasspath
-            if (project.tasks.findByName("integrationTest"))
-                shouldRunAfter("integrationTest")
+            shouldRunAfter("test")
             // Ensures that JAR is built prior to building images
             dependsOn("assemble")
             systemProperty "eventuate.servicecontainer.serviceimage.version", project.version
             useJUnitPlatform()
         }
+
+        // Configure componentTest to run after dependencies' integrationTest tasks
+        project.afterEvaluate {
+            def componentTestTask = project.tasks.findByName("componentTest")
+
+            if (project.tasks.findByName("integrationTest"))
+                componentTestTask.shouldRunAfter("integrationTest")
+
+            if (componentTestTask) {
+                project.configurations.implementation.getAllDependencies().each { dep ->
+                    if (dep.hasProperty('dependencyProject')) {
+                        def depProject = dep.dependencyProject
+                        def depComponentTest = depProject.tasks.findByName("componentTest")
+                        if (depComponentTest) {
+                            componentTestTask.shouldRunAfter(depComponentTest)
+                        }
+                        def depIntegrationTest = depProject.tasks.findByName("integrationTest")
+                        if (depIntegrationTest) {
+                            componentTestTask.shouldRunAfter(depIntegrationTest)
+                        }
+                        def depTest = depProject.tasks.findByName("test")
+                        if (depTest) {
+                            componentTestTask.shouldRunAfter(depTest)
+                        }
+                    }
+                }
+            }
+        }
+
         project.tasks.findByName("check").dependsOn(project.tasks.componentTest)
 
 
