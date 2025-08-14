@@ -4,14 +4,14 @@ import io.eventuate.examples.realguardio.customerservice.security.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
 class OrganizationManagementConfigurationTests {
 
-	@MockBean
+	@MockitoBean
 	private UserService userService;
 
 	@Configuration
