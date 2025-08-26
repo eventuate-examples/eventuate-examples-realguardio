@@ -19,13 +19,14 @@ services:
     image: eventuate-examples-realguardio-realguardio-iam-service:latest
     build:
       context: ./realguardio-iam-service
+      pull: true
       args:
         baseImageVersion: 0.1.0.RELEASE
         serviceImageVersion: 0.1.0-SNAPSHOT
     ports:
       - "9000:9000"
     environment:
-      SPRING_PROFILES_ACTIVE: realguardio
+      SPRING_PROFILES_ACTIVE: realguardio,UserDatabase
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
       OTEL_PROPAGATORS: tracecontext
     depends_on:
