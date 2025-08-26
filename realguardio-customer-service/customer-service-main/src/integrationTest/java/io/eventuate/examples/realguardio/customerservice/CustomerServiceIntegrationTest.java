@@ -1,6 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.Customers;
+import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
@@ -27,17 +27,19 @@ class CustomerServiceIntegrationTest {
   @Autowired
   private TestRestTemplate restTemplate;
 
+
   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"))
       .withDatabaseName("testdb")
       .withUsername("testuser")
       .withPassword("testpass")
       .withReuse(true);
 
-  static GenericContainer<?> iamService;
+  static AuthorizationServerContainerForLocalTests iamService;
 
   static {
 
-    iamService = IamServiceFactory.makeIamService()
+    iamService = new AuthorizationServerContainerForLocalTests()
+        .withUserDb()
         .withReuse(true)
     ;
     Startables.deepStart(iamService, postgres).join();
@@ -59,7 +61,7 @@ class CustomerServiceIntegrationTest {
   @Test
   void shouldReturnUnauthorizedWithoutToken() {
     ResponseEntity<String> response = restTemplate.exchange(
-        "/securitysystems",
+        "/customers",
         HttpMethod.GET,
         null,
         String.class

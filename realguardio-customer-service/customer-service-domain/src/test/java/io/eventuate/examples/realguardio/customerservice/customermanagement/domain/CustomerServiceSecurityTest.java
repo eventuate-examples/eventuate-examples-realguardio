@@ -4,6 +4,7 @@ import io.eventuate.examples.realguardio.customerservice.customermanagement.Cust
 import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonDetails;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.MockUser;
 import io.eventuate.examples.realguardio.customerservice.security.SecurityConfiguration;
+import io.eventuate.examples.realguardio.customerservice.security.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Set;
 
@@ -33,6 +35,9 @@ public class CustomerServiceSecurityTest {
 
     @Autowired
     private CustomerService customerService;
+
+    @MockitoBean
+    private UserService userService;
 
     @Test
     void shouldDenyCreateCustomerWithoutAuthentication() {

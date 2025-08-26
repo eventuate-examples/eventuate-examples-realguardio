@@ -1,10 +1,10 @@
 package io.eventuate.examples.realguardio.customerservice;
 
+import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -21,9 +21,8 @@ class CustomerServiceComponentTest {
 	static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
 
 	@Container
-	static GenericContainer<?> iamService = new GenericContainer<>("eventuate-examples-realguardio-realguardio-iam-service:latest")
-			.withExposedPorts(9000)
-			.withEnv("SPRING_PROFILES_ACTIVE", "realguardio");
+	static AuthorizationServerContainerForServiceContainers iamService = new AuthorizationServerContainerForServiceContainers()
+			.withUserDb();
 
 	@Container
 	static CustomerServiceContainer serviceContainer = new CustomerServiceContainer(postgres, iamService);
