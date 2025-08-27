@@ -1,4 +1,4 @@
-package io.eventuate.examples.realguardio.customerservice.customermanagement.common;
+package io.eventuate.examples.realguardio.customerservice.commondomain;
 
 import jakarta.persistence.Embeddable;
 

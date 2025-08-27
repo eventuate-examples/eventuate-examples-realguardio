@@ -23,7 +23,8 @@ dependencies {
     
     // AspectJ dependencies for custom tracing
     implementation 'org.aspectj:aspectjweaver'
-    
+
+    testImplementation project(':test-utils')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     testImplementation 'org.testcontainers:postgresql'

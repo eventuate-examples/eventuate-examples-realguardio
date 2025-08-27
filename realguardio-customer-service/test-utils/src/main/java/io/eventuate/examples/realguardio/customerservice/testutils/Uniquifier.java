@@ -1,7 +1,8 @@
-package io.eventuate.examples.realguardio.customerservice.customermanagement.common;
+package io.eventuate.examples.realguardio.customerservice.testutils;
 
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.EmailAddress;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonDetails;
+
+import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
 
 public class Uniquifier {
     

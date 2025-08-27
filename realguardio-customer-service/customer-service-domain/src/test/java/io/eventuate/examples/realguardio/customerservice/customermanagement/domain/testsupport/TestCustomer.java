@@ -1,6 +1,6 @@
 package io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport;
 
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonDetails;
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerAndCustomerEmployee;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
@@ -11,8 +11,8 @@ import org.assertj.core.api.ObjectAssert;
 import java.util.Collection;
 import java.util.Set;
 
-import static io.eventuate.examples.realguardio.customerservice.customermanagement.common.Uniquifier.uniquify;
 import static io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerServiceTestData.JOHN_DOE_DETAILS;
+import static io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier.uniquify;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public record TestCustomer(TestContext testContext,

@@ -1,7 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository;
 
+import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.Member;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.EmailAddress;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

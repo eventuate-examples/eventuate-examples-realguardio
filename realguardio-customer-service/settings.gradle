@@ -1,5 +1,7 @@
 rootProject.name = 'realguardio-customer-service'
 
+include 'common-domain'
+include 'test-utils'
 include 'customer-service-domain'
 include 'customer-service-persistence'
 include 'customer-service-restapi'

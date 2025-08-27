@@ -1,11 +1,11 @@
 package io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport;
 
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerAndCustomerEmployee;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerServiceTestData.*;
-import static io.eventuate.examples.realguardio.customerservice.customermanagement.common.Uniquifier.uniquify;
+import static io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier.uniquify;
 
 public class TestCustomerFactory {
 

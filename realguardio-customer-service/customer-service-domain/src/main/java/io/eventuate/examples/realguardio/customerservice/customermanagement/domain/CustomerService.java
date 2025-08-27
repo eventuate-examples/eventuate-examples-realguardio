@@ -1,7 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.customermanagement.domain;
 
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.EmailAddress;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonDetails;
+import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.Member;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.MemberRole;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.Organization;

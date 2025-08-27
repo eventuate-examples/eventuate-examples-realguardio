@@ -2,9 +2,11 @@ package io.eventuate.examples.realguardio.customerservice.restapi;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.Customers;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerAndCustomerEmployee;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,5 +31,11 @@ public class CustomerController {
   @PreAuthorize("hasRole('REALGUARDIO_ADMIN')")
   public CustomerAndCustomerEmployee createCustomer(@RequestBody CreateCustomerRequest request) {
     return customerService.createCustomer(request.name(), request.initialAdministrator());
+  }
+
+  @PostMapping("/{customerId}/employees")
+  @PreAuthorize("hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
+  public CustomerEmployee createEmployee(@PathVariable Long customerId, @RequestBody CreateEmployeeRequest request) {
+    return customerService.createCustomerEmployee(customerId, request.personDetails());
   }
 }

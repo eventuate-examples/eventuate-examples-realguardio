@@ -1,7 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.customermanagement.domain;
 
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.CustomerManagementConfiguration;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonDetails;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.MockUser;
 import io.eventuate.examples.realguardio.customerservice.security.SecurityConfiguration;
 import io.eventuate.examples.realguardio.customerservice.security.UserService;
@@ -18,9 +18,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Set;
 
-import static io.eventuate.examples.realguardio.customerservice.customermanagement.common.Uniquifier.uniquify;
 import static io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerServiceTestData.*;
 import static io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.SecurityTestHelper.withMockUser;
+import static io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier.uniquify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

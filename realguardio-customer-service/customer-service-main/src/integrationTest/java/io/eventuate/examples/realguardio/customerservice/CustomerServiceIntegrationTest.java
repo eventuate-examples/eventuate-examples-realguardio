@@ -1,9 +1,14 @@
 package io.eventuate.examples.realguardio.customerservice;
 
+import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.Customers;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerAndCustomerEmployee;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
+import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -16,13 +21,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
+
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CustomerServiceIntegrationTest {
+
+  private static Logger logger = org.slf4j.LoggerFactory.getLogger(CustomerServiceIntegrationTest.class);
 
   @Autowired
   private TestRestTemplate restTemplate;
@@ -38,9 +48,10 @@ class CustomerServiceIntegrationTest {
 
   static {
 
-    iamService = new AuthorizationServerContainerForLocalTests()
+    iamService = new AuthorizationServerContainerForLocalTests(Path.of("../../realguardio-iam-service/Dockerfile"))
         .withUserDb()
         .withReuse(true)
+        .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("IAM"));
     ;
     Startables.deepStart(iamService, postgres).join();
   }
@@ -127,6 +138,49 @@ class CustomerServiceIntegrationTest {
 
   @Test
   public void shouldCreateCustomer() {
+    EmailAddress adminUser = Uniquifier.uniquify(new EmailAddress("admin@example.com"));
+
+    long customerId = createCustomer(adminUser);
+
+    EmailAddress customerEmployee = Uniquifier.uniquify(new EmailAddress("john.doe@example.com"));
+
+    createCustomerEmployee(adminUser, customerEmployee, customerId);
+
+
+  }
+
+  private void createCustomerEmployee(EmailAddress adminUser, EmailAddress customerEmployee, long customerId) {
+    String token = JwtTokenHelper.getJwtTokenForUser(iamService.getMappedPort(9000), null, adminUser.toString(), "password");
+    HttpHeaders httpHeadersForAdmin = new HttpHeaders();
+    httpHeadersForAdmin.set("Authorization", "Bearer " + token);
+    httpHeadersForAdmin.setContentType(MediaType.APPLICATION_JSON);
+
+
+    HttpEntity<String> entityForCreateEmployee = new HttpEntity<>("""
+        {
+            "personDetails": {
+                "name": {
+                    "firstName": "John",
+                    "lastName": "Doe"
+                },
+                "emailAddress": {
+                    "email": "%s"
+                }
+            }
+        }
+        """.formatted(customerEmployee), httpHeadersForAdmin);
+
+    ResponseEntity<CustomerEmployee> responseForCreateEmployee = restTemplate.exchange(
+        "/customers/%s/employees".formatted(customerId),
+        HttpMethod.POST,
+        entityForCreateEmployee,
+        CustomerEmployee.class
+    );
+
+    assertThat(responseForCreateEmployee.getStatusCode()).isEqualTo(HttpStatus.OK);
+  }
+
+  private long createCustomer(EmailAddress adminUser) {
     HttpHeaders httpHeaders = makeHeadersWithJwt();
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
     HttpEntity<String> entity = new HttpEntity<>("""
@@ -138,20 +192,23 @@ class CustomerServiceIntegrationTest {
                     "lastName": "User"
                 },
                 "emailAddress": {
-                    "email": "admin@example.com"
+                    "email": "%s"
                 }
             }
         }
-        """, httpHeaders);
-    ResponseEntity<Customers> response = restTemplate.exchange(
+        """.formatted(adminUser), httpHeaders);
+
+    ResponseEntity<CustomerAndCustomerEmployee> response = restTemplate.exchange(
         "/customers",
         HttpMethod.POST,
         entity,
-        Customers.class
+        CustomerAndCustomerEmployee.class
     );
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
+    long customerId = response.getBody().customer().getId();
+    return customerId;
   }
 
 

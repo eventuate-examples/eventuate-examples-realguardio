@@ -1,5 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain;
 
+import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonName;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -8,8 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.EmailAddress;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonName;
 
 import java.util.HashSet;
 import java.util.Set;

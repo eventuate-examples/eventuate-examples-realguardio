@@ -125,4 +125,39 @@ class CustomerControllerTest {
             .andExpect(status().isForbidden());
     }
 
+    private static final String CREATE_EMPLOYEE_REQUEST_JSON = """
+        {
+            "personDetails": {
+                "name": {
+                    "firstName": "John",
+                    "lastName": "Doe"
+                },
+                "emailAddress": {
+                    "email": "john.doe@example.com"
+                }
+            }
+        }
+        """;
+
+    @Test
+    @WithMockUser(roles = "REALGUARDIO_CUSTOMER_EMPLOYEE")
+    void shouldCreateEmployee() throws Exception {
+        long customerId = 10L;
+        long employeeId = 1L;
+        long memberId = 100L;
+
+        CustomerEmployee employee = new CustomerEmployee(customerId, memberId);
+        EntityUtil.setId(employee, employeeId);
+
+        when(customerService.createCustomerEmployee(any(), any())).thenReturn(employee);
+
+        mockMvc.perform(post("/customers/{customerId}/employees", customerId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(CREATE_EMPLOYEE_REQUEST_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(employeeId))
+            .andExpect(jsonPath("$.customerId").value(customerId))
+            .andExpect(jsonPath("$.memberId").value(memberId));
+    }
+
 }

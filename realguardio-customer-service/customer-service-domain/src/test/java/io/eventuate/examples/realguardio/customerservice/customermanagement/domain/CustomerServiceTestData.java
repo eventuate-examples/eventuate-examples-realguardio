@@ -1,10 +1,10 @@
 package io.eventuate.examples.realguardio.customerservice.customermanagement.domain;
 
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.Uniquifier;
+import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonName;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.MockUser;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.EmailAddress;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonDetails;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonName;
+import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 
 
 public class CustomerServiceTestData {

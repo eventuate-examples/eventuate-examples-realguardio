@@ -1,4 +1,11 @@
+apply plugin: IntegrationTestsPlugin
+
 dependencies {
     implementation project(':customer-service-domain')
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation "io.eventuate.examples.spring-authorization-server:authorization-server-test-containers:$eventuateExamplesSpringAuthorizationServerVersion"
+
 }

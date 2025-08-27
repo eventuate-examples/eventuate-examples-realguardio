@@ -1,7 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.customermanagement.domain;
 
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.CustomerManagementConfiguration;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonDetails;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.LoggedInUser;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.TestContext;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.TestCustomerFactory;

@@ -1,7 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.persistence;
 
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.EmailAddress;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.common.PersonName;
+import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
+import io.eventuate.examples.realguardio.customerservice.commondomain.PersonName;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeRepository;
