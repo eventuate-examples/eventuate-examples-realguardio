@@ -1,0 +1,22 @@
+I want the security-system-service to implement a POST /securitysystems that creates a security system
+
+The request body should contain the following:
+
+* customerID - the ID of the customer in the CustomerService
+* locationName - the name of the location in the CustomerService
+
+The creation will be implemented using an Eventuate Tram Saga consisting of the following steps:
+
+1. Creates a SecuritySystem in a PENDING state
+2. Invokes the Customer Service to validate the customerID, and create/update the location with the security SystemID - fails if the location exists and has a securitySystme already
+3. Invokes the SecuritySystemService to update the SecuritySystem with the locationID and changes it state to DISARMED
+
+Here's the Eventuate docs:
+
+https://eventuate.io/docs/manual/eventuate-tram/latest/getting-started-eventuate-tram-sagas.html#getting-started-tram-sagas
+
+https://eventuate.io/docs/manual/eventuate-tram/latest/getting-started-eventuate-tram.html#getting-started
+
+Here's an example application: https://github.com/eventuate-tram/eventuate-tram-sagas-examples-customers-and-orders
+
+

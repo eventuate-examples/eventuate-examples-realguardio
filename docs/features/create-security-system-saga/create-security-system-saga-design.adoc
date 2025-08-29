@@ -1,0 +1,40 @@
+The flow of saga is as follows
+
+[cols="a,a,a,a"]
+|===
+
+| Step
+| Service
+| Transaction
+| Compensation
+
+| 1
+| Security System Service
+| securitySystemID = CreateSecuritySystem(locationName)
+
+Sets state to CREATION_PENDING
+
+| updateCreationFailed(securitySystemID)
+
+Sets state to CREATION_FAILED
+| 2
+| Customer Service
+| locationID = Create Location with SecuritySystem(customerId, locationName, securitySystemID)
+| - 
+
+| 3
+| Security System Service
+| noteLocationCreated(securitySystemID, locationID)
+
+Sets state to DISARMED
+| -
+
+|===
+
+== Sending back the HTTP response with the securitySystemID
+
+* The realguardio-orchestration-service sends back a response to the `POST /securitysystems` HTTP request after the first step of the saga has created the `SecuritySystem`
+* The service maintains a ConcurrentHashMap from sagaID to CompletableFuture<> that's the result of the controller method
+* The saga has an onReply() handler for the first step that completes the future if (if the hash map has an entry) with the securitySystemID
+* NOTE: This works for a single instance. Multiple instances => Per-instance subscriber (to an event or the reply queue) since the instance the handles the reply is not guranteed to be same as the one that handles the post
+
