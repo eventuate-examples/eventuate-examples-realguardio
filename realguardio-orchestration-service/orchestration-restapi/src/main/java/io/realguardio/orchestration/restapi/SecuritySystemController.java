@@ -23,14 +23,15 @@ public class SecuritySystemController {
     }
     
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CompletableFuture<CreateSecuritySystemResponse> createSecuritySystem(
+    public CompletableFuture<ResponseEntity<CreateSecuritySystemResponse>> createSecuritySystem(
             @Valid @RequestBody CreateSecuritySystemRequest request) {
         
         return securitySystemSagaService
                 .createSecuritySystem(request.customerId(), request.locationName())
                 .orTimeout(30, TimeUnit.SECONDS)
-                .thenApply(securitySystemId -> new CreateSecuritySystemResponse(securitySystemId))
+                .thenApply(securitySystemId -> 
+                    ResponseEntity.status(HttpStatus.CREATED)
+                        .body(new CreateSecuritySystemResponse(securitySystemId)))
                 .exceptionally(ex -> {
                     if (ex.getCause() instanceof TimeoutException) {
                         throw new ServiceUnavailableException("Service temporarily unavailable");

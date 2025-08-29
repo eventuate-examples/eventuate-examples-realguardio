@@ -306,7 +306,7 @@ Tasks:
         [x] Call saga service createSecuritySystem
         [x] Return CompletableFuture<ResponseEntity<CreateSecuritySystemResponse>>
         [x] Map to 201 Created status
-    [~] Run test - verify it passes (test setup issues)
+    [x] Run test - verify it passes
     [x] Extract response mapping logic if needed
     
 [x] TDD: Validation error handling
@@ -314,18 +314,18 @@ Tasks:
     [x] Run test - verify it fails (no validation handling)
     [x] Create GlobalExceptionHandler with @ControllerAdvice
         [x] Add @ExceptionHandler for MethodArgumentNotValidException
-        [ ] Return 400 Bad Request with error details
-    [ ] Run test - verify it passes
+        [x] Return 400 Bad Request with error details
+    [x] Run test - verify it passes
     
-[ ] TDD: Timeout error handling
-    [ ] Write test for CompletableFuture timeout
-    [ ] Run test - verify it fails
-    [ ] Add timeout handling to controller
-        [ ] Configure timeout on CompletableFuture
-        [ ] Add @ExceptionHandler for TimeoutException
-        [ ] Return 503 Service Unavailable
-    [ ] Run test - verify it passes
-    [ ] Consolidate error response format
+[x] TDD: Timeout error handling
+    [x] Write test for CompletableFuture timeout
+    [x] Run test - verify it fails
+    [x] Add timeout handling to controller
+        [x] Configure timeout on CompletableFuture
+        [x] Add @ExceptionHandler for TimeoutException
+        [x] Return 503 Service Unavailable
+    [x] Run test - verify it passes
+    [x] Consolidate error response format
 ```
 
 ## Thread 7: Security System Service Command Handlers

@@ -4,12 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemRequest;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemResponse;
 import io.realguardio.orchestration.sagas.SecuritySystemSagaService;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -20,13 +19,13 @@ import java.util.concurrent.TimeoutException;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SecuritySystemController.class)
-@Import(GlobalExceptionHandler.class)
-@Disabled("Test configuration needs adjustment for async controller handling")
+@Import({GlobalExceptionHandler.class, SecuritySystemController.class})
 class SecuritySystemControllerTest {
 
     @Autowired
@@ -35,7 +34,7 @@ class SecuritySystemControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private SecuritySystemSagaService securitySystemSagaService;
 
     @Test
@@ -46,10 +45,14 @@ class SecuritySystemControllerTest {
         when(securitySystemSagaService.createSecuritySystem(100L, "Warehouse"))
                 .thenReturn(CompletableFuture.completedFuture(securitySystemId));
 
-        mockMvc.perform(post("/securitysystems")
+        var result = mockMvc.perform(post("/securitysystems")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(request().asyncStarted())
                 .andDo(print())
+                .andReturn();
+        
+        mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.securitySystemId").value(200));
@@ -87,9 +90,13 @@ class SecuritySystemControllerTest {
         when(securitySystemSagaService.createSecuritySystem(anyLong(), anyString()))
                 .thenReturn(future);
 
-        mockMvc.perform(post("/securitysystems")
+        var result = mockMvc.perform(post("/securitysystems")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        
+        mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.error").value("Service temporarily unavailable"));
     }
