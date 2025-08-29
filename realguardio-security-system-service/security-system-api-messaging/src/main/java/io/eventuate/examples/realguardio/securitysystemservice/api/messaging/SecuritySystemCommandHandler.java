@@ -1,7 +1,9 @@
 package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationNoted;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemRepository;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
@@ -27,5 +29,17 @@ public class SecuritySystemCommandHandler {
         SecuritySystem savedSystem = repository.save(securitySystem);
         
         return new SecuritySystemCreated(savedSystem.getId());
+    }
+
+    public LocationNoted handle(NoteLocationCreatedCommand command) {
+        SecuritySystem securitySystem = repository.findById(command.securitySystemId())
+            .orElseThrow(() -> new IllegalArgumentException("Security system not found: " + command.securitySystemId()));
+        
+        securitySystem.setLocationId(command.locationId());
+        securitySystem.setState(SecuritySystemState.DISARMED);
+        
+        repository.save(securitySystem);
+        
+        return new LocationNoted();
     }
 }

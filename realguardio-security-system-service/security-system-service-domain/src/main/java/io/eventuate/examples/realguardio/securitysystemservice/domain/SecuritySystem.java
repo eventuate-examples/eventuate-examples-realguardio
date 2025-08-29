@@ -21,6 +21,8 @@ public class SecuritySystem {
     @Enumerated(EnumType.STRING)
     private Set<SecuritySystemAction> actions;
     
+    private Long locationId;
+    
     @Version
     private Long version;
 
@@ -56,5 +58,17 @@ public class SecuritySystem {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getLocationId() {
+        return locationId;
+    }
+
+    public void setLocationId(Long locationId) {
+        this.locationId = locationId;
+    }
+
+    public void setState(SecuritySystemState state) {
+        this.state = state;
     }
 }
