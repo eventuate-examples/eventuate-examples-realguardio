@@ -6,5 +6,6 @@ dependencies {
     
     testImplementation "org.springframework.boot:spring-boot-starter-test"
     testImplementation "org.mockito:mockito-core"
+    testImplementation "io.eventuate.tram.sagas:eventuate-tram-sagas-spring-testing-support"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }

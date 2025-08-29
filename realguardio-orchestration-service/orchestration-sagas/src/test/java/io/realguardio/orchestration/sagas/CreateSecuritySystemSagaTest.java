@@ -1,115 +1,121 @@
 package io.realguardio.orchestration.sagas;
 
-import io.eventuate.tram.sagas.simpledsl.SimpleSaga;
-import io.eventuate.tram.sagas.orchestration.SagaDefinition;
+import io.realguardio.customer.api.*;
 import io.realguardio.orchestration.sagas.proxies.CustomerServiceProxy;
 import io.realguardio.orchestration.sagas.proxies.SecuritySystemServiceProxy;
 import io.realguardio.securitysystem.api.*;
-import io.realguardio.customer.api.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static io.eventuate.tram.sagas.testing.SagaUnitTestSupport.given;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
 
-class CreateSecuritySystemSagaTest {
+public class CreateSecuritySystemSagaTest {
 
     private SecuritySystemServiceProxy securitySystemServiceProxy;
     private CustomerServiceProxy customerServiceProxy;
     private SecuritySystemSagaService securitySystemSagaService;
-    private CreateSecuritySystemSaga saga;
+    
+    private Long customerId = 100L;
+    private String locationName = "Warehouse";
+    private Long securitySystemId = 200L;
+    private Long locationId = 300L;
+
+    private CreateSecuritySystemSaga makeCreateSecuritySystemSaga() {
+        return new CreateSecuritySystemSaga(securitySystemServiceProxy, customerServiceProxy, securitySystemSagaService);
+    }
 
     @BeforeEach
-    void setUp() {
-        securitySystemServiceProxy = mock(SecuritySystemServiceProxy.class);
-        customerServiceProxy = mock(CustomerServiceProxy.class);
+    public void setUp() {
+        securitySystemServiceProxy = new SecuritySystemServiceProxy();
+        customerServiceProxy = new CustomerServiceProxy();
         securitySystemSagaService = mock(SecuritySystemSagaService.class);
-        saga = new CreateSecuritySystemSaga(securitySystemServiceProxy, customerServiceProxy, securitySystemSagaService);
     }
 
     @Test
-    void shouldImplementSimpleSaga() {
-        assertThat(saga).isInstanceOf(SimpleSaga.class);
+    public void shouldCreateSecuritySystemSuccessfully() {
+        CreateSecuritySystemSagaData sagaData = new CreateSecuritySystemSagaData(customerId, locationName);
+        
+        given()
+            .saga(makeCreateSecuritySystemSaga(), sagaData)
+            .expect()
+            .command(new CreateSecuritySystemCommand(locationName))
+            .to("security-system-service")
+            .andGiven()
+            .successReply(new SecuritySystemCreated(securitySystemId))
+            .expect()
+            .command(new CreateLocationWithSecuritySystemCommand(customerId, locationName, securitySystemId))
+            .to("customer-service")
+            .andGiven()
+            .successReply(new LocationCreatedWithSecuritySystem(locationId))
+            .expect()
+            .command(new NoteLocationCreatedCommand(securitySystemId, locationId))
+            .to("security-system-service")
+            .andGiven()
+            .successReply()
+            .expectCompletedSuccessfully()
+            .assertSagaData(data -> {
+                assertEquals(securitySystemId, data.getSecuritySystemId());
+                assertEquals(locationId, data.getLocationId());
+                assertNull(data.getRejectionReason());
+            });
     }
 
     @Test
-    void shouldHaveThreeStepsInSagaDefinition() {
-        SagaDefinition<CreateSecuritySystemSagaData> sagaDefinition = saga.getSagaDefinition();
+    public void shouldRejectWhenCustomerNotFound() {
+        CreateSecuritySystemSagaData sagaData = new CreateSecuritySystemSagaData(customerId, locationName);
         
-        assertThat(sagaDefinition).isNotNull();
-        // Verify structure exists - actual step count verification would require more complex testing
+        given()
+            .saga(makeCreateSecuritySystemSaga(), sagaData)
+            .expect()
+            .command(new CreateSecuritySystemCommand(locationName))
+            .to("security-system-service")
+            .andGiven()
+            .successReply(new SecuritySystemCreated(securitySystemId))
+            .expect()
+            .command(new CreateLocationWithSecuritySystemCommand(customerId, locationName, securitySystemId))
+            .to("customer-service")
+            .andGiven()
+            .failureReply(new CustomerNotFound())
+            .expect()
+            .command(new UpdateCreationFailedCommand(securitySystemId, "Customer not found"))
+            .to("security-system-service")
+            .andGiven()
+            .successReply()
+            .expectRolledBack()
+            .assertSagaData(data -> {
+                assertEquals(securitySystemId, data.getSecuritySystemId());
+                assertEquals("Customer not found", data.getRejectionReason());
+            });
     }
 
     @Test
-    void shouldCreateSecuritySystemInStep1() {
-        CreateSecuritySystemSagaData data = new CreateSecuritySystemSagaData(100L, "Warehouse");
+    public void shouldRejectWhenLocationAlreadyHasSecuritySystem() {
+        CreateSecuritySystemSagaData sagaData = new CreateSecuritySystemSagaData(customerId, locationName);
         
-        saga.makeCreateSecuritySystemCommand(data);
-        
-        verify(securitySystemServiceProxy).createSecuritySystem("Warehouse");
-    }
-
-    @Test
-    void shouldHandleSecuritySystemCreatedReply() {
-        CreateSecuritySystemSagaData data = new CreateSecuritySystemSagaData(100L, "Warehouse");
-        SecuritySystemCreated reply = new SecuritySystemCreated(200L);
-        
-        saga.handleSecuritySystemCreated(data, reply);
-        
-        assertThat(data.getSecuritySystemId()).isEqualTo(200L);
-    }
-
-    @Test
-    void shouldCreateLocationInStep2() {
-        CreateSecuritySystemSagaData data = new CreateSecuritySystemSagaData(100L, "Warehouse");
-        data.setSecuritySystemId(200L);
-        
-        saga.makeCreateLocationCommand(data);
-        
-        verify(customerServiceProxy).createLocationWithSecuritySystem(100L, "Warehouse", 200L);
-    }
-
-    @Test
-    void shouldHandleLocationCreatedReply() {
-        CreateSecuritySystemSagaData data = new CreateSecuritySystemSagaData(100L, "Warehouse");
-        LocationCreatedWithSecuritySystem reply = new LocationCreatedWithSecuritySystem(300L);
-        
-        saga.handleLocationCreated(data, reply);
-        
-        assertThat(data.getLocationId()).isEqualTo(300L);
-    }
-
-    @Test
-    void shouldNoteLocationCreatedInStep3() {
-        CreateSecuritySystemSagaData data = new CreateSecuritySystemSagaData(100L, "Warehouse");
-        data.setSecuritySystemId(200L);
-        data.setLocationId(300L);
-        
-        saga.makeNoteLocationCreatedCommand(data);
-        
-        verify(securitySystemServiceProxy).noteLocationCreated(200L, 300L);
-    }
-
-    @Test
-    void shouldCompensateWithUpdateCreationFailed() {
-        CreateSecuritySystemSagaData data = new CreateSecuritySystemSagaData(100L, "Warehouse");
-        data.setSecuritySystemId(200L);
-        data.setRejectionReason("Customer not found");
-        
-        saga.makeUpdateCreationFailedCommand(data);
-        
-        verify(securitySystemServiceProxy).updateCreationFailed(200L, "Customer not found");
-    }
-    
-    @Test
-    void shouldCallCompleteSecuritySystemCreationWhenHandlingReply() {
-        CreateSecuritySystemSagaData data = new CreateSecuritySystemSagaData(100L, "Warehouse");
-        data.setSagaId("saga-456");
-        SecuritySystemCreated reply = new SecuritySystemCreated(200L);
-        
-        saga.handleSecuritySystemCreated(data, reply);
-        
-        assertThat(data.getSecuritySystemId()).isEqualTo(200L);
-        verify(securitySystemSagaService).completeSecuritySystemCreation("saga-456", 200L);
+        given()
+            .saga(makeCreateSecuritySystemSaga(), sagaData)
+            .expect()
+            .command(new CreateSecuritySystemCommand(locationName))
+            .to("security-system-service")
+            .andGiven()
+            .successReply(new SecuritySystemCreated(securitySystemId))
+            .expect()
+            .command(new CreateLocationWithSecuritySystemCommand(customerId, locationName, securitySystemId))
+            .to("customer-service")
+            .andGiven()
+            .failureReply(new LocationAlreadyHasSecuritySystem())
+            .expect()
+            .command(new UpdateCreationFailedCommand(securitySystemId, "Location already has security system"))
+            .to("security-system-service")
+            .andGiven()
+            .successReply()
+            .expectRolledBack()
+            .assertSagaData(data -> {
+                assertEquals(securitySystemId, data.getSecuritySystemId());
+                assertEquals("Location already has security system", data.getRejectionReason());
+            });
     }
 }
