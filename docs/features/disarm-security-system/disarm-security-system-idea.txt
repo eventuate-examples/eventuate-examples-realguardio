@@ -1,0 +1,11 @@
+I want to add a PUT /securitysystems/{securitySystemID} endpoint to the Security Service.
+
+This will be used to arm/disarm the SecuritySystem
+
+The endpoint requires the user to have the role of REALGUARDIO_CUSTOMER_EMPLOYEE or REALGUARDIO_ADMIN
+
+if the user has a role of REALGUARDIO_CUSTOMER_EMPLOYEE then the SecuritySystemService must retrieve the user's roles for the SecuritySystem's location (it will have a locationID property) from the CustomerService and verify that the roles allow the requested operation
+
+An GET endpoint must be added to the CustomerService
+
+If the operation is authorized then the state of the SecuritySystem is changed.
