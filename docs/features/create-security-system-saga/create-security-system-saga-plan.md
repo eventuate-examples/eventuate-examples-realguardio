@@ -143,31 +143,31 @@ Tasks:
 Create service proxy interfaces that encapsulate the logic for sending commands to remote services. Follow strict TDD: write failing test -> make it pass -> refactor.
 
 Tasks:
-[ ] TDD: SecuritySystemServiceProxy interface
-    [ ] Write test for SecuritySystemServiceProxy that verifies command creation
-    [ ] Run test - verify it fails (interface doesn't exist)
-    [ ] Create SecuritySystemServiceProxy interface with @SagaParticipantProxy(channel="security-system-service")
-    [ ] Add createSecuritySystem method signature returning CommandWithDestination
-    [ ] Add updateCreationFailed method signature returning CommandWithDestination
-    [ ] Add noteLocationCreated method signature returning CommandWithDestination
-    [ ] Run test - verify proxy is generated and test passes
-    [ ] Add proper parameter names and JavaDoc if needed
+[x] TDD: SecuritySystemServiceProxy interface
+    [x] Write test for SecuritySystemServiceProxy that verifies command creation
+    [x] Run test - verify it fails (interface doesn't exist)
+    [x] Create SecuritySystemServiceProxy interface with @SagaParticipantProxy(channel="security-system-service")
+    [x] Add createSecuritySystem method signature returning CommandWithDestination
+    [x] Add updateCreationFailed method signature returning CommandWithDestination
+    [x] Add noteLocationCreated method signature returning CommandWithDestination
+    [x] Run test - verify proxy is generated and test passes
+    [x] Add proper parameter names and JavaDoc if needed
     
-[ ] TDD: CustomerServiceProxy interface
-    [ ] Write test for CustomerServiceProxy that verifies command creation
-    [ ] Run test - verify it fails (interface doesn't exist)
-    [ ] Create CustomerServiceProxy interface with @SagaParticipantProxy(channel="customer-service")
-    [ ] Add createLocationWithSecuritySystem method signature returning CommandWithDestination
-    [ ] Run test - verify proxy is generated and test passes
+[x] TDD: CustomerServiceProxy interface
+    [x] Write test for CustomerServiceProxy that verifies command creation
+    [x] Run test - verify it fails (interface doesn't exist)
+    [x] Create CustomerServiceProxy interface with @SagaParticipantProxy(channel="customer-service")
+    [x] Add createLocationWithSecuritySystem method signature returning CommandWithDestination
+    [x] Run test - verify proxy is generated and test passes
     
-[ ] TDD: Proxy configuration and integration
-    [ ] Write integration test for proxy bean creation and wiring
-    [ ] Run test - verify it fails (configuration missing)
-    [ ] Create SagaProxyConfiguration class with @Configuration
-        [ ] Add @EnableSagaParticipantProxies annotation
-        [ ] Import necessary Eventuate configurations
-    [ ] Run test - verify beans are created and wired correctly
-    [ ] Organize imports and clean up configuration
+[x] TDD: Proxy configuration and integration
+    [x] Write integration test for proxy bean creation and wiring
+    [x] Run test - verify it fails (configuration missing)
+    [x] Create SagaProxyConfiguration class with @Configuration
+        [x] Add @EnableSagaParticipantProxies annotation
+        [x] Import necessary Eventuate configurations
+    [x] Run test - verify beans are created and wired correctly
+    [x] Organize imports and clean up configuration
 ```
 
 ## Thread 4: Basic Saga Definition and Data Class
