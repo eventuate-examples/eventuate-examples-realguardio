@@ -54,9 +54,7 @@ public class CreateSecuritySystemSaga implements SimpleSaga<CreateSecuritySystem
 
     public void handleSecuritySystemCreated(CreateSecuritySystemSagaData data, SecuritySystemCreated reply) {
         data.setSecuritySystemId(reply.securitySystemId());
-        if (data.getSagaId() != null && securitySystemSagaService != null) {
-            securitySystemSagaService.completeSecuritySystemCreation(data.getSagaId(), reply.securitySystemId());
-        }
+        securitySystemSagaService.completeSecuritySystemCreation(data.getSagaId(), reply.securitySystemId());
     }
 
     public CommandWithDestination makeUpdateCreationFailedCommand(CreateSecuritySystemSagaData data) {
