@@ -23,37 +23,37 @@ Create the realguardio-orchestration-service as a new standalone Gradle multi-mo
 Note: realguardio-orchestration-service is a separate Gradle multi-module project, similar to how the example customers-and-orders project is structured.
 
 Tasks:
-[ ] Create the realguardio-orchestration-service directory structure
-    [ ] Create realguardio-orchestration-service/settings.gradle with module includes
-    [ ] Create realguardio-orchestration-service/build.gradle with subprojects configuration
+[x] Create the realguardio-orchestration-service directory structure
+    [x] Create realguardio-orchestration-service/settings.gradle with module includes
+    [x] Create realguardio-orchestration-service/build.gradle with subprojects configuration
     
-[ ] Create orchestration-sagas module
-    [ ] Create orchestration-sagas/build.gradle with Eventuate Tram Saga dependencies
-    [ ] Add dependency on eventuate-tram-sagas-spring-orchestration-simple-dsl-starter
-    [ ] Create src/main/java directory structure with package io.realguardio.orchestration.sagas
+[x] Create orchestration-sagas module
+    [x] Create orchestration-sagas/build.gradle with Eventuate Tram Saga dependencies
+    [x] Add dependency on eventuate-tram-sagas-spring-orchestration-simple-dsl-starter
+    [x] Create src/main/java directory structure with package io.realguardio.orchestration.sagas
     
-[ ] Create orchestration-domain module  
-    [ ] Create orchestration-domain/build.gradle with domain dependencies
-    [ ] Create src/main/java directory structure with package io.realguardio.orchestration.domain
-    [ ] Create SecuritySystemSagaService class (empty for now)
+[x] Create orchestration-domain module  
+    [x] Create orchestration-domain/build.gradle with domain dependencies
+    [x] Create src/main/java directory structure with package io.realguardio.orchestration.domain
+    [x] Create SecuritySystemSagaService class (empty for now)
     
-[ ] Create orchestration-restapi module
-    [ ] Create orchestration-restapi/build.gradle with Spring Web dependencies
-    [ ] Create src/main/java directory structure with package io.realguardio.orchestration.restapi
-    [ ] Create SecuritySystemController class with empty POST endpoint
+[x] Create orchestration-restapi module
+    [x] Create orchestration-restapi/build.gradle with Spring Web dependencies
+    [x] Create src/main/java directory structure with package io.realguardio.orchestration.restapi
+    [x] Create SecuritySystemController class with empty POST endpoint
     
-[ ] Create orchestration-main module
-    [ ] Create orchestration-main/build.gradle with Spring Boot application dependencies
-    [ ] Create OrchestrationServiceApplication class with @SpringBootApplication
-    [ ] Create application.yml with basic Spring and Eventuate configuration
-    [ ] Add dependencies on other orchestration modules
+[x] Create orchestration-main module
+    [x] Create orchestration-main/build.gradle with Spring Boot application dependencies
+    [x] Create OrchestrationServiceApplication class with @SpringBootApplication
+    [x] Create application.yml with basic Spring and Eventuate configuration
+    [x] Add dependencies on other orchestration modules
     
-[ ] Create integration test to verify application context starts
-    [ ] Apply IntegrationTestsPlugin in orchestration-main/build.gradle
-    [ ] Create OrchestrationServiceApplicationTest class with @SpringBootTest in src/integrationTest/java
-    [ ] Write test method that loads application context
-    [ ] Run ./gradlew :realguardio-orchestration-service:orchestration-main:integrationTest
-    [ ] Verify test passes and context loads successfully
+[x] Create integration test to verify application context starts
+    [x] Apply IntegrationTestsPlugin in orchestration-main/build.gradle
+    [x] Create OrchestrationServiceApplicationTest class with @SpringBootTest in src/integrationTest/java
+    [x] Write test method that loads application context
+    [x] Run ./gradlew :realguardio-orchestration-service:orchestration-main:integrationTest
+    [x] Verify test passes and context loads successfully
 ```
 
 ## Thread 2: Command and Reply API Contracts

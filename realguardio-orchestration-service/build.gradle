@@ -1,0 +1,65 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url "https://snapshots.repositories.eventuate.io/repository"
+        }
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
+    }
+}
+
+allprojects {
+    group = "io.realguardio.orchestration"
+}
+
+subprojects {
+
+    apply plugin: "java-library"
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+        eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
+    }
+
+    dependencies {
+        implementation(platform("io.eventuate.platform:eventuate-platform-dependencies:$eventuatePlatformVersion"))
+
+        implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+
+        implementation(platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"))
+
+        constraints {
+            implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocVersion"
+        }
+
+        testImplementation "org.springframework.boot:spring-boot-starter-test"
+
+    }
+
+    tasks.withType(Copy).all { duplicatesStrategy 'WARN' }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-parameters"
+    }
+
+    tasks.withType(Test).configureEach {
+         useJUnitPlatform()
+    }
+
+    if (System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES") != null)
+        configurations.all {
+            resolutionStrategy.cacheChangingModulesFor Integer.parseInt(System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES")), 'minutes'
+        }
+
+}

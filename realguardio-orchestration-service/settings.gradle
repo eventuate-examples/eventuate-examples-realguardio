@@ -1,0 +1,6 @@
+rootProject.name = 'realguardio-orchestration-service'
+
+include ':orchestration-sagas'
+include ':orchestration-domain'
+include ':orchestration-restapi'
+include ':orchestration-main'

@@ -1,0 +1,5 @@
+dependencies {
+    implementation "io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl-starter"
+    
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+}
