@@ -3,29 +3,29 @@ package io.realguardio.orchestration.sagas;
 import io.eventuate.tram.sagas.orchestration.SagaInstanceFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class SecuritySystemSagaService {
     
     private final SagaInstanceFactory sagaInstanceFactory;
     private final CreateSecuritySystemSaga createSecuritySystemSaga;
-    private final Map<String, CompletableFuture<Long>> pendingResponses = new ConcurrentHashMap<>();
+    private final PendingSecuritySystemResponses pendingResponses;
     
     public SecuritySystemSagaService(SagaInstanceFactory sagaInstanceFactory,
-                                    CreateSecuritySystemSaga createSecuritySystemSaga) {
+                                    CreateSecuritySystemSaga createSecuritySystemSaga,
+                                    PendingSecuritySystemResponses pendingResponses) {
         this.sagaInstanceFactory = sagaInstanceFactory;
         this.createSecuritySystemSaga = createSecuritySystemSaga;
+        this.pendingResponses = pendingResponses;
     }
     
     public CompletableFuture<Long> createSecuritySystem(Long customerId, String locationName) {
         CreateSecuritySystemSagaData sagaData = new CreateSecuritySystemSagaData(customerId, locationName);
-        CompletableFuture<Long> future = new CompletableFuture<>();
         
         var sagaInstance = sagaInstanceFactory.create(createSecuritySystemSaga, sagaData);
-        pendingResponses.put(sagaInstance.getId(), future);
+        sagaData.setSagaId(sagaInstance.getId());
+        CompletableFuture<Long> future = pendingResponses.createPendingResponse(sagaInstance.getId());
         
         return future;
     }
@@ -35,9 +35,6 @@ public class SecuritySystemSagaService {
     }
     
     public void completeSecuritySystemCreation(String sagaId, Long securitySystemId) {
-        CompletableFuture<Long> future = pendingResponses.remove(sagaId);
-        if (future != null) {
-            future.complete(securitySystemId);
-        }
+        pendingResponses.completeSecuritySystemCreation(sagaId, securitySystemId);
     }
 }

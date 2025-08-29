@@ -16,7 +16,7 @@ public class CreateSecuritySystemSagaTest {
 
     private SecuritySystemServiceProxy securitySystemServiceProxy;
     private CustomerServiceProxy customerServiceProxy;
-    private SecuritySystemSagaService securitySystemSagaService;
+    private PendingSecuritySystemResponses pendingResponses;
     
     private Long customerId = 100L;
     private String locationName = "Warehouse";
@@ -24,14 +24,14 @@ public class CreateSecuritySystemSagaTest {
     private Long locationId = 300L;
 
     private CreateSecuritySystemSaga makeCreateSecuritySystemSaga() {
-        return new CreateSecuritySystemSaga(securitySystemServiceProxy, customerServiceProxy, securitySystemSagaService);
+        return new CreateSecuritySystemSaga(securitySystemServiceProxy, customerServiceProxy, pendingResponses);
     }
 
     @BeforeEach
     public void setUp() {
         securitySystemServiceProxy = new SecuritySystemServiceProxy();
         customerServiceProxy = new CustomerServiceProxy();
-        securitySystemSagaService = mock(SecuritySystemSagaService.class);
+        pendingResponses = new PendingSecuritySystemResponses();
     }
 
     @Test

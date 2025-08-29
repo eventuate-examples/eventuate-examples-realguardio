@@ -1,22 +1,27 @@
-package io.realguardio.orchestration;
+package io.realguardio.orchestration.sagas;
 
 import io.eventuate.tram.spring.inmemory.TramInMemoryConfiguration;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @SpringBootTest
-class OrchestrationServiceApplicationTest {
+class SagaConfigurationTest {
 
     @Configuration
     @EnableAutoConfiguration
-    @Import(TramInMemoryConfiguration.class)
+    @Import({SagaConfiguration.class, SagaProxyConfiguration.class, TramInMemoryConfiguration.class})
     static class TestConfiguration {
     }
 
+    @Autowired
+    private CreateSecuritySystemSaga saga;
+
     @Test
     void contextLoads() {
+        // Bean injection verified by successful context initialization
     }
 }

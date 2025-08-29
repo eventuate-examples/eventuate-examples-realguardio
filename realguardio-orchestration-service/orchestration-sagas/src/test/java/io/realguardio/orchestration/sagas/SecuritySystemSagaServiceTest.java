@@ -17,13 +17,15 @@ class SecuritySystemSagaServiceTest {
 
     private SagaInstanceFactory sagaInstanceFactory;
     private CreateSecuritySystemSaga createSecuritySystemSaga;
+    private PendingSecuritySystemResponses pendingResponses;
     private SecuritySystemSagaService service;
 
     @BeforeEach
     void setUp() {
         sagaInstanceFactory = mock(SagaInstanceFactory.class);
         createSecuritySystemSaga = mock(CreateSecuritySystemSaga.class);
-        service = new SecuritySystemSagaService(sagaInstanceFactory, createSecuritySystemSaga);
+        pendingResponses = new PendingSecuritySystemResponses();
+        service = new SecuritySystemSagaService(sagaInstanceFactory, createSecuritySystemSaga, pendingResponses);
     }
 
     @Test
@@ -39,7 +41,6 @@ class SecuritySystemSagaServiceTest {
         CompletableFuture<Long> future = service.createSecuritySystem(customerId, locationName);
 
         assertThat(future).isNotNull();
-        assertThat(future).isInstanceOf(CompletableFuture.class);
     }
     
     @Test

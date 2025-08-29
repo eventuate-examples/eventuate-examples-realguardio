@@ -14,16 +14,16 @@ public class CreateSecuritySystemSaga implements SimpleSaga<CreateSecuritySystem
 
     private final SecuritySystemServiceProxy securitySystemServiceProxy;
     private final CustomerServiceProxy customerServiceProxy;
-    private final SecuritySystemSagaService securitySystemSagaService;
+    private final PendingSecuritySystemResponses pendingResponses;
     
     private SagaDefinition<CreateSecuritySystemSagaData> sagaDefinition;
 
     public CreateSecuritySystemSaga(SecuritySystemServiceProxy securitySystemServiceProxy,
                                    CustomerServiceProxy customerServiceProxy,
-                                   SecuritySystemSagaService securitySystemSagaService) {
+                                   PendingSecuritySystemResponses pendingResponses) {
         this.securitySystemServiceProxy = securitySystemServiceProxy;
         this.customerServiceProxy = customerServiceProxy;
-        this.securitySystemSagaService = securitySystemSagaService;
+        this.pendingResponses = pendingResponses;
         this.sagaDefinition = buildSagaDefinition();
     }
 
@@ -54,7 +54,11 @@ public class CreateSecuritySystemSaga implements SimpleSaga<CreateSecuritySystem
 
     public void handleSecuritySystemCreated(CreateSecuritySystemSagaData data, SecuritySystemCreated reply) {
         data.setSecuritySystemId(reply.securitySystemId());
-        securitySystemSagaService.completeSecuritySystemCreation(data.getSagaId(), reply.securitySystemId());
+        
+        String sagaId = data.getSagaId();
+        if (sagaId != null) {
+            pendingResponses.completeSecuritySystemCreation(sagaId, reply.securitySystemId());
+        }
     }
 
     public CommandWithDestination makeUpdateCreationFailedCommand(CreateSecuritySystemSagaData data) {
