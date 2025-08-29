@@ -64,75 +64,75 @@ Tasks:
 Create the API contract modules that define commands and replies for service communication using Java records. Follow strict TDD: write failing test -> make it pass -> refactor.
 
 Tasks:
-[ ] Create security-system-service-api module
-    [ ] Create security-system-service-api/build.gradle with Eventuate Tram dependencies and Jackson for JSON
-    [ ] Add test dependencies: JUnit 5, AssertJ, Jackson
-    [ ] Configure Java 17+ for records support
+[x] Create security-system-service-api module
+    [x] Create security-system-service-api/build.gradle with Eventuate Tram dependencies and Jackson for JSON
+    [x] Add test dependencies: JUnit 5, AssertJ, Jackson
+    [x] Configure Java 17+ for records support
     
-    [ ] TDD: CreateSecuritySystemCommand record
-        [ ] Write test that creates command, serializes to JSON, deserializes, and asserts equality
-        [ ] Run test - verify it fails (record doesn't exist)
-        [ ] Create record CreateSecuritySystemCommand(String locationName) implements Command
-        [ ] Run test - verify it passes
-        [ ] Add any necessary Jackson annotations if needed
+    [x] TDD: CreateSecuritySystemCommand record
+        [x] Write test that creates command, serializes to JSON, deserializes, and asserts equality
+        [x] Run test - verify it fails (record doesn't exist)
+        [x] Create record CreateSecuritySystemCommand(String locationName) implements Command
+        [x] Run test - verify it passes
+        [x] Add any necessary Jackson annotations if needed
         
-    [ ] TDD: SecuritySystemCreated reply record
-        [ ] Write test for JSON serialization/deserialization
-        [ ] Run test - verify it fails
-        [ ] Create record SecuritySystemCreated(Long securitySystemId)
-        [ ] Run test - verify it passes
+    [x] TDD: SecuritySystemCreated reply record
+        [x] Write test for JSON serialization/deserialization
+        [x] Run test - verify it fails
+        [x] Create record SecuritySystemCreated(Long securitySystemId)
+        [x] Run test - verify it passes
         
-    [ ] TDD: UpdateCreationFailedCommand record
-        [ ] Write test for JSON serialization/deserialization
-        [ ] Run test - verify it fails
-        [ ] Create record UpdateCreationFailedCommand(Long securitySystemId, String rejectionReason) implements Command
-        [ ] Run test - verify it passes
+    [x] TDD: UpdateCreationFailedCommand record
+        [x] Write test for JSON serialization/deserialization
+        [x] Run test - verify it fails
+        [x] Create record UpdateCreationFailedCommand(Long securitySystemId, String rejectionReason) implements Command
+        [x] Run test - verify it passes
         
-    [ ] TDD: NoteLocationCreatedCommand record
-        [ ] Write test for JSON serialization/deserialization
-        [ ] Run test - verify it fails
-        [ ] Create record NoteLocationCreatedCommand(Long securitySystemId, Long locationId) implements Command
-        [ ] Run test - verify it passes
+    [x] TDD: NoteLocationCreatedCommand record
+        [x] Write test for JSON serialization/deserialization
+        [x] Run test - verify it fails
+        [x] Create record NoteLocationCreatedCommand(Long securitySystemId, Long locationId) implements Command
+        [x] Run test - verify it passes
         
-    [ ] TDD: LocationNoted reply record
-        [ ] Write test for JSON serialization/deserialization
-        [ ] Run test - verify it fails
-        [ ] Create empty record LocationNoted()
-        [ ] Run test - verify it passes
+    [x] TDD: LocationNoted reply record
+        [x] Write test for JSON serialization/deserialization
+        [x] Run test - verify it fails
+        [x] Create empty record LocationNoted()
+        [x] Run test - verify it passes
     
-[ ] Create customer-service-api module  
-    [ ] Create customer-service-api/build.gradle with Eventuate Tram dependencies and Jackson
-    [ ] Add test dependencies: JUnit 5, AssertJ, Jackson
-    [ ] Configure Java 17+ for records support
+[x] Create customer-service-api module  
+    [x] Create customer-service-api/build.gradle with Eventuate Tram dependencies and Jackson
+    [x] Add test dependencies: JUnit 5, AssertJ, Jackson
+    [x] Configure Java 17+ for records support
     
-    [ ] TDD: CreateLocationWithSecuritySystemCommand record
-        [ ] Write test for JSON serialization/deserialization
-        [ ] Run test - verify it fails
-        [ ] Create record CreateLocationWithSecuritySystemCommand(Long customerId, String locationName, Long securitySystemId) implements Command
-        [ ] Run test - verify it passes
+    [x] TDD: CreateLocationWithSecuritySystemCommand record
+        [x] Write test for JSON serialization/deserialization
+        [x] Run test - verify it fails
+        [x] Create record CreateLocationWithSecuritySystemCommand(Long customerId, String locationName, Long securitySystemId) implements Command
+        [x] Run test - verify it passes
         
-    [ ] TDD: LocationCreatedWithSecuritySystem reply record
-        [ ] Write test for JSON serialization/deserialization
-        [ ] Run test - verify it fails
-        [ ] Create record LocationCreatedWithSecuritySystem(Long locationId)
-        [ ] Run test - verify it passes
+    [x] TDD: LocationCreatedWithSecuritySystem reply record
+        [x] Write test for JSON serialization/deserialization
+        [x] Run test - verify it fails
+        [x] Create record LocationCreatedWithSecuritySystem(Long locationId)
+        [x] Run test - verify it passes
         
-    [ ] TDD: CustomerNotFound reply record
-        [ ] Write test for JSON serialization/deserialization
-        [ ] Run test - verify it fails
-        [ ] Create record CustomerNotFound() with @FailureReply annotation
-        [ ] Run test - verify it passes
+    [x] TDD: CustomerNotFound reply record
+        [x] Write test for JSON serialization/deserialization
+        [x] Run test - verify it fails
+        [x] Create record CustomerNotFound() with @FailureReply annotation
+        [x] Run test - verify it passes
         
-    [ ] TDD: LocationAlreadyHasSecuritySystem reply record
-        [ ] Write test for JSON serialization/deserialization
-        [ ] Run test - verify it fails
-        [ ] Create record LocationAlreadyHasSecuritySystem() with @FailureReply annotation
-        [ ] Run test - verify it passes
+    [x] TDD: LocationAlreadyHasSecuritySystem reply record
+        [x] Write test for JSON serialization/deserialization
+        [x] Run test - verify it fails
+        [x] Create record LocationAlreadyHasSecuritySystem() with @FailureReply annotation
+        [x] Run test - verify it passes
 
-[ ] Integration test for all API contracts
-    [ ] Write test that verifies all commands/replies can be serialized together
-    [ ] Fix any issues found
-    [ ] Run all module tests - verify everything passes
+[x] Integration test for all API contracts
+    [x] Write test that verifies all commands/replies can be serialized together
+    [x] Fix any issues found
+    [x] Run all module tests - verify everything passes
 ```
 
 ## Thread 3: Service Proxies for Remote Communication
