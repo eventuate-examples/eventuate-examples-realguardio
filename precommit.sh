@@ -27,6 +27,13 @@ for dir in realguardio-orchestration-service realguardio-customer-service realgu
         echo ""
         echo "Checking $dir..."
         
+
+        # Check for usage of org.junit.jupiter.api.Disabled in Java files
+        if grep -r --include="*.java" "org\.junit\.jupiter\.api\.Disabled" "$dir"; then
+            echo "Error: Found usage of org.junit.jupiter.api.Disabled in $dir. Please remove @Disabled annotations before committing."
+            exit 1
+        fi
+
         if has_uncommitted_changes "$dir"; then
             echo "Found uncommitted changes in $dir, running gradlew check..."
             cd "$ROOT_DIR/$dir"
