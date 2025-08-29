@@ -2,6 +2,7 @@ package io.realguardio.orchestration.sagas;
 
 public class CreateSecuritySystemSagaData {
     
+    private String sagaId;
     private Long customerId;
     private String locationName;
     private Long securitySystemId;
@@ -54,5 +55,13 @@ public class CreateSecuritySystemSagaData {
     
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+    
+    public String getSagaId() {
+        return sagaId;
+    }
+    
+    public void setSagaId(String sagaId) {
+        this.sagaId = sagaId;
     }
 }

@@ -40,4 +40,13 @@ class CreateSecuritySystemSagaDataTest {
         
         assertThat(data.getRejectionReason()).isEqualTo("Customer not found");
     }
+    
+    @Test
+    void shouldStoreSagaId() {
+        CreateSecuritySystemSagaData data = new CreateSecuritySystemSagaData(100L, "Warehouse");
+        
+        data.setSagaId("saga-456");
+        
+        assertThat(data.getSagaId()).isEqualTo("saga-456");
+    }
 }

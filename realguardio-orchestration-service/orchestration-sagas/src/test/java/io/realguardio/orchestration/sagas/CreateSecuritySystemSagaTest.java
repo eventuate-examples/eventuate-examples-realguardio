@@ -16,13 +16,15 @@ class CreateSecuritySystemSagaTest {
 
     private SecuritySystemServiceProxy securitySystemServiceProxy;
     private CustomerServiceProxy customerServiceProxy;
+    private SecuritySystemSagaService securitySystemSagaService;
     private CreateSecuritySystemSaga saga;
 
     @BeforeEach
     void setUp() {
         securitySystemServiceProxy = mock(SecuritySystemServiceProxy.class);
         customerServiceProxy = mock(CustomerServiceProxy.class);
-        saga = new CreateSecuritySystemSaga(securitySystemServiceProxy, customerServiceProxy);
+        securitySystemSagaService = mock(SecuritySystemSagaService.class);
+        saga = new CreateSecuritySystemSaga(securitySystemServiceProxy, customerServiceProxy, securitySystemSagaService);
     }
 
     @Test
@@ -97,5 +99,17 @@ class CreateSecuritySystemSagaTest {
         saga.makeUpdateCreationFailedCommand(data);
         
         verify(securitySystemServiceProxy).updateCreationFailed(200L, "Customer not found");
+    }
+    
+    @Test
+    void shouldCallCompleteSecuritySystemCreationWhenHandlingReply() {
+        CreateSecuritySystemSagaData data = new CreateSecuritySystemSagaData(100L, "Warehouse");
+        data.setSagaId("saga-456");
+        SecuritySystemCreated reply = new SecuritySystemCreated(200L);
+        
+        saga.handleSecuritySystemCreated(data, reply);
+        
+        assertThat(data.getSecuritySystemId()).isEqualTo(200L);
+        verify(securitySystemSagaService).completeSecuritySystemCreation("saga-456", 200L);
     }
 }
