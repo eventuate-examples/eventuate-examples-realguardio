@@ -178,45 +178,45 @@ Tasks:
 Create the CreateSecuritySystemSaga class that defines the saga flow and the saga data class that maintains state. Follow strict TDD: write failing test -> make it pass -> refactor.
 
 Tasks:
-[ ] TDD: CreateSecuritySystemSagaData class
-    [ ] Write test for saga data class with all fields and getters/setters
-    [ ] Run test - verify it fails
-    [ ] Create CreateSecuritySystemSagaData class
-        [ ] Add fields: securitySystemId, customerId, locationName, locationId, rejectionReason
-        [ ] Implement constructors, getters, and setters
-    [ ] Run test - verify it passes
-    [ ] Consider using Lombok @Data if appropriate
+[x] TDD: CreateSecuritySystemSagaData class
+    [x] Write test for saga data class with all fields and getters/setters
+    [x] Run test - verify it fails
+    [x] Create CreateSecuritySystemSagaData class
+        [x] Add fields: securitySystemId, customerId, locationName, locationId, rejectionReason
+        [x] Implement constructors, getters, and setters
+    [x] Run test - verify it passes
+    [x] Consider using Lombok @Data if appropriate
     
-[ ] TDD: CreateSecuritySystemSaga - Step 1
-    [ ] Write test for first saga step (create security system)
-    [ ] Run test - verify it fails
-    [ ] Create CreateSecuritySystemSaga class implementing SimpleSaga<CreateSecuritySystemSagaData>
-        [ ] Inject SecuritySystemServiceProxy
-        [ ] Implement makeCreateSecuritySystemCommand method
-        [ ] Define Step 1 with invokeParticipant
-        [ ] Add onReply handler for SecuritySystemCreated
-        [ ] Add withCompensation for updateCreationFailed
-    [ ] Run test - verify it passes
+[x] TDD: CreateSecuritySystemSaga - Step 1
+    [x] Write test for first saga step (create security system)
+    [x] Run test - verify it fails
+    [x] Create CreateSecuritySystemSaga class implementing SimpleSaga<CreateSecuritySystemSagaData>
+        [x] Inject SecuritySystemServiceProxy
+        [x] Implement makeCreateSecuritySystemCommand method
+        [x] Define Step 1 with invokeParticipant
+        [x] Add onReply handler for SecuritySystemCreated
+        [x] Add withCompensation for updateCreationFailed
+    [x] Run test - verify it passes
     
-[ ] TDD: CreateSecuritySystemSaga - Step 2
-    [ ] Write test for second saga step (create location)
-    [ ] Run test - verify it fails
-    [ ] Add Step 2 to saga definition
-        [ ] Inject CustomerServiceProxy
-        [ ] Implement makeCreateLocationCommand method
-        [ ] Add step with invokeParticipant
-        [ ] Add onReply handlers for CustomerNotFound and LocationAlreadyHasSecuritySystem
-    [ ] Run test - verify it passes
+[x] TDD: CreateSecuritySystemSaga - Step 2
+    [x] Write test for second saga step (create location)
+    [x] Run test - verify it fails
+    [x] Add Step 2 to saga definition
+        [x] Inject CustomerServiceProxy
+        [x] Implement makeCreateLocationCommand method
+        [x] Add step with invokeParticipant
+        [x] Add onReply handlers for CustomerNotFound and LocationAlreadyHasSecuritySystem
+    [x] Run test - verify it passes
     
-[ ] TDD: CreateSecuritySystemSaga - Step 3
-    [ ] Write test for third saga step (note location created)
-    [ ] Run test - verify it fails
-    [ ] Add Step 3 to saga definition
-        [ ] Implement makeNoteLocationCreatedCommand method
-        [ ] Add step with invokeParticipant
-        [ ] Implement getSagaDefinition method returning complete definition
-    [ ] Run test - verify it passes
-    [ ] Clean up saga definition for readability
+[x] TDD: CreateSecuritySystemSaga - Step 3
+    [x] Write test for third saga step (note location created)
+    [x] Run test - verify it fails
+    [x] Add Step 3 to saga definition
+        [x] Implement makeNoteLocationCreatedCommand method
+        [x] Add step with invokeParticipant
+        [x] Implement getSagaDefinition method returning complete definition
+    [x] Run test - verify it passes
+    [x] Clean up saga definition for readability
     
 [ ] TDD: Saga configuration
     [ ] Write integration test for saga bean creation
