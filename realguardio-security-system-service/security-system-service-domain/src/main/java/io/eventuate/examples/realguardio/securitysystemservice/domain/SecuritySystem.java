@@ -27,6 +27,11 @@ public class SecuritySystem {
     public SecuritySystem() {
     }
 
+    public SecuritySystem(String locationName, SecuritySystemState state) {
+        this.locationName = locationName;
+        this.state = state;
+    }
+
     public SecuritySystem(String locationName, SecuritySystemState state, Set<SecuritySystemAction> actions) {
         this.locationName = locationName;
         this.state = state;
@@ -47,5 +52,9 @@ public class SecuritySystem {
 
     public Set<SecuritySystemAction> getActions() {
         return actions;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }
