@@ -510,76 +510,69 @@ Tasks:
 
 ## Thread 10: Component Testing - Happy Path
 
-**Goal**: Create component tests for each service using Testcontainers for real Kafka and database infrastructure.
+**Goal**: Enhance existing component tests to verify messaging API command handling, then create component tests for orchestration service.
 
 ```text
-Write component tests for each service in isolation using Testcontainers, following the pattern from CustomerServiceComponentTest.
+Enhance existing component tests to verify messaging API following the pattern from eventuate-tram-sagas-examples CustomerServiceComponentTest.
 
 Tasks:
-[ ] Component Test Setup: Common Test Infrastructure
-    [ ] Apply ComponentTestsPlugin in each service's build.gradle
-    [ ] Add Testcontainers dependencies (testcontainers, kafka, postgresql/mysql)
-    [ ] Add Eventuate test container dependencies
-    [ ] Verify gradle componentTest task works
+[ ] Component Test: Customer Service - Enhance for Messaging API
+    [ ] Update CustomerServiceComponentTest to add Kafka support
+        [ ] Add EventuateKafkaNativeCluster with network
+        [ ] Update CustomerServiceContainer to include Kafka configuration
+        [ ] Ensure ComponentTestsPlugin is applied in build.gradle
+        [ ] Add eventuate-messaging-kafka-testcontainers dependency
+    [ ] Write messaging test methods (happy path):
+        [ ] shouldHandleCreateLocationWithSecuritySystemCommand()
+            [ ] Create customer via REST API first
+            [ ] Send CreateLocationWithSecuritySystemCommand via Kafka
+            [ ] Verify location created with securitySystemId
+            [ ] Verify LocationCreatedWithSecuritySystem reply sent
+        [ ] shouldUpdateExistingLocationWithSecuritySystem()
+            [ ] Create customer and location without security system
+            [ ] Send CreateLocationWithSecuritySystemCommand for existing location
+            [ ] Verify location updated with securitySystemId
+            [ ] Verify LocationCreatedWithSecuritySystem reply sent
+    [ ] Run component tests - verify they pass
+    
+[ ] Component Test: Security System Service - Enhance for Messaging API
+    [ ] Update SecuritySystemServiceComponentTest to add Kafka support
+        [ ] Add EventuateKafkaNativeCluster with network
+        [ ] Update SecuritySystemServiceContainer to include Kafka configuration
+        [ ] Ensure ComponentTestsPlugin is applied in build.gradle
+        [ ] Add eventuate-messaging-kafka-testcontainers dependency
+    [ ] Write messaging test methods (happy path):
+        [ ] shouldHandleCreateSecuritySystemCommand()
+            [ ] Send CreateSecuritySystemCommand via Kafka
+            [ ] Verify SecuritySystem created in database with CREATION_PENDING state
+            [ ] Verify SecuritySystemCreated reply sent
+        [ ] shouldHandleNoteLocationCreatedCommand()
+            [ ] Create SecuritySystem via command first
+            [ ] Send NoteLocationCreatedCommand via Kafka
+            [ ] Verify state updated to DISARMED
+            [ ] Verify LocationNoted reply sent
+    [ ] Run component tests - verify they pass
     
 [ ] Component Test: Orchestration Service
     [ ] Create OrchestrationServiceComponentTest class
     [ ] Set up Testcontainers:
         [ ] EventuateKafkaNativeCluster with network
-        [ ] EventuateDatabaseContainer for PostgreSQL/MySQL
+        [ ] EventuateDatabaseContainer for PostgreSQL
         [ ] ServiceContainer for orchestration service
+        [ ] Add IAM service container for authentication
     [ ] Implement @BeforeAll to start containers
     [ ] Write test methods:
         [ ] shouldStart() - verify service starts successfully
         [ ] shouldExposeSwaggerUI() - verify REST endpoints available
-        [ ] shouldInitiateSaga() - POST /securitysystems returns 201
-        [ ] shouldCompleteFirstStep() - verify CompletableFuture completion
-    [ ] Verify message published to Kafka topics
-    [ ] Run component tests - verify they pass
-    
-[ ] Component Test: Security System Service
-    [ ] Create SecuritySystemServiceComponentTest class
-    [ ] Set up Testcontainers:
-        [ ] EventuateKafkaNativeCluster with network
-        [ ] EventuateDatabaseContainer for database
-        [ ] ServiceContainer for security-system-service
-    [ ] Implement @BeforeAll to start containers
-    [ ] Write test methods:
-        [ ] shouldHandleCreateSecuritySystemCommand()
-            [ ] Send command via Kafka
-            [ ] Verify SecuritySystem created in database
-            [ ] Verify reply message sent
-        [ ] shouldHandleUpdateCreationFailedCommand()
-            [ ] Create SecuritySystem first
-            [ ] Send failure command
-            [ ] Verify state updated to CREATION_FAILED
-        [ ] shouldHandleNoteLocationCreatedCommand()
-            [ ] Create SecuritySystem first
-            [ ] Send note location command
-            [ ] Verify state updated to DISARMED
-    [ ] Run component tests - verify they pass
-    
-[ ] Component Test: Customer Service
-    [ ] Create CustomerServiceComponentTest class
-    [ ] Set up Testcontainers:
-        [ ] EventuateKafkaNativeCluster with network
-        [ ] EventuateDatabaseContainer for database
-        [ ] ServiceContainer for customer-service
-    [ ] Implement @BeforeAll to start containers
-    [ ] Write test methods:
-        [ ] shouldCreateNewLocationWithSecuritySystem()
-            [ ] Create customer in database
-            [ ] Send CreateLocationWithSecuritySystemCommand
-            [ ] Verify location created with securitySystemId
-            [ ] Verify reply message sent
-        [ ] shouldUpdateExistingLocation()
-            [ ] Create customer and location
-            [ ] Send command to update location
-            [ ] Verify location updated
-        [ ] shouldRejectDuplicateSecuritySystem()
-            [ ] Create location with existing securitySystemId
-            [ ] Send command for same location
-            [ ] Verify LocationAlreadyHasSecuritySystem reply
+        [ ] shouldCompleteSagaSuccessfully()
+            [ ] POST /securitysystems to initiate saga
+            [ ] Verify CreateSecuritySystemCommand published to security-system-service channel
+            [ ] Simulate SecuritySystemCreated reply with securitySystemId
+            [ ] Verify CreateLocationWithSecuritySystemCommand published to customer-service channel
+            [ ] Simulate LocationCreatedWithSecuritySystem reply with locationId
+            [ ] Verify NoteLocationCreatedCommand published to security-system-service channel
+            [ ] Simulate LocationNoted reply
+            [ ] Verify HTTP response returns securitySystemId (201 Created)
     [ ] Run component tests - verify they pass
     
 ```
@@ -648,9 +641,23 @@ Tasks:
         [ ] Verify saga marked as failed
     [ ] Run component tests - verify they pass
     
+[ ] Component Test: Customer Service - Error Responses
+    [ ] Extend CustomerServiceComponentTest with error tests
+    [ ] Write shouldReturnCustomerNotFound() test
+    [ ] Implement test:
+        [ ] Send CreateLocationWithSecuritySystemCommand with non-existent customerId
+        [ ] Verify CustomerNotFound reply sent via Kafka
+        [ ] Query database to verify no location created
+    [ ] Write shouldRejectDuplicateSecuritySystem() test:
+        [ ] Create location with securitySystemId
+        [ ] Send CreateLocationWithSecuritySystemCommand for same location
+        [ ] Verify LocationAlreadyHasSecuritySystem reply
+        [ ] Verify original securitySystemId unchanged
+    [ ] Run component tests - verify they pass
+    
 [ ] Component Test: Security System Service - Compensation
     [ ] Extend SecuritySystemServiceComponentTest with compensation tests
-    [ ] Write shouldHandleCompensation() test
+    [ ] Write shouldHandleUpdateCreationFailedCommand() test
     [ ] Implement test:
         [ ] Create SecuritySystem in CREATION_PENDING state
         [ ] Send UpdateCreationFailedCommand via Kafka
@@ -660,20 +667,6 @@ Tasks:
         [ ] Send same command twice
         [ ] Verify no errors on duplicate
         [ ] Verify state remains consistent
-    [ ] Run component tests - verify they pass
-    
-[ ] Component Test: Customer Service - Error Responses
-    [ ] Extend CustomerServiceComponentTest with error tests
-    [ ] Write shouldReturnCustomerNotFound() test
-    [ ] Implement test:
-        [ ] Send command with non-existent customerId
-        [ ] Verify CustomerNotFound reply sent via Kafka
-        [ ] Query database to verify no location created
-    [ ] Write shouldRejectDuplicateSecuritySystem() test:
-        [ ] Create location with securitySystemId
-        [ ] Send command for same location
-        [ ] Verify LocationAlreadyHasSecuritySystem reply
-        [ ] Verify original securitySystemId unchanged
     [ ] Run component tests - verify they pass
 ```
 
@@ -769,6 +762,9 @@ Tasks:
 
 ## Change History
 
+- **2025-08-30**: Thread 10 - Updated Orchestration Service component test to verify complete saga flow: checking all three commands are published in sequence (CreateSecuritySystemCommand, CreateLocationWithSecuritySystemCommand, NoteLocationCreatedCommand) and simulating all necessary replies to progress the saga to completion.
+- **2025-08-30**: Thread 10 & 12 - Moved non-happy path tests from Thread 10 to Thread 12. Thread 10 now contains only happy path tests (successful command handling). Thread 12 contains all error cases: CustomerNotFound, LocationAlreadyHasSecuritySystem, and UpdateCreationFailedCommand compensation handling.
+- **2025-08-30**: Thread 10 - Revised to reflect that Customer and Security System Services already have component tests that need to be enhanced for messaging API testing. Reordered tasks to test Customer Service first, then Security System Service, then create new Orchestration Service component test. Removed redundant infrastructure setup tasks. Referenced eventuate-tram-sagas-examples CustomerServiceComponentTest as the pattern to follow.
 - **2025-08-30**: Thread 7 & 9 - Added specific tasks for all missing tests instead of just noting their absence. Thread 7 needs SecuritySystemService tests for createSecuritySystem and noteLocationCreated. Thread 9 needs LocationTest class, CustomerService tests for all scenarios, and completion of LocationAlreadyHasSecuritySystem exception handling in command handler.
 - **2025-08-30**: Thread 7 & 9 - Updated plan to accurately reflect test state: Most TDD steps were NOT followed. Tests are incomplete at service level. Thread 7: Only command handler tests exist, no SecuritySystemService tests for any methods. Thread 9: No Location entity tests, no CustomerService tests for createLocationWithSecuritySystem, LocationAlreadyHasSecuritySystem exception handling incomplete (exception thrown but not caught).
 - **2025-08-30**: Thread 7 & 9 - Added integration tests for command handlers. Note: UpdateCreationFailedCommand handler (Thread 7) not implemented as it's not on happy path. LocationAlreadyHasSecuritySystem error handling (Thread 9) partially complete - exception thrown but not caught in handler.
