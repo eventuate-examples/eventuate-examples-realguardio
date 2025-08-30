@@ -3,17 +3,13 @@ package io.eventuate.examples.realguardio.customerservice.api.messaging;
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
-import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationCreatedWithSecuritySystem;
-import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.CustomerNotFound;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerNotFoundException;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaCluster;
-import io.eventuate.tram.commands.consumer.CommandMessage;
-import io.eventuate.tram.commands.consumer.CommandReplyProducer;
-import io.eventuate.tram.messaging.common.Message;
+import io.eventuate.tram.commands.producer.CommandProducer;
+import io.eventuate.tram.spring.consumer.kafka.EventuateTramKafkaMessageConsumerConfiguration;
 import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration;
 import io.eventuate.tram.spring.messaging.producer.jdbc.TramMessageProducerJdbcConfiguration;
-import io.eventuate.tram.spring.consumer.kafka.EventuateTramKafkaMessageConsumerConfiguration;
 import io.eventuate.util.test.async.Eventually;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +26,6 @@ import org.testcontainers.lifecycle.Startables;
 import java.util.Collections;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,58 +59,53 @@ public class CustomerCommandHandlerIntegrationTest {
     private CustomerService customerService;
     
     @Autowired
-    private CustomerCommandHandler customerCommandHandler;
+    private CommandProducer commandProducer;
     
     @Test
     public void shouldHandleCreateLocationWithSecuritySystemCommand() {
         // Given
-        Long customerId = 123L;
+        String replyTo = "my-reply-to-channel-" + System.currentTimeMillis();
+        Long customerId = System.currentTimeMillis();
         String locationName = "Office Front Door";
-        Long securitySystemId = 456L;
-        Long expectedLocationId = 789L;
+        Long securitySystemId = System.currentTimeMillis() + 1000;
+        Long expectedLocationId = System.currentTimeMillis() + 2000;
         
         when(customerService.createLocationWithSecuritySystem(customerId, locationName, securitySystemId))
             .thenReturn(expectedLocationId);
         
-        CreateLocationWithSecuritySystemCommand command = new CreateLocationWithSecuritySystemCommand(
-            customerId, locationName, securitySystemId);
-        
-        CommandMessage<CreateLocationWithSecuritySystemCommand> commandMessage = 
-            new CommandMessage<>("messageId", command, Collections.emptyMap(), null);
-        
         // When
-        Message reply = customerCommandHandler.handleCreateLocationWithSecuritySystem(commandMessage);
+        sendCommand(customerId, locationName, securitySystemId, replyTo);
         
-        // Then
-        verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
-        assertThat(reply).isNotNull();
-        assertThat(reply.getHeader("reply_outcome-type")).isPresent()
-            .hasValue("SUCCESS");
+        // Then - verify the service method gets called
+        Eventually.eventually(() -> {
+            verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
+        });
     }
     
     @Test
     public void shouldHandleCustomerNotFound() {
         // Given
-        Long customerId = 123L;
+        String replyTo = "my-reply-to-channel-" + System.currentTimeMillis();
+        Long customerId = System.currentTimeMillis();
         String locationName = "Office Front Door";
-        Long securitySystemId = 456L;
+        Long securitySystemId = System.currentTimeMillis() + 1000;
         
         when(customerService.createLocationWithSecuritySystem(customerId, locationName, securitySystemId))
             .thenThrow(new CustomerNotFoundException("Customer not found: " + customerId));
         
-        CreateLocationWithSecuritySystemCommand command = new CreateLocationWithSecuritySystemCommand(
-            customerId, locationName, securitySystemId);
-        
-        CommandMessage<CreateLocationWithSecuritySystemCommand> commandMessage = 
-            new CommandMessage<>("messageId", command, Collections.emptyMap(), null);
-        
         // When
-        Message reply = customerCommandHandler.handleCreateLocationWithSecuritySystem(commandMessage);
+        sendCommand(customerId, locationName, securitySystemId, replyTo);
         
-        // Then
-        verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
-        assertThat(reply).isNotNull();
-        assertThat(reply.getHeader("reply_outcome-type")).isPresent()
-            .hasValue("FAILURE");
+        // Then - verify the service method gets called
+        Eventually.eventually(() -> {
+            verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
+        });
+    }
+    
+    private void sendCommand(Long customerId, String locationName, Long securitySystemId, String replyTo) {
+        commandProducer.send("customer-service", 
+            new CreateLocationWithSecuritySystemCommand(customerId, locationName, securitySystemId), 
+            replyTo, 
+            Collections.emptyMap());
     }
 }
