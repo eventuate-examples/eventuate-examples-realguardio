@@ -1,24 +1,4 @@
-apply plugin: 'java-test-fixtures'
-
-configurations {
-    integrationTestImplementation.extendsFrom implementation
-    integrationTestImplementation.extendsFrom testImplementation
-    integrationTestRuntimeOnly.extendsFrom runtimeOnly
-    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
-}
-
-sourceSets {
-    integrationTest {
-        java {
-            srcDir 'src/integrationTest/java'
-        }
-        resources {
-            srcDir 'src/integrationTest/resources'
-        }
-        compileClasspath += sourceSets.main.output + sourceSets.test.output
-        runtimeClasspath += sourceSets.main.output + sourceSets.test.output
-    }
-}
+apply plugin: IntegrationTestsPlugin
 
 dependencies {
     implementation project(':customer-service-domain')
@@ -30,6 +10,8 @@ dependencies {
     implementation 'io.eventuate.tram.sagas:eventuate-tram-sagas-spring-participant'
     implementation 'io.eventuate.tram.core:eventuate-tram-spring-consumer-kafka'
     implementation 'io.eventuate.tram.core:eventuate-tram-spring-producer-jdbc'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.8.2'
+    implementation "org.flywaydb:flyway-core"
 
     testImplementation "io.eventuate.tram.core:eventuate-tram-spring-commands-starter"
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -46,14 +28,12 @@ dependencies {
     integrationTestImplementation 'org.testcontainers:testcontainers'
     integrationTestImplementation 'org.testcontainers:postgresql'
     integrationTestRuntimeOnly 'org.postgresql:postgresql'
+
+    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-kafka-producer"
+    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-outbox-commands"
+
 }
 
-tasks.register('integrationTest', Test) {
-    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-    classpath = sourceSets.integrationTest.runtimeClasspath
-    useJUnitPlatform()
-}
-
-tasks.named('processIntegrationTestResources') {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+integrationTest {
+    systemProperty "spring.profiles.active", "test,postgres"
 }

@@ -3,13 +3,14 @@ package io.eventuate.examples.realguardio.customerservice.api.messaging;
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerNotFoundException;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaCluster;
 import io.eventuate.tram.commands.producer.CommandProducer;
-import io.eventuate.tram.spring.consumer.kafka.EventuateTramKafkaMessageConsumerConfiguration;
 import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration;
-import io.eventuate.tram.spring.messaging.producer.jdbc.TramMessageProducerJdbcConfiguration;
+import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
+import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
+import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
 import io.eventuate.util.test.async.Eventually;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -29,8 +29,7 @@ import java.util.stream.Stream;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@ActiveProfiles("postgres")
+@SpringBootTest(classes = CustomerCommandHandlerIntegrationTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class CustomerCommandHandlerIntegrationTest {
 
     private static final EventuateKafkaCluster eventuateKafkaCluster = new EventuateKafkaCluster();
@@ -50,8 +49,8 @@ public class CustomerCommandHandlerIntegrationTest {
     @EnableAutoConfiguration
     @Import({CustomerCommandHandlerConfiguration.class,
             EventuateTramFlywayMigrationConfiguration.class,
-            TramMessageProducerJdbcConfiguration.class,
-            EventuateTramKafkaMessageConsumerConfiguration.class})
+            EventuateKafkaTestCommandProducerConfiguration.class,
+            CommandOutboxTestSupportConfiguration.class})
     static public class Config {
     }
     
@@ -60,7 +59,10 @@ public class CustomerCommandHandlerIntegrationTest {
     
     @Autowired
     private CommandProducer commandProducer;
-    
+
+    @Autowired
+    private CommandOutboxTestSupport commandOutboxTestSupport;
+
     @Test
     public void shouldHandleCreateLocationWithSecuritySystemCommand() {
         // Given
@@ -79,6 +81,8 @@ public class CustomerCommandHandlerIntegrationTest {
         // Then - verify the service method gets called
         Eventually.eventually(() -> {
             verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
+            commandOutboxTestSupport.assertCommandReplyMessageSent(replyTo);
+
         });
     }
     
