@@ -1,3 +1,25 @@
+apply plugin: 'java-test-fixtures'
+
+configurations {
+    integrationTestImplementation.extendsFrom implementation
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom runtimeOnly
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            srcDir 'src/integrationTest/java'
+        }
+        resources {
+            srcDir 'src/integrationTest/resources'
+        }
+        compileClasspath += sourceSets.main.output + sourceSets.test.output
+        runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+    }
+}
+
 dependencies {
     implementation project(':customer-service-domain')
     implementation project(':customer-service-persistence')
@@ -16,4 +38,22 @@ dependencies {
     testImplementation 'io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory'
     testImplementation 'io.eventuate.tram.core:eventuate-tram-test-util'
     testRuntimeOnly 'com.h2database:h2'
+    
+    integrationTestImplementation 'io.eventuate.common:eventuate-common-testcontainers'
+    integrationTestImplementation 'io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers'
+    integrationTestImplementation 'io.eventuate.tram.core:eventuate-tram-spring-flyway'
+    integrationTestImplementation 'io.eventuate.util:eventuate-util-test'
+    integrationTestImplementation 'org.testcontainers:testcontainers'
+    integrationTestImplementation 'org.testcontainers:postgresql'
+    integrationTestRuntimeOnly 'org.postgresql:postgresql'
+}
+
+tasks.register('integrationTest', Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    useJUnitPlatform()
+}
+
+tasks.named('processIntegrationTestResources') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
