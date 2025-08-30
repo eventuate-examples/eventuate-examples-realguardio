@@ -1,3 +1,5 @@
+apply plugin: IntegrationTestsPlugin
+
 dependencies {
     implementation project(':security-system-service-domain')
     implementation project(':security-system-service-persistence')
@@ -8,6 +10,8 @@ dependencies {
     implementation 'io.eventuate.tram.sagas:eventuate-tram-sagas-spring-participant'
     implementation 'io.eventuate.tram.core:eventuate-tram-spring-consumer-kafka'
     implementation 'io.eventuate.tram.core:eventuate-tram-spring-producer-jdbc'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.8.2'
+    implementation "org.flywaydb:flyway-core"
 
     testImplementation "io.eventuate.tram.core:eventuate-tram-spring-commands-starter"
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -16,4 +20,19 @@ dependencies {
     testImplementation 'io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory'
     testImplementation 'io.eventuate.tram.core:eventuate-tram-test-util'
     testRuntimeOnly 'com.h2database:h2'
+    
+    integrationTestImplementation 'io.eventuate.common:eventuate-common-testcontainers'
+    integrationTestImplementation 'io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers'
+    integrationTestImplementation 'io.eventuate.tram.core:eventuate-tram-spring-flyway'
+    integrationTestImplementation 'io.eventuate.util:eventuate-util-test'
+    integrationTestImplementation 'org.testcontainers:testcontainers'
+    integrationTestImplementation 'org.testcontainers:postgresql'
+    integrationTestRuntimeOnly 'org.postgresql:postgresql'
+    
+    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-kafka-producer"
+    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-outbox-commands"
+}
+
+integrationTest {
+    systemProperty "spring.profiles.active", "test,postgres"
 }
