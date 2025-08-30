@@ -166,6 +166,38 @@ public class CustomerService {
         Location location = locationRepository.findRequiredById(locationId);
         location.addSecuritySystem(securitySystemId);
     }
+    
+    /**
+     * Create or update a location with a security system.
+     * If the location doesn't exist, create it.
+     * If it exists without a security system, add the security system.
+     * If it already has a security system, throw an exception.
+     *
+     * @param customerId the ID of the customer
+     * @param locationName the name of the location
+     * @param securitySystemId the ID of the security system
+     * @return the ID of the location
+     * @throws CustomerNotFoundException if customer doesn't exist
+     * @throws LocationAlreadyHasSecuritySystemException if location already has a security system
+     */
+    public Long createLocationWithSecuritySystem(Long customerId, String locationName, Long securitySystemId) {
+        // Verify customer exists
+        Customer customer = customerRepository.findById(customerId)
+            .orElseThrow(() -> new CustomerNotFoundException("Customer not found: " + customerId));
+        
+        // Find or create location
+        Location location = locationRepository.findByCustomerIdAndName(customerId, locationName)
+            .orElseGet(() -> {
+                Location newLocation = new Location(locationName, customerId);
+                return locationRepository.save(newLocation);
+            });
+        
+        // Add security system to location
+        location.addSecuritySystem(securitySystemId);
+        locationRepository.save(location);
+        
+        return location.getId();
+    }
 
     /**
      * Verify if an employee is authorized to disarm a security system.

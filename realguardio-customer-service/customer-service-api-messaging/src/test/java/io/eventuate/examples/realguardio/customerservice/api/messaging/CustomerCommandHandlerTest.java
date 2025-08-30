@@ -1,0 +1,97 @@
+package io.eventuate.examples.realguardio.customerservice.api.messaging;
+
+import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
+import io.eventuate.tram.commands.consumer.CommandDispatcher;
+import io.eventuate.tram.commands.producer.CommandProducer;
+import io.eventuate.tram.sagas.participant.SagaCommandDispatcherFactory;
+import io.eventuate.tram.sagas.spring.inmemory.TramSagaInMemoryConfiguration;
+import io.eventuate.tram.testutil.TestMessageConsumer;
+import io.eventuate.tram.testutil.TestMessageConsumerFactory;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import java.util.Collections;
+
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@SpringBootTest(classes = CustomerCommandHandlerTest.TestConfig.class)
+class CustomerCommandHandlerTest {
+
+    @Configuration
+    @EnableAutoConfiguration
+    @Import({CustomerCommandHandlerConfiguration.class, TramSagaInMemoryConfiguration.class})
+    static class TestConfig {
+        @Bean
+        public TestMessageConsumerFactory testMessageConsumerFactory() {
+            return new TestMessageConsumerFactory();
+        }
+    }
+
+    @MockitoBean
+    private CustomerService customerService;
+
+    @Autowired
+    private CommandProducer commandProducer;
+    
+    @Autowired
+    private TestMessageConsumerFactory testMessageConsumerFactory;
+
+    @Test
+    void shouldHandleCreateLocationWithSecuritySystemCommand() {
+        // Given
+        Long customerId = 123L;
+        String locationName = "Office Front Door";
+        Long securitySystemId = 456L;
+        Long expectedLocationId = 789L;
+        
+        CreateLocationWithSecuritySystemCommand command = new CreateLocationWithSecuritySystemCommand(
+            customerId, locationName, securitySystemId);
+        
+        when(customerService.createLocationWithSecuritySystem(customerId, locationName, securitySystemId))
+            .thenReturn(expectedLocationId);
+        
+        // Create a test message consumer to receive the reply
+        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
+
+        // When - Send the command
+        var commandId = commandProducer.send("customer-service", command, replyConsumer.getReplyChannel(),
+            Collections.emptyMap());
+        
+        // Then - Verify the reply is received
+        replyConsumer.assertHasReplyTo(commandId);
+        verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
+    }
+    
+    @Test
+    void shouldHandleCustomerNotFound() {
+        // Given
+        Long customerId = 123L;
+        String locationName = "Office Front Door";
+        Long securitySystemId = 456L;
+        
+        CreateLocationWithSecuritySystemCommand command = new CreateLocationWithSecuritySystemCommand(
+            customerId, locationName, securitySystemId);
+        
+        when(customerService.createLocationWithSecuritySystem(customerId, locationName, securitySystemId))
+            .thenThrow(new io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerNotFoundException("Customer not found: " + customerId));
+        
+        // Create a test message consumer to receive the reply
+        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
+
+        // When - Send the command
+        var commandId = commandProducer.send("customer-service", command, replyConsumer.getReplyChannel(),
+            Collections.emptyMap());
+        
+        // Then - Verify the failure reply is received
+        replyConsumer.assertHasReplyTo(commandId);
+        verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
+    }
+}

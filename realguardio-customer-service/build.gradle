@@ -20,6 +20,7 @@ subprojects {
 	dependencyManagement {
 		imports {
 			mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+			mavenBom "io.eventuate.platform:eventuate-platform-dependencies:$eventuatePlatformVersion"
 		}
 	}
 	
