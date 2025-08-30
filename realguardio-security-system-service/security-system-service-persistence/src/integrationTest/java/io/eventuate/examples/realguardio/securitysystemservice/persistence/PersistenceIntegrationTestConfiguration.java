@@ -1,11 +1,9 @@
 package io.eventuate.examples.realguardio.securitysystemservice.persistence;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
-@EnableJpaRepositories(basePackages = "io.eventuate.examples.realguardio.securitysystemservice.domain")
-@EntityScan(basePackages = "io.eventuate.examples.realguardio.securitysystemservice.domain")
+@Import(JPAPersistenceConfiguration.class)
 public class PersistenceIntegrationTestConfiguration {
 }

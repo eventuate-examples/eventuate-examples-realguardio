@@ -22,4 +22,29 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     public List<SecuritySystem> findAll() {
         return securitySystemRepository.findAll();
     }
+    
+    @Override
+    public Long createSecuritySystem(String locationName) {
+        SecuritySystem securitySystem = new SecuritySystem(locationName, SecuritySystemState.CREATION_PENDING);
+        SecuritySystem savedSystem = securitySystemRepository.save(securitySystem);
+        return savedSystem.getId();
+    }
+    
+    @Override
+    public void noteLocationCreated(Long securitySystemId, Long locationId) {
+        SecuritySystem securitySystem = securitySystemRepository.findById(securitySystemId)
+            .orElseThrow(() -> new IllegalArgumentException("Security system not found: " + securitySystemId));
+        securitySystem.setLocationId(locationId);
+        securitySystem.setState(SecuritySystemState.DISARMED);
+        securitySystemRepository.save(securitySystem);
+    }
+    
+    @Override
+    public void updateCreationFailed(Long securitySystemId, String rejectionReason) {
+        SecuritySystem securitySystem = securitySystemRepository.findById(securitySystemId)
+            .orElseThrow(() -> new IllegalArgumentException("Security system not found: " + securitySystemId));
+        securitySystem.setState(SecuritySystemState.CREATION_FAILED);
+        securitySystem.setRejectionReason(rejectionReason);
+        securitySystemRepository.save(securitySystem);
+    }
 }

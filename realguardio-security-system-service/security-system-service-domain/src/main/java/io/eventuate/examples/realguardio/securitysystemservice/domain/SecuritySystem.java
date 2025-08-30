@@ -23,6 +23,8 @@ public class SecuritySystem {
     
     private Long locationId;
     
+    private String rejectionReason;
+    
     @Version
     private Long version;
 
@@ -70,5 +72,13 @@ public class SecuritySystem {
 
     public void setState(SecuritySystemState state) {
         this.state = state;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 }

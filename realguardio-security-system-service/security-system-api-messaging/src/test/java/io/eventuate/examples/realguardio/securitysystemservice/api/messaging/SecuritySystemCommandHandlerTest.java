@@ -1,75 +1,97 @@
 package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationNoted;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemRepository;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
+import io.eventuate.tram.commands.consumer.CommandDispatcher;
+import io.eventuate.tram.commands.producer.CommandProducer;
+import io.eventuate.tram.sagas.participant.SagaCommandDispatcherFactory;
+import io.eventuate.tram.sagas.spring.inmemory.TramSagaInMemoryConfiguration;
+import io.eventuate.tram.testutil.TestMessageConsumer;
+import io.eventuate.tram.testutil.TestMessageConsumerFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import java.util.Optional;
+import java.util.Collections;
 
+import static io.eventuate.tram.commands.consumer.CommandWithDestinationBuilder.send;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = SecuritySystemCommandHandlerTest.TestConfig.class)
 class SecuritySystemCommandHandlerTest {
 
-    @Mock
-    private SecuritySystemRepository repository;
+    @Configuration
+    @EnableAutoConfiguration
+    @Import({SecuritySystemCommandHandlerConfiguration.class, TramSagaInMemoryConfiguration.class})
+    static class TestConfig {
 
-    private SecuritySystemCommandHandler commandHandler;
-
-    @BeforeEach
-    void setUp() {
-        commandHandler = new SecuritySystemCommandHandler(repository);
+        @Bean
+        public TestMessageConsumerFactory testMessageConsumerFactory() {
+            return new TestMessageConsumerFactory();
+        }
     }
+
+    @MockitoBean
+    private SecuritySystemService securitySystemService;
+
+    @Autowired
+    private CommandProducer commandProducer;
+    
+    @Autowired
+    private TestMessageConsumerFactory testMessageConsumerFactory;
 
     @Test
     void shouldHandleCreateSecuritySystemCommand() {
         // Given
-        CreateSecuritySystemCommand command = new CreateSecuritySystemCommand("Main Office");
+        String locationName = "Office Front Door";
+        Long expectedSecuritySystemId = 42L;
+        CreateSecuritySystemCommand command = new CreateSecuritySystemCommand(locationName);
         
-        SecuritySystem savedSystem = new SecuritySystem();
-        savedSystem.setId(123L);
-        when(repository.save(any(SecuritySystem.class))).thenReturn(savedSystem);
+        when(securitySystemService.createSecuritySystem(locationName)).thenReturn(expectedSecuritySystemId);
+        
+        // Create a test message consumer to receive the reply
+        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
 
-        // When
-        SecuritySystemCreated reply = commandHandler.handle(command);
+      // When - Send the command
+        var commandId = commandProducer.send("security-system-service", command, replyConsumer.getReplyChannel(),
+            Collections.emptyMap());
+        
+        // Then - Verify the reply is received
 
-        // Then
-        assertThat(reply.securitySystemId()).isEqualTo(123L);
-        verify(repository).save(argThat(system -> 
-            system.getLocationName().equals("Main Office") &&
-            system.getState() == SecuritySystemState.CREATION_PENDING
-        ));
+        replyConsumer.assertHasReplyTo(commandId);
+        verify(securitySystemService).createSecuritySystem(locationName);
     }
 
     @Test
     void shouldHandleNoteLocationCreatedCommand() {
         // Given
-        NoteLocationCreatedCommand command = new NoteLocationCreatedCommand(123L, 456L);
-        SecuritySystem existingSystem = new SecuritySystem("Main Office", SecuritySystemState.CREATION_PENDING);
-        existingSystem.setId(123L);
+        Long securitySystemId = 42L;
+        Long locationId = 123L;
+        NoteLocationCreatedCommand command = new NoteLocationCreatedCommand(securitySystemId, locationId);
         
-        when(repository.findById(123L)).thenReturn(Optional.of(existingSystem));
-        when(repository.save(any(SecuritySystem.class))).thenReturn(existingSystem);
+        // Create a test message consumer to receive the reply
+        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
 
-        // When
-        LocationNoted reply = commandHandler.handle(command);
+        // When - Send the command
+        var commandId = commandProducer.send("security-system-service", command, replyConsumer.getReplyChannel(),
+            Collections.emptyMap());
+        
+        // Then - Verify the reply is received
 
-        // Then
-        assertThat(reply).isNotNull();
-        verify(repository).save(argThat(system -> 
-            system.getState() == SecuritySystemState.DISARMED &&
-            system.getLocationId().equals(456L)
-        ));
+        replyConsumer.assertHasReplyTo(commandId);
+
+        verify(securitySystemService).noteLocationCreated(securitySystemId, locationId);
     }
 }

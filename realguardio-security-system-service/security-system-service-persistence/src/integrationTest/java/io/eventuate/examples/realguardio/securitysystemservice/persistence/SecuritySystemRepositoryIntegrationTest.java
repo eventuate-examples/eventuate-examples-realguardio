@@ -69,4 +69,47 @@ class SecuritySystemRepositoryIntegrationTest {
         Iterable<SecuritySystem> all = repository.findAll();
         assertThat(all).hasSize(2);
     }
+
+    @Test
+    void shouldSaveAndRetrieveLocationId() {
+        SecuritySystem securitySystem = new SecuritySystem("Oakland office",
+            SecuritySystemState.CREATION_PENDING);
+        securitySystem.setLocationId(123L);
+
+        SecuritySystem saved = repository.save(securitySystem);
+        assertThat(saved.getId()).isNotNull();
+
+        Optional<SecuritySystem> found = repository.findById(saved.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getLocationId()).isEqualTo(123L);
+    }
+
+    @Test
+    void shouldSaveAndRetrieveRejectionReason() {
+        SecuritySystem securitySystem = new SecuritySystem("Oakland office",
+            SecuritySystemState.CREATION_FAILED);
+        securitySystem.setRejectionReason("Customer not found");
+
+        SecuritySystem saved = repository.save(securitySystem);
+        assertThat(saved.getId()).isNotNull();
+
+        Optional<SecuritySystem> found = repository.findById(saved.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getRejectionReason()).isEqualTo("Customer not found");
+        assertThat(found.get().getState()).isEqualTo(SecuritySystemState.CREATION_FAILED);
+    }
+
+    @Test
+    void shouldHandleNullLocationIdAndRejectionReason() {
+        SecuritySystem securitySystem = new SecuritySystem("Oakland office",
+            SecuritySystemState.DISARMED);
+        // Not setting locationId or rejectionReason - they should be null
+
+        SecuritySystem saved = repository.save(securitySystem);
+        
+        Optional<SecuritySystem> found = repository.findById(saved.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getLocationId()).isNull();
+        assertThat(found.get().getRejectionReason()).isNull();
+    }
 }
