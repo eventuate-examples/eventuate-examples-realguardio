@@ -69,9 +69,9 @@ class CustomerServiceIntegrationTest {
     database.registerProperties(registry::add);
 
     registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-        () -> "http://localhost:" + iamService.getMappedPort(9000));
+        () -> "http://localhost:" + iamService.getFirstMappedPort());
     registry.add("spring.security.oauth2.resourceserver.jwt.jwk-set-uri",
-        () -> "http://localhost:" + iamService.getMappedPort(9000) + "/oauth2/jwks");
+        () -> "http://localhost:" + iamService.getFirstMappedPort() + "/oauth2/jwks");
   }
 
   @Test
@@ -106,7 +106,7 @@ class CustomerServiceIntegrationTest {
   }
 
   private static @NotNull HttpHeaders makeHeadersWithJwt() {
-    String token = JwtTokenHelper.getJwtTokenForUser(iamService.getMappedPort(9000));
+    String token = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort());
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", "Bearer " + token);
     return headers;
@@ -155,7 +155,7 @@ class CustomerServiceIntegrationTest {
   }
 
   private void createCustomerEmployee(EmailAddress adminUser, EmailAddress customerEmployee, long customerId) {
-    String token = JwtTokenHelper.getJwtTokenForUser(iamService.getMappedPort(9000), null, adminUser.toString(), "password");
+    String token = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, adminUser.toString(), "password");
     HttpHeaders httpHeadersForAdmin = new HttpHeaders();
     httpHeadersForAdmin.set("Authorization", "Bearer " + token);
     httpHeadersForAdmin.setContentType(MediaType.APPLICATION_JSON);

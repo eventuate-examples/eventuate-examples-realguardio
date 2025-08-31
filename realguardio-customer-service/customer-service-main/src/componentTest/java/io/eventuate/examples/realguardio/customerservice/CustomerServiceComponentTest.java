@@ -99,9 +99,9 @@ public class CustomerServiceComponentTest {
 		database.registerProperties(registry::add);
 
 		registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-				() -> "http://localhost:" + iamService.getMappedPort(9000));
+				() -> "http://localhost:" + iamService.getFirstMappedPort());
 		registry.add("spring.security.oauth2.resourceserver.jwt.jwk-set-uri",
-				() -> "http://localhost:" + iamService.getMappedPort(9000) + "/oauth2/jwks");
+				() -> "http://localhost:" + iamService.getFirstMappedPort() + "/oauth2/jwks");
 	}
 
 	@BeforeEach
@@ -141,7 +141,7 @@ public class CustomerServiceComponentTest {
 	
 	@Test
 	void shouldReturn200WithValidJwtToken() {
-		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getMappedPort(9000));
+		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
 		
 		RestAssured.given()
 				.baseUri(String.format("http://localhost:%d", service.getFirstMappedPort()))
@@ -154,7 +154,7 @@ public class CustomerServiceComponentTest {
 
 	@Test
 	void shouldHandleCreateLocationWithSecuritySystemCommand() throws Exception {
-		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getMappedPort(9000));
+		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
 		String baseUri = String.format("http://localhost:%d", service.getFirstMappedPort());
 
 		EmailAddress adminUser = Uniquifier.uniquify(new EmailAddress("admin@example.com"));
