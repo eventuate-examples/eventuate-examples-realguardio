@@ -15,6 +15,27 @@ services:
       - "4318:4318" # OTLP HTTP
     environment:
       COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+
   realguardio-iam-service:
     image: eventuate-examples-realguardio-realguardio-iam-service:latest
     build:
@@ -50,8 +71,10 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
       OTEL_PROPAGATORS: tracecontext
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       - postgres
+      - kafka
       - jaeger
       - realguardio-iam-service
   realguardio-bff:
@@ -99,7 +122,9 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
       OTEL_PROPAGATORS: tracecontext
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       - postgres
+      - kafka
       - jaeger
       - realguardio-iam-service
