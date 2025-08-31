@@ -1,11 +1,15 @@
 package io.eventuate.examples.realguardio.customerservice;
 
+import io.eventuate.common.testcontainers.DatabaseContainerFactory;
+import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.Customers;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerAndCustomerEmployee;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
 import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
+import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
+import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -20,10 +24,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.lifecycle.Startables;
-import org.testcontainers.utility.DockerImageName;
 
 import java.nio.file.Path;
 
@@ -32,36 +34,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CustomerServiceIntegrationTest {
 
-  private static Logger logger = org.slf4j.LoggerFactory.getLogger(CustomerServiceIntegrationTest.class);
+  private static final Logger logger = org.slf4j.LoggerFactory.getLogger(CustomerServiceIntegrationTest.class);
 
   @Autowired
   private TestRestTemplate restTemplate;
 
 
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"))
-      .withDatabaseName("testdb")
-      .withUsername("testuser")
-      .withPassword("testpass")
-      .withReuse(true);
+  public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("customer-service-tests");
 
-  static AuthorizationServerContainerForLocalTests iamService;
+  public static EventuateKafkaNativeContainer kafka = eventuateKafkaCluster.kafka
+      .withNetworkAliases("kafka")
+      .withReuse(true)
+      ;
 
-  static {
+  public static EventuateDatabaseContainer<?> database = DatabaseContainerFactory.makeVanillaDatabaseContainer()
+      .withNetwork(eventuateKafkaCluster.network)
+      .withNetworkAliases("database")
+      .withReuse(true)
+      ;
 
-    iamService = new AuthorizationServerContainerForLocalTests(Path.of("../../realguardio-iam-service/Dockerfile"))
-        .withUserDb()
-        .withReuse(true)
-        .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("IAM"));
-    ;
-    Startables.deepStart(iamService, postgres).join();
-  }
+  static AuthorizationServerContainerForLocalTests     iamService = new AuthorizationServerContainerForLocalTests(Path.of("../../realguardio-iam-service/Dockerfile"))
+      .withUserDb()
+      .withReuse(true)
+      .withNetworkAliases("database")
+      .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("IAM"));
+
+
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url", () -> postgres.getJdbcUrl());
-    registry.add("spring.datasource.username", postgres::getUsername);
-    registry.add("spring.datasource.password", postgres::getPassword);
-    registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+    Startables.deepStart(database, kafka, iamService).join();
+
+    kafka.registerProperties(registry::add);
+    database.registerProperties(registry::add);
 
     registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
         () -> "http://localhost:" + iamService.getMappedPort(9000));

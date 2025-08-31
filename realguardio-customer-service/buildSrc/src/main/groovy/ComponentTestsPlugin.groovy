@@ -79,5 +79,9 @@ class ComponentTestsPlugin implements Plugin<Project> {
         project.tasks.withType(Test) {
             reports.html.destination = project.file("${project.reporting.baseDir}/${name}")
         }
+
+        project.tasks.processComponentTestResources {
+            duplicatesStrategy = 'include'
+        }
     }
 }

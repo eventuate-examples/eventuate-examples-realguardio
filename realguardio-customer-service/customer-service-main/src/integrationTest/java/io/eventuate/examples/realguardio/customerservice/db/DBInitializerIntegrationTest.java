@@ -1,5 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.db;
 
+import io.eventuate.common.testcontainers.DatabaseContainerFactory;
+import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.CustomerManagementConfiguration;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeRepository;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerRepository;
@@ -11,6 +13,8 @@ import io.eventuate.examples.realguardio.customerservice.organizationmanagement.
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.OrganizationRepository;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
 import io.eventuate.examples.realguardio.customerservice.security.UserService;
+import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
+import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -22,10 +26,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.lifecycle.Startables;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -50,18 +52,26 @@ public class DBInitializerIntegrationTest {
     @MockitoBean
     private UserNameSupplier userNameSupplier;
 
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"))
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpass");
-    
+    public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("customer-service-tests");
+
+    public static EventuateKafkaNativeContainer kafka = eventuateKafkaCluster.kafka
+        .withNetworkAliases("kafka")
+        .withReuse(true)
+        ;
+
+    public static EventuateDatabaseContainer<?> database = DatabaseContainerFactory.makeVanillaDatabaseContainer()
+        .withNetwork(eventuateKafkaCluster.network)
+        .withNetworkAliases("database")
+        .withReuse(true)
+        ;
+
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", () -> postgres.getJdbcUrl());
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        Startables.deepStart(database, kafka).join();
+
+        kafka.registerProperties(registry::add);
+        database.registerProperties(registry::add);
+
     }
 
     @Autowired

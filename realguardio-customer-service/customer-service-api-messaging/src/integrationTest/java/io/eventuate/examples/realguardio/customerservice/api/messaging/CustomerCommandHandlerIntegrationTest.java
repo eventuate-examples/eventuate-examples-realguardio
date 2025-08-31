@@ -7,7 +7,6 @@ import io.eventuate.examples.realguardio.customerservice.customermanagement.doma
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaCluster;
 import io.eventuate.tram.commands.producer.CommandProducer;
-import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration;
 import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
@@ -48,7 +47,6 @@ public class CustomerCommandHandlerIntegrationTest {
     @Configuration
     @EnableAutoConfiguration
     @Import({CustomerCommandHandlerConfiguration.class,
-            EventuateTramFlywayMigrationConfiguration.class,
             EventuateKafkaTestCommandProducerConfiguration.class,
             CommandOutboxTestSupportConfiguration.class})
     static public class Config {
