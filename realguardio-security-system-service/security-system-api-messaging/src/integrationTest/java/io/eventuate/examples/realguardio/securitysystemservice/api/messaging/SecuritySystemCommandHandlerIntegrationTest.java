@@ -50,7 +50,6 @@ public class SecuritySystemCommandHandlerIntegrationTest {
     @Configuration
     @EnableAutoConfiguration
     @Import({SecuritySystemCommandHandlerConfiguration.class,
-            EventuateTramFlywayMigrationConfiguration.class,
             EventuateKafkaTestCommandProducerConfiguration.class,
             CommandOutboxTestSupportConfiguration.class})
     static public class Config {

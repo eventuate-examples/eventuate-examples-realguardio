@@ -9,10 +9,14 @@ import io.eventuate.tram.commands.consumer.CommandHandlers;
 import io.eventuate.tram.commands.consumer.CommandMessage;
 import io.eventuate.tram.messaging.common.Message;
 import io.eventuate.tram.sagas.participant.SagaCommandHandlersBuilder;
+import org.slf4j.Logger;
 
 import static io.eventuate.tram.commands.consumer.CommandHandlerReplyBuilder.withSuccess;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class SecuritySystemCommandHandler {
+
+    private static Logger logger = getLogger(SecuritySystemCommandHandler.class);
 
     private final SecuritySystemService securitySystemService;
 
@@ -21,8 +25,10 @@ public class SecuritySystemCommandHandler {
     }
 
     public Message handleCreateSecuritySystem(CommandMessage<CreateSecuritySystemCommand> cm) {
+        logger.info("Handling CreateSecuritySystemCommand: " + cm);
         CreateSecuritySystemCommand command = cm.getCommand();
         Long securitySystemId = securitySystemService.createSecuritySystem(command.locationName());
+        logger.info("Created CreateSecuritySystemCommand: " + cm);
         return withSuccess(new SecuritySystemCreated(securitySystemId));
     }
 

@@ -1,11 +1,17 @@
 package io.eventuate.examples.realguardio.securitysystemservice;
 
+import io.eventuate.common.testcontainers.DatabaseContainerFactory;
+import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.securitysystemservice.db.DBInitializer;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAction;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystems;
+import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
+import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
+import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -22,53 +28,54 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
 class SecuritySystemServiceIntegrationTest {
+
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(SecuritySystemServiceIntegrationTest.class);
 
     @Autowired
     private TestRestTemplate restTemplate;
-    
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"))
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpass");
 
-    static GenericContainer<?> iamService;
-    
-    static {
-        // Start containers in static block to ensure they're ready for DynamicPropertySource
-        postgres.start();
-        
-        // IAM service is a mock authorization server - doesn't need PostgreSQL
-        iamService = new GenericContainer<>(DockerImageName.parse("eventuate-examples-realguardio-realguardio-iam-service:latest"))
-                .withExposedPorts(9000)
-                .withEnv("SPRING_PROFILES_ACTIVE", "realguardio")
-                .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("IAM-SERVICE")))
-                .waitingFor(Wait.forHttp("/actuator/health").forPort(9000).forStatusCode(200))
-                .withStartupTimeout(Duration.ofSeconds(60));
-        iamService.start();
-    }
-    
+    public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("customer-service-tests");
+
+    public static EventuateKafkaNativeContainer kafka = eventuateKafkaCluster.kafka
+        .withNetworkAliases("kafka")
+        .withReuse(true)
+        ;
+
+    public static EventuateDatabaseContainer<?> database = DatabaseContainerFactory.makeVanillaDatabaseContainer()
+        .withNetwork(eventuateKafkaCluster.network)
+        .withNetworkAliases("database")
+        .withReuse(true)
+        ;
+
+    static AuthorizationServerContainerForLocalTests iamService = new AuthorizationServerContainerForLocalTests(Path.of("../../realguardio-iam-service/Dockerfile"))
+        .withUserDb()
+        .withReuse(true)
+        .withNetworkAliases("database")
+        .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("IAM"));
+
+
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", () -> postgres.getJdbcUrl());
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        
-        registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", 
-            () -> "http://localhost:" + iamService.getMappedPort(9000));
+        Startables.deepStart(database, kafka, iamService).join();
+
+        kafka.registerProperties(registry::add);
+        database.registerProperties(registry::add);
+
+        registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
+            () -> "http://localhost:" + iamService.getFirstMappedPort());
         registry.add("spring.security.oauth2.resourceserver.jwt.jwk-set-uri",
-            () -> "http://localhost:" + iamService.getMappedPort(9000) + "/oauth2/jwks");
+            () -> "http://localhost:" + iamService.getFirstMappedPort() + "/oauth2/jwks");
     }
 
     @Test
