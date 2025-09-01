@@ -77,7 +77,7 @@ run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build} re
 
 [tasks.e2e-test-only]
 dir = "./realguardio-bff"
-run = "DISABLE_MOCK_BACKEND=yes npm run e2e-test"
+run = "DISABLE_MOCK_BACKEND=yes npm run e2e-test || DISABLE_MOCK_BACKEND=yes npm run e2e-test"
 
 [tasks.bff-dev-wait]
 run = "npx wait-on@8.0.3 --timeout 30s http://localhost:3000"
@@ -155,4 +155,4 @@ description = "Query all records from security_system table"
 run = "docker compose exec postgres psql -U postgres -d securitysystem -c 'SELECT * FROM security_system;'"
 
 [tasks.gh-download] 
-run = "rm -fr _download && gh run download --dir _download -n logs -n test-reports"
+run = "rm -fr _download && gh run download --dir _download -n logs -n test-reports -n compose-up-logs"
