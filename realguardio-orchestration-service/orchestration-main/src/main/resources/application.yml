@@ -18,10 +18,10 @@ eventuate:
     bootstrap:
       servers: localhost:9092
   database:
-    schema: eventuate
+    schema: public
 
 server:
-  port: 8084
+  port: 8080
 
 logging:
   level:

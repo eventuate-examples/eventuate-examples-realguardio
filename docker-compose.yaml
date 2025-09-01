@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
     ports:
       - "5432:5432"
     environment:
@@ -60,7 +60,7 @@ services:
         baseImageVersion: 0.1.0.RELEASE
         serviceImageVersion: 0.1.0-SNAPSHOT
     ports:
-      - "3001:3001"
+      - "3001:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/securitysystem
@@ -71,7 +71,7 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
       OTEL_PROPAGATORS: tracecontext
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       - postgres
       - kafka
@@ -96,7 +96,7 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_SERVICE_NAME: realguardio-bff
       OTEL_PROPAGATORS: tracecontext
-      SECURITY_SYSTEMS_API_URL: http://realguardio-security-system-service:3001
+      SECURITY_SYSTEMS_API_URL: http://realguardio-security-system-service:8080
       NEXT_OTEL_VERBOSE: 1
       OTEL_TRACES_SAMPLER: always_on
       OTEL_LOG_LEVEL: info
@@ -111,7 +111,7 @@ services:
         baseImageVersion: 0.1.0.RELEASE
         serviceImageVersion: 0.1.0-SNAPSHOT
     ports:
-      - "3002:3001"
+      - "3002:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/securitysystem
@@ -122,7 +122,7 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
       OTEL_PROPAGATORS: tracecontext
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       - postgres
       - kafka
