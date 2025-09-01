@@ -31,6 +31,10 @@ subprojects {
         mavenCentral()
         eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
     }
+    
+    configurations.all {
+        exclude group: 'com.mysql', module: 'mysql-connector-j'
+    }
 
     dependencies {
         implementation(platform("io.eventuate.platform:eventuate-platform-dependencies:$eventuatePlatformVersion"))

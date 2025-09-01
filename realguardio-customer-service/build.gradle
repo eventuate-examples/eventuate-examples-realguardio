@@ -24,6 +24,10 @@ subprojects {
 		}
 	}
 	
+	configurations.all {
+		exclude group: 'com.mysql', module: 'mysql-connector-j'
+	}
+	
 	java {
 		toolchain {
 			languageVersion = JavaLanguageVersion.of(17)

@@ -4,6 +4,9 @@ apply plugin: IntegrationTestsPlugin
 componentTest {
     systemProperty "spring.profiles.active", "test,postgres"
 }
+integrationTest {
+    systemProperty "spring.profiles.active", "test,postgres"
+}
 
 dependencies {
     implementation project(':customer-service-domain')
