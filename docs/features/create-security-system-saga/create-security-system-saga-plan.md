@@ -12,6 +12,8 @@ When executing this plan:
 3. Run tests after each significant change to ensure nothing breaks
 4. Use TDD principles: write test, implement code, refactor as needed
 5. Commit after each successfully completed thread (when all tests pass)
+6. A task is not complete until the tests have been written and pass
+7. For component tests: CommandOutboxTestSupport.assertCommandMessageSent() returns the command that was sent
 
 ## Thread 1: Project Setup and Module Structure
 
@@ -552,15 +554,15 @@ Tasks:
     [ ] Run component tests - verify they pass
     
 [ ] Component Test: Orchestration Service
-    [ ] Create OrchestrationServiceComponentTest class
-    [ ] Set up Testcontainers:
-        [ ] EventuateKafkaNativeCluster with network
-        [ ] EventuateDatabaseContainer for PostgreSQL
-        [ ] ServiceContainer for orchestration service
-        [ ] Add IAM service container for authentication
-    [ ] Implement @BeforeAll to start containers
-    [ ] Write test methods:
-        [ ] shouldStart() - verify service starts successfully
+    [x] Create OrchestrationServiceComponentTest class
+    [x] Set up Testcontainers:
+        [x] EventuateKafkaNativeCluster with network
+        [x] EventuateDatabaseContainer for PostgreSQL
+        [x] ServiceContainer for orchestration service
+        [x] Add IAM service container for authentication
+    [x] Implement @DynamicPropertySource to start containers
+    [x] Write test methods:
+        [x] shouldStart() - verify service starts successfully (PASSES)
         [ ] shouldExposeSwaggerUI() - verify REST endpoints available
         [ ] shouldCompleteSagaSuccessfully()
             [ ] POST /securitysystems to initiate saga

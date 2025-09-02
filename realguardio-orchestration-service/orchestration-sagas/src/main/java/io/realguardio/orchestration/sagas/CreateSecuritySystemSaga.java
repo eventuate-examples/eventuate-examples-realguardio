@@ -7,10 +7,14 @@ import io.realguardio.customer.api.*;
 import io.realguardio.orchestration.sagas.proxies.CustomerServiceProxy;
 import io.realguardio.orchestration.sagas.proxies.SecuritySystemServiceProxy;
 import io.realguardio.securitysystem.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CreateSecuritySystemSaga implements SimpleSaga<CreateSecuritySystemSagaData> {
+
+    private static final Logger logger = LoggerFactory.getLogger(CreateSecuritySystemSaga.class);
 
     private final SecuritySystemServiceProxy securitySystemServiceProxy;
     private final CustomerServiceProxy customerServiceProxy;
@@ -47,18 +51,24 @@ public class CreateSecuritySystemSaga implements SimpleSaga<CreateSecuritySystem
         return sagaDefinition;
     }
 
+    @Override
+    public void onStarting(String sagaId, CreateSecuritySystemSagaData data) {
+        logger.info("Starting CreateSecuritySystemSaga with id: {}", sagaId);
+        data.setSagaId(sagaId);
+    }
+
     // Step 1: Create Security System
     public CommandWithDestination makeCreateSecuritySystemCommand(CreateSecuritySystemSagaData data) {
         return securitySystemServiceProxy.createSecuritySystem(data.getLocationName());
     }
 
     public void handleSecuritySystemCreated(CreateSecuritySystemSagaData data, SecuritySystemCreated reply) {
+
+        logger.info("SecuritySystemCreated received with id: {}", reply.securitySystemId());
+
         data.setSecuritySystemId(reply.securitySystemId());
-        
-        String sagaId = data.getSagaId();
-        if (sagaId != null) {
-            pendingResponses.completeSecuritySystemCreation(sagaId, reply.securitySystemId());
-        }
+
+        pendingResponses.completeSecuritySystemCreation(data.getSagaId(), reply.securitySystemId());
     }
 
     public CommandWithDestination makeUpdateCreationFailedCommand(CreateSecuritySystemSagaData data) {

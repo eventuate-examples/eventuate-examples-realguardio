@@ -24,7 +24,6 @@ public class SecuritySystemSagaService {
         CreateSecuritySystemSagaData sagaData = new CreateSecuritySystemSagaData(customerId, locationName);
         
         var sagaInstance = sagaInstanceFactory.create(createSecuritySystemSaga, sagaData);
-        sagaData.setSagaId(sagaInstance.getId());
         CompletableFuture<Long> future = pendingResponses.createPendingResponse(sagaInstance.getId());
         
         return future;
