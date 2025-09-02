@@ -1,12 +1,13 @@
 services:
   postgres:
     image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
+    volumes:
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: securitysystem
   jaeger:
     image: jaegertracing/jaeger:2.6.0
     ports:
@@ -63,9 +64,10 @@ services:
       - "3001:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/securitysystem
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      EVENTUATE_DATABASE_SCHEMA: securitysystem_schema
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/securitysystem?currentSchema=securitysystem_schema
+      SPRING_DATASOURCE_USERNAME: securitysystemuser
+      SPRING_DATASOURCE_PASSWORD: securitysystempass
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
@@ -114,9 +116,36 @@ services:
       - "3002:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/securitysystem
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      EVENTUATE_DATABASE_SCHEMA: customer_schema
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/customer?currentSchema=customer_schema
+      SPRING_DATASOURCE_USERNAME: customeruser
+      SPRING_DATASOURCE_PASSWORD: customerpass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      OTEL_PROPAGATORS: tracecontext
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      - postgres
+      - kafka
+      - jaeger
+      - realguardio-iam-service
+  realguardio-orchestration-service:
+    build:
+      context: ./realguardio-orchestration-service
+      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      args:
+        baseImageVersion: 0.1.0.RELEASE
+        serviceImageVersion: 0.1.0-SNAPSHOT
+    ports:
+      - "3003:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EVENTUATE_DATABASE_SCHEMA: orchestration_schema
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orchestration?currentSchema=orchestration_schema
+      SPRING_DATASOURCE_USERNAME: orchestrationuser
+      SPRING_DATASOURCE_PASSWORD: orchestrationpass
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000

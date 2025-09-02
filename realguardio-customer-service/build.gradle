@@ -69,6 +69,9 @@ task compileAll {
 		if (subproject.tasks.findByName('integrationTestClasses')) {
 			dependsOn subproject.tasks.named('integrationTestClasses')
 		}
+		if (subproject.tasks.findByName('componentTestClasses')) {
+			dependsOn subproject.tasks.named('componentTestClasses')
+		}
 	}
 }
 
