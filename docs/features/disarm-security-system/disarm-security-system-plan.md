@@ -218,27 +218,27 @@ Steps:
 This thread creates the client component in Security Service to call Customer Service.
 
 ```text
-[ ] Create CustomerServiceClient in Security Service
+[x] Create CustomerServiceClient in Security Service
 
 Steps:
-[ ] 1. Write unit test for CustomerServiceClient:
+[x] 1. Write unit test for CustomerServiceClient:
      - Test successful role retrieval
      - Test handling of 404 response (returns empty set)
      - Test handling of service unavailable
      - Test JWT token forwarding
-[ ] 2. Create CustomerServiceClient class:
+[x] 2. Create CustomerServiceClient class:
      - Inject RestTemplate and customer service URL
      - Implement getUserRolesAtLocation method
      - Forward JWT token in Authorization header
      - Handle different response scenarios
-[ ] 3. Create RolesResponse DTO in Security Service
-[ ] 4. Add configuration for customer service URL:
+[x] 3. Create RolesResponse DTO in Security Service
+[x] 4. Add configuration for customer service URL:
      - Add to application.yml
      - Add @Value annotation for URL injection
-[ ] 5. Configure RestTemplate bean if not exists
-[ ] 6. Run the unit test with mocked RestTemplate
-[ ] 7. Run all tests to ensure nothing is broken
-[ ] 8. Commit the changes
+[x] 5. Configure RestTemplate bean if not exists
+[x] 6. Run the unit test with mocked RestTemplate
+[x] 7. Run all tests to ensure nothing is broken
+[x] 8. Commit the changes
 ```
 
 ## Steel Thread 8: Integrate Location-Based Authorization
