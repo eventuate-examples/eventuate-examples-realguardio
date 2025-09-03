@@ -147,6 +147,7 @@ for dir in realguardio-*/; do
     (cd "$dir" && ./gradlew build) || exit 1
   fi
 done
+(cd end-to-end-tests; ./gradlew build) || exit 1
 """
 
 [tasks.reset-db]
