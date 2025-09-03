@@ -47,4 +47,14 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         securitySystem.setRejectionReason(rejectionReason);
         securitySystemRepository.save(securitySystem);
     }
+    
+    @Override
+    public SecuritySystem arm(Long id) {
+        throw new UnsupportedOperationException("Implement me");
+    }
+    
+    @Override
+    public SecuritySystem disarm(Long id) {
+        throw new UnsupportedOperationException("Implement me");
+    }
 }

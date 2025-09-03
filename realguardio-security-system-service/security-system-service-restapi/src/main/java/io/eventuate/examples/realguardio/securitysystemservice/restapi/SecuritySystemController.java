@@ -1,9 +1,11 @@
 package io.eventuate.examples.realguardio.securitysystemservice.restapi;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAction;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystems;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class SecuritySystemController {
@@ -17,5 +19,23 @@ public class SecuritySystemController {
   @GetMapping("/securitysystems")
   public SecuritySystems getSecuritySystems() {
     return new SecuritySystems(securitySystemService.findAll());
+  }
+  
+  @PutMapping("/securitysystems/{id}")
+  public ResponseEntity<SecuritySystem> updateSecuritySystem(
+          @PathVariable("id") Long id,
+          @RequestBody SecuritySystemActionRequest request) {
+      
+      SecuritySystem updated;
+      
+      if (request.getAction() == SecuritySystemAction.ARM) {
+          updated = securitySystemService.arm(id);
+      } else if (request.getAction() == SecuritySystemAction.DISARM) {
+          updated = securitySystemService.disarm(id);
+      } else {
+          return ResponseEntity.badRequest().build();
+      }
+      
+      return ResponseEntity.ok(updated);
   }
 }

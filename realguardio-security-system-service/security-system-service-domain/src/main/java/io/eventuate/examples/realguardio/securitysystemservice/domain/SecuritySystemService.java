@@ -10,4 +10,8 @@ public interface SecuritySystemService {
     void noteLocationCreated(Long securitySystemId, Long locationId);
     
     void updateCreationFailed(Long securitySystemId, String rejectionReason);
+    
+    SecuritySystem arm(Long id);
+    
+    SecuritySystem disarm(Long id);
 }

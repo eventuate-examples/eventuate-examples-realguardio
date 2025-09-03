@@ -21,27 +21,27 @@ When implementing this plan:
 This thread starts with the controller layer, creating the endpoint and basic request DTO.
 
 ```text
-[ ] Create PUT /securitysystems/{id} endpoint with basic DTO
+[x] Create PUT /securitysystems/{id} endpoint with basic DTO
 
 Steps:
-[ ] 1. Write test in SecuritySystemControllerTest: test PUT request with DISARM action returns 200
+[x] 1. Write test in SecuritySystemControllerTest: test PUT request with DISARM action returns 200
      - Create test class with MockMVC setup
      - Mock SecuritySystemService
      - Create minimal SecuritySystemActionRequest DTO inline for test
      - Write test for DISARM action expecting 200 response
-[ ] 2. Make the test pass:
+[x] 2. Make the test pass:
      - Create SecuritySystemAction enum with values: ARM, DISARM
      - Create SecuritySystemActionRequest class with action field and getter/setter
      - Create or update SecuritySystemController with PUT mapping for /{id}
      - Accept SecuritySystemActionRequest in request body
      - Call service.disarm() for DISARM action (create stub method)
      - Return 200 OK
-[ ] 3. Refactor and run all tests
-[ ] 4. Write test: test PUT request with ARM action returns 200
-[ ] 5. Make the test pass:
+[x] 3. Refactor and run all tests
+[x] 4. Write test: test PUT request with ARM action returns 200
+[x] 5. Make the test pass:
      - Update controller to handle ARM action
      - Call service.arm() for ARM action (create stub method)
-[ ] 6. Refactor and run all tests
+[x] 6. Refactor and run all tests
 [ ] 7. Write test: test invalid action returns 400
 [ ] 8. Make the test pass:
      - Add validation for invalid actions
