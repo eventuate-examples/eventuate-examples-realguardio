@@ -60,26 +60,26 @@ Steps:
 This thread implements the service layer that the controller depends on.
 
 ```text
-[ ] Implement arm() and disarm() methods in SecuritySystemService
+[x] Implement arm() and disarm() methods in SecuritySystemService
 
 Steps:
-[ ] 1. Write unit test in SecuritySystemServiceTest: test disarm() method changes state to DISARMED
+[x] 1. Write unit test in SecuritySystemServiceTest: test disarm() method changes state to DISARMED
      - Mock SecuritySystemRepository
      - Create test SecuritySystem entity
      - Verify disarm() loads system, calls entity method, and saves
-[ ] 2. Make the test pass:
+[x] 2. Make the test pass:
      - Implement disarm() method in SecuritySystemService
      - Load SecuritySystem by id
      - Check if locationId is present (throw BadRequestException if missing)
      - Call entity.disarm() and save
-[ ] 3. Refactor and run all tests
-[ ] 4. Write unit test: test arm() method changes state to ARMED
-[ ] 5. Make the test pass:
+[x] 3. Refactor and run all tests
+[x] 4. Write unit test: test arm() method changes state to ARMED
+[x] 5. Make the test pass:
      - Implement arm() method in SecuritySystemService
      - Load SecuritySystem by id
      - Check if locationId is present (throw BadRequestException if missing)
      - Call entity.arm() and save
-[ ] 6. Refactor and run all tests
+[x] 6. Refactor and run all tests
 [ ] 7. Write test: test service throws NotFoundException for non-existent system
 [ ] 8. Make the test pass:
      - Throw NotFoundException when system not found
@@ -97,27 +97,27 @@ Steps:
 This thread implements the entity methods for state transitions.
 
 ```text
-[ ] Implement arm() and disarm() methods in SecuritySystem entity
+[x] Implement arm() and disarm() methods in SecuritySystem entity
 
 Steps:
-[ ] 1. Write unit test in SecuritySystemTest: test disarm() state transition
+[x] 1. Write unit test in SecuritySystemTest: test disarm() state transition
      - Test transition from ARMED to DISARMED
      - Test transition from ALARMED to DISARMED
      - Test already DISARMED stays DISARMED
-[ ] 2. Make the test pass:
+[x] 2. Make the test pass:
      - Add disarm() method to SecuritySystem entity
      - Set state to DISARMED
-[ ] 3. Refactor and run all tests
-[ ] 4. Write unit test: test arm() state transition
+[x] 3. Refactor and run all tests
+[x] 4. Write unit test: test arm() state transition
      - Test transition from DISARMED to ARMED
      - Test cannot arm when ALARMED (throws exception)
      - Test already ARMED stays ARMED
-[ ] 5. Make the test pass:
+[x] 5. Make the test pass:
      - Add arm() method to SecuritySystem entity
      - Transition to ARMED state
      - Throw IllegalStateException if already ALARMED
-[ ] 6. Refactor and run all tests
-[ ] 7. Commit the changes
+[x] 6. Refactor and run all tests
+[x] 7. Commit the changes
 ```
 
 ## Steel Thread 4: Add Top-Level Role Authorization

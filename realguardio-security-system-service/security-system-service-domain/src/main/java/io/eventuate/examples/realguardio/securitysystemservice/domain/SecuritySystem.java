@@ -81,4 +81,15 @@ public class SecuritySystem {
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
     }
+    
+    public void disarm() {
+        this.state = SecuritySystemState.DISARMED;
+    }
+    
+    public void arm() {
+        if (this.state == SecuritySystemState.ALARMED) {
+            throw new IllegalStateException("Cannot arm system in ALARMED state");
+        }
+        this.state = SecuritySystemState.ARMED;
+    }
 }

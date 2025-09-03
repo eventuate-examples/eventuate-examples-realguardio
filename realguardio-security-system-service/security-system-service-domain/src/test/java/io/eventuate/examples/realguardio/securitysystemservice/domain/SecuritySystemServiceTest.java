@@ -10,8 +10,11 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,5 +72,49 @@ class SecuritySystemServiceTest {
         
         // Then
         assertThat(actualSystems).isEmpty();
+    }
+    
+    @Test
+    void shouldDisarmSecuritySystem() throws Exception {
+        // Given
+        Long systemId = 1L;
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        setId(securitySystem, systemId);
+        securitySystem.setLocationId(456L);
+        
+        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
+        when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // When
+        SecuritySystem result = securitySystemService.disarm(systemId);
+        
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getState()).isEqualTo(SecuritySystemState.DISARMED);
+        verify(securitySystemRepository).findById(systemId);
+        verify(securitySystemRepository).save(securitySystem);
+    }
+    
+    @Test
+    void shouldArmSecuritySystem() throws Exception {
+        // Given
+        Long systemId = 1L;
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
+        setId(securitySystem, systemId);
+        securitySystem.setLocationId(456L);
+        
+        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
+        when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // When
+        SecuritySystem result = securitySystemService.arm(systemId);
+        
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getState()).isEqualTo(SecuritySystemState.ARMED);
+        verify(securitySystemRepository).findById(systemId);
+        verify(securitySystemRepository).save(securitySystem);
     }
 }

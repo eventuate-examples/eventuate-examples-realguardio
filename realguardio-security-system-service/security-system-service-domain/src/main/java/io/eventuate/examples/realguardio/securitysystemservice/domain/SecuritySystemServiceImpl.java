@@ -50,11 +50,27 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     
     @Override
     public SecuritySystem arm(Long id) {
-        throw new UnsupportedOperationException("Implement me");
+        SecuritySystem securitySystem = securitySystemRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Security system not found: " + id));
+        
+        if (securitySystem.getLocationId() == null) {
+            throw new BadRequestException("Security system not properly configured: missing location");
+        }
+        
+        securitySystem.arm();
+        return securitySystemRepository.save(securitySystem);
     }
     
     @Override
     public SecuritySystem disarm(Long id) {
-        throw new UnsupportedOperationException("Implement me");
+        SecuritySystem securitySystem = securitySystemRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Security system not found: " + id));
+        
+        if (securitySystem.getLocationId() == null) {
+            throw new BadRequestException("Security system not properly configured: missing location");
+        }
+        
+        securitySystem.disarm();
+        return securitySystemRepository.save(securitySystem);
     }
 }
