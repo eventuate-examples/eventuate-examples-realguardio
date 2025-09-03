@@ -1,13 +1,28 @@
 services:
-  postgres:
+  customer-service-postgres:
     image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
-    volumes:
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: eventuate
+  security-service-postgres:
+    image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: eventuate
+  orchestration-service-postgres:
+    image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: eventuate
   jaeger:
     image: jaegertracing/jaeger:2.6.0
     ports:
@@ -65,9 +80,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EVENTUATE_DATABASE_SCHEMA: securitysystem_schema
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/securitysystem?currentSchema=securitysystem_schema
-      SPRING_DATASOURCE_USERNAME: securitysystemuser
-      SPRING_DATASOURCE_PASSWORD: securitysystempass
+      SPRING_DATASOURCE_URL: jdbc:postgresql://security-service-postgres:5432/eventuate
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
@@ -75,7 +90,7 @@ services:
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
-      - postgres
+      - security-service-postgres
       - kafka
       - jaeger
       - realguardio-iam-service
@@ -117,9 +132,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EVENTUATE_DATABASE_SCHEMA: customer_schema
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/customer?currentSchema=customer_schema
-      SPRING_DATASOURCE_USERNAME: customeruser
-      SPRING_DATASOURCE_PASSWORD: customerpass
+      SPRING_DATASOURCE_URL: jdbc:postgresql://security-service-postgres:5432/eventuate
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
@@ -127,7 +142,7 @@ services:
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
-      - postgres
+      - customer-service-postgres
       - kafka
       - jaeger
       - realguardio-iam-service
@@ -143,9 +158,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EVENTUATE_DATABASE_SCHEMA: orchestration_schema
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orchestration?currentSchema=orchestration_schema
-      SPRING_DATASOURCE_USERNAME: orchestrationuser
-      SPRING_DATASOURCE_PASSWORD: orchestrationpass
+      SPRING_DATASOURCE_URL: jdbc:postgresql://orchestration-service-postgres:5432/eventuate
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
@@ -153,7 +168,7 @@ services:
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
-      - postgres
+      - orchestration-service-postgres
       - kafka
       - jaeger
       - realguardio-iam-service
