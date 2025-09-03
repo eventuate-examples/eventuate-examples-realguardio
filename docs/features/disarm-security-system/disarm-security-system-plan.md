@@ -159,34 +159,34 @@ Steps:
 This thread implements the Customer Service endpoint that returns user roles for a location.
 
 ```text
-[ ] Implement GET /locations/{locationId}/roles endpoint in Customer Service
+[x] Implement GET /locations/{locationId}/roles endpoint in Customer Service
 
 Steps:
-[ ] 1. Write test in LocationRoleControllerTest: test returns roles for user with direct location roles
+[x] 1. Write test in LocationRoleControllerTest: test returns roles for user with direct location roles
      - Create test class with MockMVC setup
      - Mock LocationRoleService
      - Write test expecting roles to be returned
-[ ] 2. Make the test pass:
+[x] 2. Make the test pass:
      - Create RolesResponse DTO with Set<String> roles field
      - Create LocationRoleController with GET mapping for /{locationId}/roles
      - Add @PreAuthorize for REALGUARDIO_CUSTOMER_EMPLOYEE or REALGUARDIO_ADMIN
      - Create LocationRoleService stub
-[ ] 3. Refactor and run all tests
-[ ] 4. Write test: test returns 404 when user has no roles at location
-[ ] 5. Make the test pass:
+[x] 3. Refactor and run all tests
+[x] 4. Write test: test returns 404 when user has no roles at location
+[x] 5. Make the test pass:
      - Update LocationRoleController to return 404 when roles set is empty
-[ ] 6. Refactor and run all tests
-[ ] 7. Write test: test requires authentication
-[ ] 8. Make the test pass:
+[x] 6. Refactor and run all tests
+[x] 7. Write test: test requires authentication
+[x] 8. Make the test pass:
      - Verify Spring Security configuration is correct
-[ ] 9. Refactor and run all tests
-[ ] 10. Write unit test in LocationRoleServiceTest: test getUserRolesAtLocation returns direct roles
-[ ] 11. Make the test pass:
+[x] 9. Refactor and run all tests
+[x] 10. Write unit test in LocationRoleServiceTest: test getUserRolesAtLocation returns direct roles
+[x] 11. Make the test pass:
      - Implement getUserRolesAtLocation method
      - Add repository method findDirectRolesAtLocation(employeeId, locationId)
      - Query direct roles from CustomerEmployeeLocationRole
-[ ] 12. Refactor and run all tests
-[ ] 13. Commit the changes
+[x] 12. Refactor and run all tests
+[x] 13. Commit the changes
 ```
 
 ## Steel Thread 6: Add Team-Based Roles to Customer Service
