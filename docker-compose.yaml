@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: eventuate
-  security-service-postgres:
+  security-system-service-postgres:
     image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
     ports:
       - "5433:5432"
@@ -80,7 +80,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EVENTUATE_DATABASE_SCHEMA: securitysystem_schema
-      SPRING_DATASOURCE_URL: jdbc:postgresql://security-service-postgres:5432/eventuate
+      SPRING_DATASOURCE_URL: jdbc:postgresql://security-system-service-postgres:5432/eventuate
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -90,7 +90,7 @@ services:
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
-      - security-service-postgres
+      - security-system-service-postgres
       - kafka
       - jaeger
       - realguardio-iam-service
@@ -132,7 +132,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EVENTUATE_DATABASE_SCHEMA: customer_schema
-      SPRING_DATASOURCE_URL: jdbc:postgresql://security-service-postgres:5432/eventuate
+      SPRING_DATASOURCE_URL: jdbc:postgresql://customer-service-postgres:5432/eventuate
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -172,3 +172,71 @@ services:
       - kafka
       - jaeger
       - realguardio-iam-service
+
+  cdc:
+    image: eventuateio/eventuate-cdc-service:0.19.0.BUILD-SNAPSHOT
+    ports:
+      - "8099:8080"
+    environment:
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # Kafka leadership configuration
+      SPRING_PROFILES_ACTIVE: "KafkaLeadership"
+      
+      # Customer database pipeline
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_READER: reader1
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_EVENTUATEDATABASESCHEMA: eventuate
+      
+      # Security system database pipeline  
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_READER: reader2
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_EVENTUATEDATABASESCHEMA: eventuate
+      
+      # Orchestration database pipeline
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_READER: reader3
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_EVENTUATEDATABASESCHEMA: eventuate
+      
+      # Reader 1 - Customer database
+      EVENTUATE_CDC_READER_READER1_TYPE: postgres-wal
+      EVENTUATE_CDC_READER_READER1_DATASOURCEURL: jdbc:postgresql://customer-service-postgres:5432/eventuate
+      EVENTUATE_CDC_READER_READER1_DATASOURCEUSERNAME: postgres
+      EVENTUATE_CDC_READER_READER1_DATASOURCEPASSWORD: postgres
+      EVENTUATE_CDC_READER_READER1_DATASOURCEDRIVERCLASSNAME: org.postgresql.Driver
+      EVENTUATE_CDC_READER_READER1_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/customer
+      EVENTUATE_CDC_READER_READER1_OFFSETSTORAGETOPICNAME: customer_schema.cdc_offset_store
+      EVENTUATE_CDC_READER_READER1_OUTBOXID: "1"
+      EVENTUATE_CDC_READER_READER1_MONITORINGSCHEMA: public
+
+      # Reader 2 - Security system database
+      EVENTUATE_CDC_READER_READER2_TYPE: postgres-wal
+      EVENTUATE_CDC_READER_READER2_DATASOURCEURL: jdbc:postgresql://security-system-service-postgres:5432/eventuate
+      EVENTUATE_CDC_READER_READER2_DATASOURCEUSERNAME: postgres
+      EVENTUATE_CDC_READER_READER2_DATASOURCEPASSWORD: postgres
+      EVENTUATE_CDC_READER_READER2_DATASOURCEDRIVERCLASSNAME: org.postgresql.Driver
+      EVENTUATE_CDC_READER_READER2_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/security-system
+      EVENTUATE_CDC_READER_READER2_OFFSETSTORAGETOPICNAME: securitysystem_schema.cdc_offset_store
+      EVENTUATE_CDC_READER_READER2_OUTBOXID: "2"
+      EVENTUATE_CDC_READER_READER2_MONITORINGSCHEMA: public
+      
+      # Reader 3 - Orchestration database
+      EVENTUATE_CDC_READER_READER3_TYPE: postgres-wal
+      EVENTUATE_CDC_READER_READER3_DATASOURCEURL: jdbc:postgresql://orchestration-service-postgres:5432/eventuate
+      EVENTUATE_CDC_READER_READER3_DATASOURCEUSERNAME: postgres
+      EVENTUATE_CDC_READER_READER3_DATASOURCEPASSWORD: postgres
+      EVENTUATE_CDC_READER_READER3_DATASOURCEDRIVERCLASSNAME: org.postgresql.Driver
+      EVENTUATE_CDC_READER_READER3_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/orchestration
+      EVENTUATE_CDC_READER_READER3_OFFSETSTORAGETOPICNAME: orchestration_schema.cdc_offset_store
+      EVENTUATE_CDC_READER_READER3_OUTBOXID: "3"
+      EVENTUATE_CDC_READER_READER3_MONITORINGSCHEMA: public
+      
+      
+    depends_on:
+      - kafka
+      - zookeeper
+      - customer-service-postgres
+      - security-system-service-postgres
+      - orchestration-service-postgres
+      - realguardio-customer-service
+      - realguardio-security-system-service
+      - realguardio-orchestration-service
