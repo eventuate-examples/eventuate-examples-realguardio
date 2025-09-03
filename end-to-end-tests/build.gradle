@@ -1,0 +1,122 @@
+plugins {
+    id 'java'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+group = 'com.realguardio'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://snapshots.repositories.eventuate.io/repository' }
+    mavenLocal()
+}
+
+sourceSets {
+    endToEndTest {
+        java {
+            srcDir 'src/endToEndTest/java'
+        }
+        resources {
+            srcDir 'src/endToEndTest/resources'
+        }
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    endToEndTestImplementation.extendsFrom implementation
+    endToEndTestRuntimeOnly.extendsFrom runtimeOnly
+}
+
+dependencies {
+    // Test Framework
+    endToEndTestImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    endToEndTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    
+    // RestAssured for API Testing
+    endToEndTestImplementation 'io.rest-assured:rest-assured:5.3.2'
+    
+    // Testcontainers
+    endToEndTestImplementation 'org.testcontainers:testcontainers:1.19.1'
+    endToEndTestImplementation 'org.testcontainers:junit-jupiter:1.19.1'
+    
+    // Eventuate Testcontainers support
+    endToEndTestImplementation platform('io.eventuate.platform:eventuate-platform-dependencies:2025.1.BUILD-SNAPSHOT')
+    endToEndTestImplementation 'io.eventuate.common:eventuate-common-testcontainers'
+    endToEndTestImplementation 'io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers'
+    endToEndTestImplementation "io.eventuate.platform.testcontainer.support:eventuate-platform-testcontainer-support-service:$eventuatePlatformTestContainerSupportVersion"
+    endToEndTestImplementation "io.eventuate.cdc:eventuate-cdc-testcontainers"
+
+    endToEndTestImplementation "io.eventuate.examples.spring-authorization-server:authorization-server-test-containers:0.1.0.BUILD-SNAPSHOT"
+    endToEndTestImplementation 'org.springframework.boot:spring-boot-starter-webflux:3.4.1'
+
+    // Logging
+    endToEndTestImplementation 'org.slf4j:slf4j-api:2.0.9'
+    endToEndTestImplementation 'ch.qos.logback:logback-classic:1.4.11'
+    
+    // Assertions
+    endToEndTestImplementation 'org.assertj:assertj-core:3.24.2'
+    
+    // JSON Processing
+    endToEndTestImplementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+    
+    // Unit testing for DTOs
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+
+    // Main dependencies for DTOs
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+}
+
+task endToEndTest(type: Test) {
+    description = 'Runs end-to-end tests'
+    group = 'verification'
+    
+    testClassesDirs = sourceSets.endToEndTest.output.classesDirs
+    classpath = sourceSets.endToEndTest.runtimeClasspath
+    
+    useJUnitPlatform()
+
+    systemProperty "eventuate.servicecontainer.serviceimage.version", project.version
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+    
+    // Increase heap size for Testcontainers
+    maxHeapSize = '2g'
+    jvmArgs '-XX:MaxMetaspaceSize=512m'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+check.dependsOn endToEndTest
+
+endToEndTest {
+    systemProperty "spring.profiles.active", "test,postgres"
+}
+
+['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service'].each { serviceDir ->
+    def taskName = "assemble${serviceDir.replaceAll(/(^\w|-\w)/) { it[0].toUpperCase() }.replaceAll('-', '') }"
+    task "$taskName"(type: GradleBuild) {
+        dir = "../$serviceDir"
+        tasks = ['assemble']
+    }
+    endToEndTest.dependsOn taskName
+}

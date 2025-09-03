@@ -1,7 +1,8 @@
 package io.realguardio.orchestration.sagas.proxies;
 
 import io.eventuate.tram.commands.consumer.CommandWithDestination;
-import io.realguardio.customer.api.*;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.*;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.*;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -3,7 +3,8 @@ package io.realguardio.orchestration.sagas.proxies;
 import io.eventuate.tram.commands.consumer.CommandWithDestination;
 import io.eventuate.tram.commands.consumer.CommandWithDestinationBuilder;
 import io.eventuate.tram.sagas.simpledsl.annotations.SagaParticipantProxy;
-import io.realguardio.customer.api.*;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.*;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.*;
 
 @SagaParticipantProxy(channel = CustomerServiceProxy.CHANNEL)
 public class CustomerServiceProxy {

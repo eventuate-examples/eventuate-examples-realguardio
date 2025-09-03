@@ -1,9 +1,11 @@
 package io.realguardio.orchestration.sagas;
 
-import io.realguardio.customer.api.*;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.*;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.*;
 import io.realguardio.orchestration.sagas.proxies.CustomerServiceProxy;
 import io.realguardio.orchestration.sagas.proxies.SecuritySystemServiceProxy;
-import io.realguardio.securitysystem.api.*;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.*;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
