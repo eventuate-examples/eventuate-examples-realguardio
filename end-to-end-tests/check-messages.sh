@@ -3,7 +3,7 @@
 # Find postgres containers by their network aliases
 CUSTOMER_DB_CONTAINER=$(docker ps --format "{{.Names}}" --filter "ancestor=eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT" | xargs -I {} sh -c 'docker inspect {} | grep -q "customer-service-db" && echo {}' | head -1)
 ORCHESTRATION_DB_CONTAINER=$(docker ps --format "{{.Names}}" --filter "ancestor=eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT" | xargs -I {} sh -c 'docker inspect {} | grep -q "orchestration-service-db" && echo {}' | head -1)
-SECURITY_DB_CONTAINER=$(docker ps --format "{{.Names}}" --filter "ancestor=eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT" | xargs -I {} sh -c 'docker inspect {} | grep -q "security-service-db" && echo {}' | head -1)
+SECURITY_DB_CONTAINER=$(docker ps --format "{{.Names}}" --filter "ancestor=eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT" | xargs -I {} sh -c 'docker inspect {} | grep -q "security-system-service-db" && echo {}' | head -1)
 
 if [ -z "$CUSTOMER_DB_CONTAINER" ] || [ -z "$ORCHESTRATION_DB_CONTAINER" ] || [ -z "$SECURITY_DB_CONTAINER" ]; then
     echo "Error: Could not find all required postgres containers"

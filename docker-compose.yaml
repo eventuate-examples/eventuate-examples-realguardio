@@ -1,27 +1,27 @@
 services:
-  customer-service-postgres:
+  customer-service-db:
     image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgresuser
+      POSTGRES_PASSWORD: postgrespw
       POSTGRES_DB: eventuate
-  security-system-service-postgres:
+  security-system-service-db:
     image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgresuser
+      POSTGRES_PASSWORD: postgrespw
       POSTGRES_DB: eventuate
-  orchestration-service-postgres:
+  orchestration-service-db:
     image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
     ports:
       - "5434:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgresuser
+      POSTGRES_PASSWORD: postgrespw
       POSTGRES_DB: eventuate
   jaeger:
     image: jaegertracing/jaeger:2.6.0
@@ -79,10 +79,10 @@ services:
       - "3001:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      EVENTUATE_DATABASE_SCHEMA: securitysystem_schema
-      SPRING_DATASOURCE_URL: jdbc:postgresql://security-system-service-postgres:5432/eventuate
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      EVENTUATE_DATABASE_SCHEMA: public
+      SPRING_DATASOURCE_URL: jdbc:postgresql://security-system-service-db:5432/eventuate
+      SPRING_DATASOURCE_USERNAME: postgresuser
+      SPRING_DATASOURCE_PASSWORD: postgrespw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
@@ -90,7 +90,7 @@ services:
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
-      - security-system-service-postgres
+      - security-system-service-db
       - kafka
       - jaeger
       - realguardio-iam-service
@@ -131,10 +131,10 @@ services:
       - "3002:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      EVENTUATE_DATABASE_SCHEMA: customer_schema
-      SPRING_DATASOURCE_URL: jdbc:postgresql://customer-service-postgres:5432/eventuate
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      EVENTUATE_DATABASE_SCHEMA: public
+      SPRING_DATASOURCE_URL: jdbc:postgresql://customer-service-db:5432/eventuate
+      SPRING_DATASOURCE_USERNAME: postgresuser
+      SPRING_DATASOURCE_PASSWORD: postgrespw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
@@ -142,7 +142,7 @@ services:
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
-      - customer-service-postgres
+      - customer-service-db
       - kafka
       - jaeger
       - realguardio-iam-service
@@ -157,10 +157,10 @@ services:
       - "3003:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      EVENTUATE_DATABASE_SCHEMA: orchestration_schema
-      SPRING_DATASOURCE_URL: jdbc:postgresql://orchestration-service-postgres:5432/eventuate
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      EVENTUATE_DATABASE_SCHEMA: public
+      SPRING_DATASOURCE_URL: jdbc:postgresql://orchestration-service-db:5432/eventuate
+      SPRING_DATASOURCE_USERNAME: postgresuser
+      SPRING_DATASOURCE_PASSWORD: postgrespw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
@@ -168,7 +168,7 @@ services:
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
-      - orchestration-service-postgres
+      - orchestration-service-db
       - kafka
       - jaeger
       - realguardio-iam-service
@@ -185,23 +185,23 @@ services:
       # Customer database pipeline
       EVENTUATE_CDC_PIPELINE_PIPELINE1_TYPE: eventuate-tram
       EVENTUATE_CDC_PIPELINE_PIPELINE1_READER: reader1
-      EVENTUATE_CDC_PIPELINE_PIPELINE1_EVENTUATEDATABASESCHEMA: eventuate
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_EVENTUATEDATABASESCHEMA: public
       
       # Security system database pipeline  
       EVENTUATE_CDC_PIPELINE_PIPELINE2_TYPE: eventuate-tram
       EVENTUATE_CDC_PIPELINE_PIPELINE2_READER: reader2
-      EVENTUATE_CDC_PIPELINE_PIPELINE2_EVENTUATEDATABASESCHEMA: eventuate
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_EVENTUATEDATABASESCHEMA: public
       
       # Orchestration database pipeline
       EVENTUATE_CDC_PIPELINE_PIPELINE3_TYPE: eventuate-tram
       EVENTUATE_CDC_PIPELINE_PIPELINE3_READER: reader3
-      EVENTUATE_CDC_PIPELINE_PIPELINE3_EVENTUATEDATABASESCHEMA: eventuate
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_EVENTUATEDATABASESCHEMA: public
       
       # Reader 1 - Customer database
       EVENTUATE_CDC_READER_READER1_TYPE: postgres-wal
-      EVENTUATE_CDC_READER_READER1_DATASOURCEURL: jdbc:postgresql://customer-service-postgres:5432/eventuate
-      EVENTUATE_CDC_READER_READER1_DATASOURCEUSERNAME: postgres
-      EVENTUATE_CDC_READER_READER1_DATASOURCEPASSWORD: postgres
+      EVENTUATE_CDC_READER_READER1_DATASOURCEURL: jdbc:postgresql://customer-service-db:5432/eventuate
+      EVENTUATE_CDC_READER_READER1_DATASOURCEUSERNAME: postgresuser
+      EVENTUATE_CDC_READER_READER1_DATASOURCEPASSWORD: postgrespw
       EVENTUATE_CDC_READER_READER1_DATASOURCEDRIVERCLASSNAME: org.postgresql.Driver
       EVENTUATE_CDC_READER_READER1_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/customer
       EVENTUATE_CDC_READER_READER1_OFFSETSTORAGETOPICNAME: customer_schema.cdc_offset_store
@@ -210,9 +210,9 @@ services:
 
       # Reader 2 - Security system database
       EVENTUATE_CDC_READER_READER2_TYPE: postgres-wal
-      EVENTUATE_CDC_READER_READER2_DATASOURCEURL: jdbc:postgresql://security-system-service-postgres:5432/eventuate
-      EVENTUATE_CDC_READER_READER2_DATASOURCEUSERNAME: postgres
-      EVENTUATE_CDC_READER_READER2_DATASOURCEPASSWORD: postgres
+      EVENTUATE_CDC_READER_READER2_DATASOURCEURL: jdbc:postgresql://security-system-service-db:5432/eventuate
+      EVENTUATE_CDC_READER_READER2_DATASOURCEUSERNAME: postgresuser
+      EVENTUATE_CDC_READER_READER2_DATASOURCEPASSWORD: postgrespw
       EVENTUATE_CDC_READER_READER2_DATASOURCEDRIVERCLASSNAME: org.postgresql.Driver
       EVENTUATE_CDC_READER_READER2_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/security-system
       EVENTUATE_CDC_READER_READER2_OFFSETSTORAGETOPICNAME: securitysystem_schema.cdc_offset_store
@@ -221,9 +221,9 @@ services:
       
       # Reader 3 - Orchestration database
       EVENTUATE_CDC_READER_READER3_TYPE: postgres-wal
-      EVENTUATE_CDC_READER_READER3_DATASOURCEURL: jdbc:postgresql://orchestration-service-postgres:5432/eventuate
-      EVENTUATE_CDC_READER_READER3_DATASOURCEUSERNAME: postgres
-      EVENTUATE_CDC_READER_READER3_DATASOURCEPASSWORD: postgres
+      EVENTUATE_CDC_READER_READER3_DATASOURCEURL: jdbc:postgresql://orchestration-service-db:5432/eventuate
+      EVENTUATE_CDC_READER_READER3_DATASOURCEUSERNAME: postgresuser
+      EVENTUATE_CDC_READER_READER3_DATASOURCEPASSWORD: postgrespw
       EVENTUATE_CDC_READER_READER3_DATASOURCEDRIVERCLASSNAME: org.postgresql.Driver
       EVENTUATE_CDC_READER_READER3_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/orchestration
       EVENTUATE_CDC_READER_READER3_OFFSETSTORAGETOPICNAME: orchestration_schema.cdc_offset_store
@@ -234,9 +234,9 @@ services:
     depends_on:
       - kafka
       - zookeeper
-      - customer-service-postgres
-      - security-system-service-postgres
-      - orchestration-service-postgres
+      - customer-service-db
+      - security-system-service-db
+      - orchestration-service-db
       - realguardio-customer-service
       - realguardio-security-system-service
       - realguardio-orchestration-service

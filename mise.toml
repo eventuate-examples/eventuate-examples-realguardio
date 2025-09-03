@@ -164,3 +164,10 @@ run = "docker compose exec postgres psql -U postgres -d securitysystem -c 'SELEC
 
 [tasks.gh-download] 
 run = "rm -fr _download && gh run download --dir _download -n logs -n test-reports -n compose-up-logs"
+
+[tasks.backend-end-to-end-with-compose]
+dir = "end-to-end-tests"
+run = [
+    "DOCKERFILE_SUFFIX=-local ./gradlew -P endToEndTestMode=DockerCompose clean build",
+    "mise compose-down"
+]

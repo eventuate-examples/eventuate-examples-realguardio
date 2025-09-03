@@ -110,6 +110,13 @@ check.dependsOn endToEndTest
 
 endToEndTest {
     systemProperty "spring.profiles.active", "test,postgres"
+    if (project.hasProperty('endToEndTestMode'))
+        systemProperty "endToEndTestMode", endToEndTestMode
+}
+
+task assembleServices {
+    description = 'Assembles all dependent services'
+    group = 'build setup'
 }
 
 ['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service'].each { serviceDir ->
@@ -118,5 +125,23 @@ endToEndTest {
         dir = "../$serviceDir"
         tasks = ['assemble']
     }
+    assembleServices.dependsOn taskName
     endToEndTest.dependsOn taskName
+
 }
+
+task dockerComposeUp(type: Exec) {
+    description = 'Starts all services using docker compose'
+    group = 'application'
+
+    dependsOn "assembleServices"
+
+    commandLine 'docker', 'compose', 'up', '-d', '--build', '--wait', "realguardio-iam-service", "cdc"
+
+    // Optional: Set the working directory if docker-compose.yml is not in the project root
+    // workingDir '../'
+}
+
+if (project.hasProperty('endToEndTestMode') && endToEndTestMode == 'DockerCompose')
+    endToEndTest.dependsOn dockerComposeUp
+

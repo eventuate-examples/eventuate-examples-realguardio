@@ -42,6 +42,9 @@ jobs:
     - name: Build Java services
       run: mise build
 
+    - name: Run backend end-to-end tests with compose
+      run: mise backend-end-to-end-with-compose
+
     - name: Create logs
       run: mkdir -p logs
 
