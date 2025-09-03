@@ -4,7 +4,9 @@
 
 This implementation plan uses the Steel Thread methodology to implement the arm/disarm security system feature. Each thread represents a narrow end-to-end flow that delivers value, building progressively on previous threads.
 
-The plan consists of 13 progressive threads that build the feature from foundation to completion.
+The plan follows an **outside-in development approach**, starting with the controller layer and working inward through the service and entity layers, then adding authorization, inter-service communication, and finally comprehensive testing and error handling.
+
+The plan consists of 12 progressive threads that build the feature from the outside-in.
 
 ## Implementation Instructions for Coding Agent
 
@@ -14,75 +16,31 @@ When implementing this plan:
 3. Run all tests after each thread to ensure nothing is broken
 4. Commit after each successful thread completion
 
-## Steel Thread 1: Add locationId to SecuritySystem Entity
+## Steel Thread 1: Create Controller Endpoint with Basic DTO
 
-This thread establishes the foundation by adding the locationId field to the SecuritySystem entity and database.
-
-```text
-[ ] Add locationId field to the SecuritySystem entity and create database migration
-
-Steps:
-[ ] 1. Write test in SecuritySystemTest: verify locationId field getter/setter
-[ ] 2. Make the test pass:
-     - Add private Long locationId field with @Column(name = "location_id")
-     - Add getter and setter methods
-[ ] 3. Refactor and run all tests
-[ ] 4. Create Flyway migration script:
-     - Create migration file: V[next_version]__add_location_id_to_security_systems.sql
-     - Add SQL: ALTER TABLE security_systems ADD COLUMN location_id BIGINT;
-[ ] 5. Write test in SecuritySystemDtoTest: verify locationId field
-[ ] 6. Make the test pass:
-     - Update SecuritySystemDto to include locationId field
-[ ] 7. Refactor and run all tests
-[ ] 8. Write test in SecuritySystemMapperTest: verify mapper correctly maps locationId
-[ ] 9. Make the test pass:
-     - Update SecuritySystemMapper to map the locationId field
-[ ] 10. Refactor and run all tests
-[ ] 11. Commit the changes
-```
-
-## Steel Thread 2: Create SecuritySystemActionRequest DTO
-
-This thread creates the request DTO for the arm/disarm endpoint.
+This thread starts with the controller layer, creating the endpoint and basic request DTO.
 
 ```text
-[ ] Create SecuritySystemActionRequest DTO and SecuritySystemAction enum
+[ ] Create PUT /securitysystems/{id} endpoint with basic DTO
 
 Steps:
-[ ] 1. Write test in SecuritySystemActionRequestTest: verify action field getter/setter
-[ ] 2. Make the test pass:
-     - Create SecuritySystemAction enum with values: ARM, DISARM
-     - Create SecuritySystemActionRequest class with action field
-     - Add getter and setter
-[ ] 3. Refactor and run all tests
-[ ] 4. Write test: verify validation of null action
-[ ] 5. Make the test pass:
-     - Add validation annotations if needed
-[ ] 6. Refactor and run all tests
-[ ] 7. Commit the changes
-```
-
-## Steel Thread 3: Implement Basic PUT Endpoint Without Authorization
-
-This thread implements the basic PUT endpoint that can arm/disarm a security system without authorization checks.
-
-```text
-[ ] Implement basic PUT /securitysystems/{id} endpoint without authorization
-
-Steps:
-[ ] 1. Write test in SecuritySystemControllerTest: test PUT request with ARM action returns 200
+[ ] 1. Write test in SecuritySystemControllerTest: test PUT request with DISARM action returns 200
      - Create test class with MockMVC setup
      - Mock SecuritySystemService
-     - Write test for ARM action
+     - Create minimal SecuritySystemActionRequest DTO inline for test
+     - Write test for DISARM action expecting 200 response
 [ ] 2. Make the test pass:
+     - Create SecuritySystemAction enum with values: ARM, DISARM
+     - Create SecuritySystemActionRequest class with action field and getter/setter
      - Create or update SecuritySystemController with PUT mapping for /{id}
      - Accept SecuritySystemActionRequest in request body
-     - Call service.arm() for ARM action
+     - Call service.disarm() for DISARM action (create stub method)
+     - Return 200 OK
 [ ] 3. Refactor and run all tests
-[ ] 4. Write test: test PUT request with DISARM action returns 200
+[ ] 4. Write test: test PUT request with ARM action returns 200
 [ ] 5. Make the test pass:
-     - Update controller to handle DISARM action
-     - Call service.disarm() for DISARM action
+     - Update controller to handle ARM action
+     - Call service.arm() for ARM action (create stub method)
 [ ] 6. Refactor and run all tests
 [ ] 7. Write test: test invalid action returns 400
 [ ] 8. Make the test pass:
@@ -94,27 +52,72 @@ Steps:
      - Handle NotFoundException from service
      - Return 404 Not Found
 [ ] 12. Refactor and run all tests
-[ ] 13. Write unit test in SecuritySystemServiceTest: test arm() method changes state to ARMED
-[ ] 14. Make the test pass:
+[ ] 13. Commit the changes
+```
+
+## Steel Thread 2: Implement Service Layer Methods
+
+This thread implements the service layer that the controller depends on.
+
+```text
+[ ] Implement arm() and disarm() methods in SecuritySystemService
+
+Steps:
+[ ] 1. Write unit test in SecuritySystemServiceTest: test disarm() method changes state to DISARMED
+     - Mock SecuritySystemRepository
+     - Create test SecuritySystem entity
+     - Verify disarm() loads system, calls entity method, and saves
+[ ] 2. Make the test pass:
+     - Implement disarm() method in SecuritySystemService
+     - Load SecuritySystem by id
+     - Check if locationId is present (throw BadRequestException if missing)
+     - Call entity.disarm() and save
+[ ] 3. Refactor and run all tests
+[ ] 4. Write unit test: test arm() method changes state to ARMED
+[ ] 5. Make the test pass:
      - Implement arm() method in SecuritySystemService
      - Load SecuritySystem by id
      - Check if locationId is present (throw BadRequestException if missing)
      - Call entity.arm() and save
-[ ] 15. Refactor and run all tests
-[ ] 16. Write unit test: test disarm() method changes state to DISARMED
-[ ] 17. Make the test pass:
-     - Implement disarm() method in SecuritySystemService
-[ ] 18. Refactor and run all tests
-[ ] 19. Write unit test in SecuritySystemTest: test arm() state transition
-[ ] 20. Make the test pass:
-     - Add arm() method to SecuritySystem entity
-     - Transition to ARMED state (throw exception if already ALARMED)
-[ ] 21. Refactor and run all tests
-[ ] 22. Write unit test: test disarm() state transition
-[ ] 23. Make the test pass:
+[ ] 6. Refactor and run all tests
+[ ] 7. Write test: test service throws NotFoundException for non-existent system
+[ ] 8. Make the test pass:
+     - Throw NotFoundException when system not found
+[ ] 9. Refactor and run all tests
+[ ] 10. Write test: test service throws BadRequestException when locationId is null
+[ ] 11. Make the test pass:
+     - Add locationId null check
+     - Throw BadRequestException with appropriate message
+[ ] 12. Refactor and run all tests
+[ ] 13. Commit the changes
+```
+
+## Steel Thread 3: Implement Entity State Transitions
+
+This thread implements the entity methods for state transitions.
+
+```text
+[ ] Implement arm() and disarm() methods in SecuritySystem entity
+
+Steps:
+[ ] 1. Write unit test in SecuritySystemTest: test disarm() state transition
+     - Test transition from ARMED to DISARMED
+     - Test transition from ALARMED to DISARMED
+     - Test already DISARMED stays DISARMED
+[ ] 2. Make the test pass:
      - Add disarm() method to SecuritySystem entity
-[ ] 24. Refactor and run all tests
-[ ] 25. Commit the changes
+     - Set state to DISARMED
+[ ] 3. Refactor and run all tests
+[ ] 4. Write unit test: test arm() state transition
+     - Test transition from DISARMED to ARMED
+     - Test cannot arm when ALARMED (throws exception)
+     - Test already ARMED stays ARMED
+[ ] 5. Make the test pass:
+     - Add arm() method to SecuritySystem entity
+     - Transition to ARMED state
+     - Throw IllegalStateException if already ALARMED
+[ ] 6. Refactor and run all tests
+[ ] 7. Commit the changes
 ```
 
 ## Steel Thread 4: Add Top-Level Role Authorization
@@ -148,11 +151,7 @@ Steps:
      - Create test fixture for employee JWT token
      - Verify employee can access endpoint
 [ ] 12. Refactor and run all tests
-[ ] 13. Write unit test in SecuritySystemServiceTest: verify @PreAuthorize on arm() method
-[ ] 14. Make the test pass:
-     - Add @PreAuthorize annotations to service methods arm() and disarm()
-[ ] 15. Refactor and run all tests
-[ ] 16. Commit the changes
+[ ] 13. Commit the changes
 ```
 
 ## Steel Thread 5: Create Customer Service Location Roles Endpoint
@@ -250,35 +249,35 @@ This thread integrates the Customer Service client to enforce location-based per
 [ ] Integrate location-based authorization in SecuritySystemService
 
 Steps:
-[ ] 1. Write test in SecuritySystemServiceTest: admin bypasses location check when arming
+[ ] 1. Write test in SecuritySystemServiceTest: admin bypasses location check when disarming
 [ ] 2. Make the test pass:
      - Inject CustomerServiceClient (mock in test)
      - Add isCustomerEmployee() helper method
-     - Update arm() method to check if user is customer employee
+     - Update disarm() method to check if user is customer employee
      - Skip location check for admin
 [ ] 3. Refactor and run all tests
-[ ] 4. Write test: employee with CAN_ARM permission can arm
+[ ] 4. Write test: employee with CAN_DISARM permission can disarm
 [ ] 5. Make the test pass:
      - Add validateLocationPermission() method
      - Add extractJwtFromCurrentAuthentication() method
-     - Call validateLocationPermission for employees in arm()
+     - Call validateLocationPermission for employees in disarm()
 [ ] 6. Refactor and run all tests
-[ ] 7. Write test: employee without CAN_ARM permission gets ForbiddenException
+[ ] 7. Write test: employee without CAN_DISARM permission gets ForbiddenException
 [ ] 8. Make the test pass:
      - Create ForbiddenException class
      - Throw ForbiddenException when permission missing
 [ ] 9. Refactor and run all tests
-[ ] 10. Write test: admin bypasses location check when disarming
+[ ] 10. Write test: admin bypasses location check when arming
 [ ] 11. Make the test pass:
-     - Update disarm() method similar to arm()
+     - Update arm() method similar to disarm()
 [ ] 12. Refactor and run all tests
-[ ] 13. Write test: employee with CAN_DISARM permission can disarm
+[ ] 13. Write test: employee with CAN_ARM permission can arm
 [ ] 14. Make the test pass:
-     - Call validateLocationPermission for employees in disarm()
+     - Call validateLocationPermission for employees in arm()
 [ ] 15. Refactor and run all tests
-[ ] 16. Write test: employee without CAN_DISARM permission gets ForbiddenException
+[ ] 16. Write test: employee without CAN_ARM permission gets ForbiddenException
 [ ] 17. Make the test pass:
-     - Ensure disarm() throws ForbiddenException when permission missing
+     - Ensure arm() throws ForbiddenException when permission missing
 [ ] 18. Refactor and run all tests
 [ ] 19. Write test: handle Customer Service unavailable
 [ ] 20. Make the test pass:
@@ -338,7 +337,43 @@ Steps:
 [ ] 9. Commit the changes
 ```
 
-## Steel Thread 11: Add End-to-End Integration Tests (Happy Path)
+## Steel Thread 11: Add Error Handling and Responses
+
+This thread implements proper error handling and standardized error responses.
+
+```text
+[ ] Implement comprehensive error handling
+
+Steps:
+[ ] 1. Write integration test: test 400 for invalid action
+[ ] 2. Make the test pass:
+     - Create ErrorResponse DTO with error, message, timestamp, path fields
+     - Create @ControllerAdvice class for global exception handling
+     - Handle BadRequestException → 400
+[ ] 3. Refactor and run all tests
+[ ] 4. Write integration test: test 400 for missing locationId
+[ ] 5. Make the test pass:
+     - Ensure BadRequestException is thrown for missing locationId
+     - Verify error response format
+[ ] 6. Refactor and run all tests
+[ ] 7. Write integration test: test 403 for insufficient permissions
+[ ] 8. Make the test pass:
+     - Handle ForbiddenException → 403
+     - Update exception classes with meaningful messages
+[ ] 9. Refactor and run all tests
+[ ] 10. Write integration test: test 404 for non-existent security system
+[ ] 11. Make the test pass:
+     - Handle NotFoundException → 404
+[ ] 12. Refactor and run all tests
+[ ] 13. Write integration test: test 503 when Customer Service is unavailable
+[ ] 14. Make the test pass:
+     - Handle ServiceUnavailableException → 503
+[ ] 15. Refactor and run all tests
+[ ] 16. Run all tests to ensure nothing is broken
+[ ] 17. Commit the changes
+```
+
+## Steel Thread 12: Add End-to-End Integration Tests
 
 This thread adds comprehensive end-to-end integration tests using real services.
 
@@ -369,72 +404,13 @@ Steps:
 [ ] 7. Write test: Inter-service communication flow
      - Verify Security Service correctly calls Customer Service
      - Verify role aggregation works correctly
-[ ] 8. Configure test data fixtures and cleanup
-[ ] 9. Run all integration tests
-[ ] 10. Run all tests to ensure nothing is broken
-[ ] 11. Commit the changes
-```
-
-## Steel Thread 12: Add Error Handling and Responses
-
-This thread implements proper error handling and standardized error responses after the happy path is fully working.
-
-```text
-[ ] Implement comprehensive error handling
-
-Steps:
-[ ] 1. Write integration test: test 400 for invalid action
-[ ] 2. Make the test pass:
-     - Create ErrorResponse DTO with error, message, timestamp, path fields
-     - Create @ControllerAdvice class for global exception handling
-     - Handle BadRequestException → 400
-[ ] 3. Refactor and run all tests
-[ ] 4. Write integration test: test 400 for missing locationId
-[ ] 5. Make the test pass:
-     - Ensure BadRequestException is thrown for missing locationId
-     - Verify error response format
-[ ] 6. Refactor and run all tests
-[ ] 7. Write integration test: test 403 for insufficient permissions
-[ ] 8. Make the test pass:
-     - Handle ForbiddenException → 403
-     - Update exception classes with meaningful messages
-[ ] 9. Refactor and run all tests
-[ ] 10. Write integration test: test 404 for non-existent security system
-[ ] 11. Make the test pass:
-     - Handle NotFoundException → 404
-[ ] 12. Refactor and run all tests
-[ ] 13. Write integration test: test 503 when Customer Service is unavailable
-[ ] 14. Make the test pass:
-     - Handle ServiceUnavailableException → 503
-[ ] 15. Refactor and run all tests
-[ ] 16. Add error scenario tests to E2E test suite:
+[ ] 8. Add error scenario tests to E2E test suite:
      - Verify error responses in end-to-end context
      - Test error flows with real services
-[ ] 17. Run all tests to ensure nothing is broken
-[ ] 18. Commit the changes
-```
-
-## Steel Thread 13: Documentation and Deployment
-
-This thread finalizes the implementation with documentation and deployment configuration.
-
-```text
-[ ] Complete documentation and deployment configuration
-
-Steps:
-[ ] 1. Update API documentation (OpenAPI/Swagger)
-[ ] 2. Add deployment configuration:
-     - Update Docker compose files
-     - Add environment variables
-     - Update Kubernetes manifests if applicable
-[ ] 3. Create or update README with:
-     - Setup instructions
-     - Configuration requirements
-     - API usage examples
-[ ] 4. Add migration scripts to deployment pipeline
-[ ] 5. Configure feature flags if needed
-[ ] 6. Run final test suite
-[ ] 7. Commit the changes
+[ ] 9. Configure test data fixtures and cleanup
+[ ] 10. Run all integration tests
+[ ] 11. Run all tests to ensure nothing is broken
+[ ] 12. Commit the changes
 ```
 
 ## Verification Checklist
@@ -456,6 +432,8 @@ After completing all threads, verify:
 
 ## Change History
 
+- 2025-09-03: Reordered plan to follow outside-in development approach, starting with controller layer
+- 2025-09-03: Removed Steel Thread 1 (Add locationId to SecuritySystem Entity) as SecuritySystem already has locationId field; renumbered remaining threads
 - 2025-08-29: Removed caching and rate limiting threads (original Steel Thread 12 and 13) as they are not requirements
 - 2025-08-29: Updated Steel Thread 11 (originally 12) to clarify end-to-end tests use real services via test containers (not mocks)
 - 2025-08-29: Updated Steel Thread 10 (originally 11) to remove concurrent modification testing
@@ -464,4 +442,4 @@ After completing all threads, verify:
 - 2025-08-29: Removed specific commit messages from all threads (commit messages to be determined at commit time)
 - 2025-08-29: Updated controller tests to use MockMVC unit tests instead of integration tests
 - 2025-08-29: Restructured all threads to follow strict TDD methodology: write one test, make it pass, refactor, repeat
-- 2025-08-29: Total: 13 threads
+- 2025-08-29: Total: 12 threads
