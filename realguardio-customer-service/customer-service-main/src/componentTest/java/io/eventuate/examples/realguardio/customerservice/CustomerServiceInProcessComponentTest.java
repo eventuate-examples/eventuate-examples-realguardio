@@ -4,6 +4,7 @@ import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.
 import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
 import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
+import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,6 +95,30 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 
 		assertThat(getRolesForLocation(companyAdminAccessToken, locationId).getRoles()).isEmpty();
 
+		assignDisarmRoleToSelfAtLocation(companyAdminAccessToken, customerSummary, locationId);
+
+		assertThat(getRolesForLocation(companyAdminAccessToken, locationId).getRoles()).contains("DISARM");
+
+	}
+
+	private void assignDisarmRoleToSelfAtLocation(String companyAdminAccessToken, CustomerSummary customerSummary, Long locationId) {
+		String requestBody = """
+			{
+				"employeeId": %d,
+				"locationId": %d,
+				"roleName": "DISARM"
+			}
+			""".formatted(customerSummary.employeeId(), locationId);
+
+		RestAssured.given()
+				.baseUri(baseUri)
+				.header("Authorization", "Bearer " + companyAdminAccessToken)
+				.contentType("application/json")
+				.body(requestBody)
+				.when()
+				.put("/customers/" + customerSummary.customerId() + "/location-roles")
+				.then()
+				.statusCode(200);
 	}
 
 

@@ -62,22 +62,16 @@ public class JwtTokenHelper {
         if (hostHeader != null) {
             requestSpec = requestSpec.header("Host", hostHeader);
         }
-        
-        String tokenResponseBody = requestSpec
+
+        TokenResponse tokenResponse = requestSpec
                 .bodyValue("grant_type=password&username=" + username + "&password=" + password)
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(TokenResponse.class)
                 .block(TIMEOUT);
         
-        logger.info("Token response: {}", tokenResponseBody);
-        
-        // Parse JSON response using ObjectMapper
-        try {
-            TokenResponse tokenResponse = objectMapper.readValue(tokenResponseBody, TokenResponse.class);
-            return tokenResponse.accessToken();
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to parse token response", e);
-        }
+        logger.info("Token response: {}", tokenResponse);
+
+        return tokenResponse.accessToken();
     }
     
     private static String getJwtToken(int iamServicePort, String hostHeader) {

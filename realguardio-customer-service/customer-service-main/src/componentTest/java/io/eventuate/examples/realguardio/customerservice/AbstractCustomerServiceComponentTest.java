@@ -68,19 +68,22 @@ public abstract class AbstractCustomerServiceComponentTest {
 
 
   protected RolesResponse getRolesForLocation(String realGuardIOAdminAccessToken, Long locationId) {
-return RestAssured.given()
-.baseUri(baseUri)
-.header("Authorization", "Bearer " + realGuardIOAdminAccessToken)
-.when()
-.get("/locations/" + locationId + "/roles")
-.then()
-.statusCode(200)
-.extract()
-.body()
-.as(RolesResponse.class);
+    logger.info("Getting roles for locationId: {}", locationId);
+    return RestAssured.given()
+        .baseUri(baseUri)
+        .header("Authorization", "Bearer " + realGuardIOAdminAccessToken)
+        .when()
+        .get("/locations/" + locationId + "/roles")
+        .then()
+        .statusCode(200)
+        .extract()
+        .body()
+        .as(RolesResponse.class);
   }
 
   protected Long createLocationForSecuritySystem(long customerId, long securitySystemId) {
+    logger.info("Creating location for customerId: {}, securitySystemId: {}", customerId, securitySystemId);
+
     String locationName = "Office Front Door";
     String replyTo = UUID.randomUUID().toString();
 
@@ -107,6 +110,8 @@ return RestAssured.given()
   protected abstract String sendCommand(CreateLocationWithSecuritySystemCommand command, String replyTo);
 
   protected CustomerSummary createCustomer(EmailAddress adminUser, String realGuardIOAdminAccessToken) {
+
+    logger.info("Creating customer with admin user {}", adminUser);
     // Create customer
     String customerJson = """
 {
@@ -145,7 +150,7 @@ return RestAssured.given()
   }
 
   protected String getAccessTokenForRealGuardIoAdmin() {
-return JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
+    return JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
   }
 
 

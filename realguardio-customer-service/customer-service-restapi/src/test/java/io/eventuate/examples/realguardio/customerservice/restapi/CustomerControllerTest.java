@@ -3,6 +3,7 @@ package io.eventuate.examples.realguardio.customerservice.restapi;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerAndCustomerEmployee;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeLocationRole;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +23,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -158,6 +161,48 @@ class CustomerControllerTest {
             .andExpect(jsonPath("$.id").value(employeeId))
             .andExpect(jsonPath("$.customerId").value(customerId))
             .andExpect(jsonPath("$.memberId").value(memberId));
+    }
+
+    private static final String ASSIGN_LOCATION_ROLE_REQUEST_JSON = """
+        {
+            "employeeId": 1,
+            "locationId": 123,
+            "roleName": "DISARM"
+        }
+        """;
+
+    @Test
+    @WithMockUser(roles = "REALGUARDIO_CUSTOMER_EMPLOYEE")
+    void shouldAssignLocationRole() throws Exception {
+        long customerId = 10L;
+        long employeeId = 1L;
+        long locationId = 123L;
+        String roleName = "DISARM";
+
+        CustomerEmployeeLocationRole role = new CustomerEmployeeLocationRole(customerId, employeeId, locationId, roleName);
+        EntityUtil.setId(role, 456L);
+
+        when(customerService.assignLocationRole(customerId, employeeId, locationId, roleName))
+            .thenReturn(role);
+
+        mockMvc.perform(put("/customers/{customerId}/location-roles", customerId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ASSIGN_LOCATION_ROLE_REQUEST_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(456L))
+            .andExpect(jsonPath("$.customerId").value(customerId))
+            .andExpect(jsonPath("$.customerEmployeeId").value(employeeId))
+            .andExpect(jsonPath("$.locationId").value(locationId))
+            .andExpect(jsonPath("$.roleName").value(roleName));
+    }
+
+    @Test
+    @WithMockUser(roles = "REALGUARDIO_ADMIN")
+    void shouldNotAllowAdminToAssignLocationRole() throws Exception {
+        mockMvc.perform(put("/customers/{customerId}/location-roles", 10L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ASSIGN_LOCATION_ROLE_REQUEST_JSON))
+            .andExpect(status().isForbidden());
     }
 
 }
