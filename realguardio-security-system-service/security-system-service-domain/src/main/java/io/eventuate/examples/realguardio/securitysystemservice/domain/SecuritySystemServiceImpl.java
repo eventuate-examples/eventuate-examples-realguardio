@@ -1,7 +1,5 @@
 package io.eventuate.examples.realguardio.securitysystemservice.domain;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,17 +12,23 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     
     private final SecuritySystemRepository securitySystemRepository;
     private final CustomerServiceClient customerServiceClient;
+    private final UserNameSupplier userNameSupplier;
     
     public SecuritySystemServiceImpl(SecuritySystemRepository securitySystemRepository,
-                                    CustomerServiceClient customerServiceClient) {
+                                    CustomerServiceClient customerServiceClient,
+                                    UserNameSupplier userNameSupplier) {
         if (securitySystemRepository == null) {
             throw new IllegalArgumentException("securitySystemRepository cannot be null");
         }
         if (customerServiceClient == null) {
             throw new IllegalArgumentException("customerServiceClient cannot be null");
         }
+        if (userNameSupplier == null) {
+            throw new IllegalArgumentException("userNameSupplier cannot be null");
+        }
         this.securitySystemRepository = securitySystemRepository;
         this.customerServiceClient = customerServiceClient;
+        this.userNameSupplier = userNameSupplier;
     }
     
     @Override
@@ -67,7 +71,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         }
         
         // Check location-based authorization for customer employees
-        if (isCustomerEmployee()) {
+        if (userNameSupplier.isCustomerEmployee()) {
             validateLocationPermission(securitySystem.getLocationId(), "CAN_ARM");
         }
         
@@ -85,7 +89,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         }
         
         // Check location-based authorization for customer employees
-        if (isCustomerEmployee()) {
+        if (userNameSupplier.isCustomerEmployee()) {
             validateLocationPermission(securitySystem.getLocationId(), "CAN_DISARM");
         }
         
@@ -93,18 +97,8 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         return securitySystemRepository.save(securitySystem);
     }
     
-    private boolean isCustomerEmployee() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) {
-            return false;
-        }
-        return auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"));
-    }
-    
     private void validateLocationPermission(Long locationId, String requiredRole) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userId = auth.getName();
+        String userId = userNameSupplier.getCurrentUserName();
         
         try {
             Set<String> roles = customerServiceClient.getUserRolesAtLocation(userId, locationId);

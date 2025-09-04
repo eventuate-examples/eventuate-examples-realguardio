@@ -5,17 +5,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,12 +32,15 @@ class SecuritySystemServiceTest {
     
     @Mock
     private CustomerServiceClient customerServiceClient;
+    
+    @Mock
+    private UserNameSupplier userNameSupplier;
 
     private SecuritySystemService securitySystemService;
 
     @BeforeEach
     void setUp() {
-        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient);
+        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient, userNameSupplier);
     }
 
     @Test
@@ -142,13 +141,8 @@ class SecuritySystemServiceTest {
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
-        // Set up admin authentication
-        Authentication adminAuth = new TestingAuthenticationToken(
-            "admin@example.com", 
-            null, 
-            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_ADMIN"))
-        );
-        SecurityContextHolder.getContext().setAuthentication(adminAuth);
+        // Set up admin (not a customer employee)
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(false);
         
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -163,9 +157,6 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository).save(securitySystem);
         // Admin should not trigger location permission check
         verify(customerServiceClient, never()).getUserRolesAtLocation(anyString(), anyLong());
-        
-        // Clean up
-        SecurityContextHolder.clearContext();
     }
     
     @Test
@@ -179,13 +170,9 @@ class SecuritySystemServiceTest {
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
-        // Set up employee authentication
-        Authentication employeeAuth = new TestingAuthenticationToken(
-            userId, 
-            null, 
-            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
-        );
-        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        // Set up employee
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
+        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
         
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -201,9 +188,6 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
         verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
-        
-        // Clean up
-        SecurityContextHolder.clearContext();
     }
     
     @Test
@@ -217,13 +201,9 @@ class SecuritySystemServiceTest {
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
-        // Set up employee authentication
-        Authentication employeeAuth = new TestingAuthenticationToken(
-            userId, 
-            null, 
-            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
-        );
-        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        // Set up employee
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
+        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
         
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
@@ -237,9 +217,6 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository).findById(systemId);
         verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
         verify(securitySystemRepository, never()).save(any());
-        
-        // Clean up
-        SecurityContextHolder.clearContext();
     }
     
     @Test
@@ -252,13 +229,8 @@ class SecuritySystemServiceTest {
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
-        // Set up admin authentication
-        Authentication adminAuth = new TestingAuthenticationToken(
-            "admin@example.com", 
-            null, 
-            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_ADMIN"))
-        );
-        SecurityContextHolder.getContext().setAuthentication(adminAuth);
+        // Set up admin (not a customer employee)
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(false);
         
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -273,9 +245,6 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository).save(securitySystem);
         // Admin should not trigger location permission check
         verify(customerServiceClient, never()).getUserRolesAtLocation(anyString(), anyLong());
-        
-        // Clean up
-        SecurityContextHolder.clearContext();
     }
     
     @Test
@@ -289,13 +258,9 @@ class SecuritySystemServiceTest {
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
-        // Set up employee authentication
-        Authentication employeeAuth = new TestingAuthenticationToken(
-            userId, 
-            null, 
-            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
-        );
-        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        // Set up employee
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
+        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
         
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -311,9 +276,6 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
         verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
-        
-        // Clean up
-        SecurityContextHolder.clearContext();
     }
     
     @Test
@@ -327,13 +289,9 @@ class SecuritySystemServiceTest {
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
-        // Set up employee authentication
-        Authentication employeeAuth = new TestingAuthenticationToken(
-            userId, 
-            null, 
-            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
-        );
-        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        // Set up employee
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
+        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
         
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
@@ -347,9 +305,6 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository).findById(systemId);
         verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
         verify(securitySystemRepository, never()).save(any());
-        
-        // Clean up
-        SecurityContextHolder.clearContext();
     }
     
     @Test
@@ -363,13 +318,9 @@ class SecuritySystemServiceTest {
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
-        // Set up employee authentication
-        Authentication employeeAuth = new TestingAuthenticationToken(
-            userId, 
-            null, 
-            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
-        );
-        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        // Set up employee
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
+        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
         
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
@@ -383,8 +334,5 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository).findById(systemId);
         verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
         verify(securitySystemRepository, never()).save(any());
-        
-        // Clean up
-        SecurityContextHolder.clearContext();
     }
 }
