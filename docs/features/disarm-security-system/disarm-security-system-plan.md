@@ -125,33 +125,33 @@ Steps:
 This thread adds Spring Security authorization for REALGUARDIO_ADMIN and REALGUARDIO_CUSTOMER_EMPLOYEE roles.
 
 ```text
-[ ] Add Spring Security authorization for top-level roles
+[x] Add Spring Security authorization for top-level roles
 
 Steps:
-[ ] 1. Write test in SecuritySystemControllerSecurityTest: test request without authentication returns 401
+[x] 1. Write test in SecuritySystemControllerSecurityTest: test request without authentication returns 401
      - Create test class with MockMVC and Spring Security test support
      - Mock SecuritySystemService
      - Write test for unauthenticated request
-[ ] 2. Make the test pass:
+[x] 2. Make the test pass:
      - Add @PreAuthorize annotation to controller endpoint
      - @PreAuthorize("hasRole('REALGUARDIO_ADMIN') or hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
      - Update SecurityConfig if needed
-[ ] 3. Refactor and run all tests
-[ ] 4. Write test: test request with invalid role returns 403
-[ ] 5. Make the test pass:
+[x] 3. Refactor and run all tests
+[x] 4. Write test: test request with invalid role returns 403
+[x] 5. Make the test pass:
      - Verify @PreAuthorize correctly rejects invalid roles
-[ ] 6. Refactor and run all tests
-[ ] 7. Write test: test request with REALGUARDIO_ADMIN role succeeds
-[ ] 8. Make the test pass:
+[x] 6. Refactor and run all tests
+[x] 7. Write test: test request with REALGUARDIO_ADMIN role succeeds
+[x] 8. Make the test pass:
      - Create test fixture for admin JWT token
      - Verify admin can access endpoint
-[ ] 9. Refactor and run all tests
-[ ] 10. Write test: test request with REALGUARDIO_CUSTOMER_EMPLOYEE role succeeds
-[ ] 11. Make the test pass:
+[x] 9. Refactor and run all tests
+[x] 10. Write test: test request with REALGUARDIO_CUSTOMER_EMPLOYEE role succeeds
+[x] 11. Make the test pass:
      - Create test fixture for employee JWT token
      - Verify employee can access endpoint
-[ ] 12. Refactor and run all tests
-[ ] 13. Commit the changes
+[x] 12. Refactor and run all tests
+[x] 13. Commit the changes
 ```
 
 ## Steel Thread 5: Create Customer Service Location Roles Endpoint

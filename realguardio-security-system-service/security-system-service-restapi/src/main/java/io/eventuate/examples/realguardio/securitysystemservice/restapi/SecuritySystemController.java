@@ -5,6 +5,7 @@ import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySy
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystems;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,6 +23,7 @@ public class SecuritySystemController {
   }
   
   @PutMapping("/securitysystems/{id}")
+  @PreAuthorize("hasRole('REALGUARDIO_ADMIN') or hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
   public ResponseEntity<SecuritySystem> updateSecuritySystem(
           @PathVariable("id") Long id,
           @RequestBody SecuritySystemActionRequest request) {
