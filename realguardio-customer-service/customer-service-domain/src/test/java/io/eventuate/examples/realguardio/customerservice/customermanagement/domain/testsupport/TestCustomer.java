@@ -74,8 +74,8 @@ public record TestCustomer(TestContext testContext,
 
   public AbstractCollectionAssert<?, Collection<? extends String>, String, ObjectAssert<String>>
   assertEmployeeLocationRoles(TestCustomerEmployee employee, Location location) {
-    return assertThat(testContext.customerService.getCustomerEmployeeLocationRoles(
-        customer().getId(), employee.customerEmployee().getId(), location.getId()));
+    return assertThat(testContext.customerService.getCustomerEmployeeLocationRoles(employee.employeeDetails().emailAddress().email(),
+        location.getId()));
   }
   
 }

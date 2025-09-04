@@ -3,5 +3,5 @@ package io.eventuate.examples.realguardio.customerservice.customermanagement.dom
 import java.util.Set;
 
 public interface LocationRoleService {
-    Set<String> getUserRolesAtLocation(String userId, Long locationId);
+    Set<String> getUserRolesAtLocation(Long locationId);
 }

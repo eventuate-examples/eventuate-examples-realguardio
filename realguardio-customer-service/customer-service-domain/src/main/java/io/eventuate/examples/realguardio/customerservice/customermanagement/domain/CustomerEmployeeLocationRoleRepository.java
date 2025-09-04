@@ -35,8 +35,7 @@ public interface CustomerEmployeeLocationRoleRepository extends JpaRepository<Cu
      * Find all role names for a specific employee at a specific location,
      * ensuring both the employee and location belong to the specified customer.
      *
-     * @param customerId the ID of the customer
-     * @param employeeId the ID of the employee
+     * @param userName the userName/Email of the customer employee
      * @param locationId the ID of the location
      * @return list of role names
      */
@@ -44,13 +43,11 @@ public interface CustomerEmployeeLocationRoleRepository extends JpaRepository<Cu
         SELECT celr.roleName
         FROM CustomerEmployeeLocationRole celr
         JOIN CustomerEmployee ce ON celr.customerEmployeeId = ce.id
+        JOIN Member m ON ce.memberId = m.id
         JOIN Location l ON celr.locationId = l.id
-        WHERE ce.customerId = :customerId
-        AND l.customerId = :customerId
-        AND celr.customerEmployeeId = :employeeId
+        WHERE m.emailAddress.email = :userName
         AND celr.locationId = :locationId
         """)
-    List<String> findRoleNamesByCustomerIdAndEmployeeIdAndLocationId(@Param("customerId") Long customerId,
-                                                                     @Param("employeeId") Long employeeId,
-                                                                     @Param("locationId") Long locationId);
+    List<String> findRoleNamesByUserNameAndLocationId(@Param("userName") String userName,
+                                                      @Param("locationId") Long locationId);
 }

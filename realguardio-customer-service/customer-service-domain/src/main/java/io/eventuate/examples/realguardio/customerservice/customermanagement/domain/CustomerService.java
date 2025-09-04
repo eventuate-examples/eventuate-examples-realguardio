@@ -309,20 +309,16 @@ public class CustomerService {
     /**
      * Get location-specific roles for a customer employee.
      *
-     * @param customerId the ID of the customer
-     * @param employeeId the ID of the customer employee
+     * @param userName email address
      * @param locationId the ID of the location
      * @return set of role names for the location
      */
-    public Set<String> getCustomerEmployeeLocationRoles(Long customerId, Long employeeId, Long locationId) {
-        customerRepository.findRequiredById(customerId);
-        
-        customerEmployeeRepository.findRequiredById(employeeId);
-        
+    public Set<String> getCustomerEmployeeLocationRoles(String userName, Long locationId) {
+
         locationRepository.findRequiredById(locationId);
         
         return new HashSet<>(customerEmployeeLocationRoleRepository
-                .findRoleNamesByCustomerIdAndEmployeeIdAndLocationId(customerId, employeeId, locationId));
+                .findRoleNamesByUserNameAndLocationId(userName, locationId));
     }
     
     /**

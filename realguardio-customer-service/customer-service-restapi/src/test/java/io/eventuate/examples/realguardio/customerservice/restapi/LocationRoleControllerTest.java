@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Set;
@@ -31,7 +30,7 @@ class LocationRoleControllerTest {
         String userId = "123";
         Set<String> expectedRoles = Set.of("CAN_ARM", "CAN_DISARM", "VIEW_ALERTS");
         
-        when(locationRoleService.getUserRolesAtLocation(userId, locationId))
+        when(locationRoleService.getUserRolesAtLocation(locationId))
             .thenReturn(expectedRoles);
         
         mockMvc.perform(get("/locations/{locationId}/roles", locationId))
@@ -45,7 +44,7 @@ class LocationRoleControllerTest {
         Long locationId = 999L;
         String userId = "123";
         
-        when(locationRoleService.getUserRolesAtLocation(userId, locationId))
+        when(locationRoleService.getUserRolesAtLocation(locationId))
             .thenReturn(Set.of());
         
         mockMvc.perform(get("/locations/{locationId}/roles", locationId))

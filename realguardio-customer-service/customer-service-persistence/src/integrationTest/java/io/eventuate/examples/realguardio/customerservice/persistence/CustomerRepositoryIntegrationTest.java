@@ -4,6 +4,7 @@ import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddre
 import io.eventuate.examples.realguardio.customerservice.commondomain.PersonName;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeLocationRoleRepository;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeRepository;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerRepository;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationRepository;
@@ -25,6 +26,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @DataJpaTest
 @Testcontainers
@@ -66,6 +69,9 @@ class CustomerRepositoryIntegrationTest {
     @Autowired
     private MemberRoleRepository memberRoleRepository;
 
+    @Autowired
+    private CustomerEmployeeLocationRoleRepository customerEmployeeLocationRoleRepository;
+
     @Test
     void shouldSaveCustomer() {
         Organization organization = new Organization("Acme Corporation");
@@ -91,6 +97,14 @@ class CustomerRepositoryIntegrationTest {
         CustomerEmployee adminEmployee = new CustomerEmployee(customer.getId(), adminMember.getId());
         adminEmployee = customerEmployeeRepository.save(adminEmployee);
         logger.info("Created admin employee with ID: {}", adminEmployee.getId());
+    }
+
+    @Test
+    void shouldFindRolesAtLocation() {
+        String userName = "foo-%s@example.com".formatted(System.currentTimeMillis());
+        long locationId = System.currentTimeMillis();
+
+        assertThat(customerEmployeeLocationRoleRepository.findRoleNamesByUserNameAndLocationId(userName, locationId)).isEmpty();
     }
 
 }
