@@ -6,11 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Set;
@@ -35,37 +32,25 @@ public class CustomerServiceClientImpl implements CustomerServiceClient {
     @Override
     public Set<String> getUserRolesAtLocation(String userId, Long locationId) {
         String url = customerServiceUrl + "/locations/" + locationId + "/roles";
-        
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            
-            // Get JWT token from JwtProvider
-            String jwtToken = jwtProvider.getCurrentJwtToken();
-            headers.set(HttpHeaders.AUTHORIZATION, jwtToken);
-            
-            HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-            
-            ResponseEntity<RolesResponse> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                requestEntity,
-                RolesResponse.class
-            );
-            
-            logger.info("Retrieved roles for user {} at location {}: {}", 
-                userId, locationId, response.getBody().getRoles());
-            
-            return response.getBody().getRoles();
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                logger.info("No roles found for user {} at location {}", userId, locationId);
-                return Set.of();
-            }
-            logger.error("HTTP error calling customer service: {}", e.getMessage());
-            return Set.of();
-        } catch (RestClientException e) {
-            logger.error("Error calling customer service: {}", e.getMessage());
-            return Set.of();
-        }
+
+        HttpHeaders headers = new HttpHeaders();
+
+        // Get JWT token from JwtProvider
+        String jwtToken = jwtProvider.getCurrentJwtToken();
+        headers.set(HttpHeaders.AUTHORIZATION, jwtToken);
+
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        ResponseEntity<RolesResponse> response = restTemplate.exchange(
+            url,
+            HttpMethod.GET,
+            requestEntity,
+            RolesResponse.class
+        );
+
+        logger.info("Retrieved roles for user {} at location {}: {}",
+            userId, locationId, response.getBody().getRoles());
+
+        return response.getBody().getRoles();
     }
 }

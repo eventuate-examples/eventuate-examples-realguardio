@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Set;
@@ -72,7 +75,7 @@ class CustomerServiceClientImplTest {
     }
 
     @Test
-    void shouldReturnEmptySetWhenServiceReturns404() {
+    void shouldThrowHttpClientErrorExceptionWhenServiceReturns404() {
         // Given
         String userId = "123";
         Long locationId = 999L;
@@ -83,20 +86,21 @@ class CustomerServiceClientImplTest {
         stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
             .withHeader("Authorization", equalTo(jwtToken))
             .willReturn(aResponse()
-                .withStatus(404)));
+                .withStatus(404)
+                .withHeader("Content-Type", "application/json")
+                .withBody("{\"error\":\"Not Found\"}")));
 
-        // When
-        Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId);
-
-        // Then
-        assertThat(result).isEmpty();
+        // When/Then
+        assertThatThrownBy(() -> customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .isInstanceOf(HttpClientErrorException.class)
+            .hasMessageContaining("404");
         
         verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
             .withHeader("Authorization", equalTo(jwtToken)));
     }
 
     @Test
-    void shouldReturnEmptySetWhenServiceIsUnavailable() {
+    void shouldThrowHttpServerErrorExceptionWhenServiceIsUnavailable() {
         // Given
         String userId = "123";
         Long locationId = 456L;
@@ -107,20 +111,21 @@ class CustomerServiceClientImplTest {
         stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
             .withHeader("Authorization", equalTo(jwtToken))
             .willReturn(aResponse()
-                .withStatus(503)));
+                .withStatus(503)
+                .withHeader("Content-Type", "application/json")
+                .withBody("{\"error\":\"Service Unavailable\"}")));
 
-        // When
-        Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId);
-
-        // Then
-        assertThat(result).isEmpty();
+        // When/Then
+        assertThatThrownBy(() -> customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .isInstanceOf(HttpServerErrorException.class)
+            .hasMessageContaining("503");
         
         verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
             .withHeader("Authorization", equalTo(jwtToken)));
     }
 
     @Test
-    void shouldReturnEmptySetWhenServiceReturns400() {
+    void shouldThrowHttpClientErrorExceptionWhenServiceReturns400() {
         // Given
         String userId = "123";
         Long locationId = 456L;
@@ -135,18 +140,17 @@ class CustomerServiceClientImplTest {
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"error\":\"Bad Request\"}")));
 
-        // When
-        Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId);
-
-        // Then
-        assertThat(result).isEmpty();
+        // When/Then
+        assertThatThrownBy(() -> customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .isInstanceOf(HttpClientErrorException.class)
+            .hasMessageContaining("400");
         
         verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
             .withHeader("Authorization", equalTo(jwtToken)));
     }
 
     @Test
-    void shouldHandleConnectionTimeout() {
+    void shouldThrowResourceAccessExceptionOnConnectionTimeout() {
         // Given
         String userId = "123";
         Long locationId = 456L;
@@ -169,11 +173,9 @@ class CustomerServiceClientImplTest {
             .willReturn(aResponse()
                 .withFixedDelay(1000)));  // 1 second delay
 
-        // When
-        Set<String> result = clientWithTimeout.getUserRolesAtLocation(userId, locationId);
-
-        // Then
-        assertThat(result).isEmpty();
+        // When/Then
+        assertThatThrownBy(() -> clientWithTimeout.getUserRolesAtLocation(userId, locationId))
+            .isInstanceOf(ResourceAccessException.class);
     }
 
     @Test
@@ -211,5 +213,49 @@ class CustomerServiceClientImplTest {
         // Then
         verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
             .withHeader("Authorization", equalTo(jwtToken)));
+    }
+
+    @Test
+    void shouldThrowHttpServerErrorExceptionWhenServiceReturns500() {
+        // Given
+        String userId = "123";
+        Long locationId = 456L;
+        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        
+        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        
+        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", equalTo(jwtToken))
+            .willReturn(aResponse()
+                .withStatus(500)
+                .withHeader("Content-Type", "application/json")
+                .withBody("{\"error\":\"Internal Server Error\"}")));
+
+        // When/Then
+        assertThatThrownBy(() -> customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .isInstanceOf(HttpServerErrorException.class)
+            .hasMessageContaining("500");
+        
+        verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", equalTo(jwtToken)));
+    }
+
+    @Test
+    void shouldThrowNullPointerExceptionWhenResponseBodyIsNull() {
+        // Given
+        String userId = "123";
+        Long locationId = 456L;
+        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        
+        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        
+        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", equalTo(jwtToken))
+            .willReturn(aResponse()
+                .withStatus(200)));  // No body
+
+        // When/Then
+        assertThatThrownBy(() -> customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .isInstanceOf(NullPointerException.class);
     }
 }
