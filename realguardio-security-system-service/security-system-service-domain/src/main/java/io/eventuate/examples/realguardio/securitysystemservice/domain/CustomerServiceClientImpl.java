@@ -31,11 +31,18 @@ public class CustomerServiceClientImpl implements CustomerServiceClient {
 
     @Override
     public Set<String> getUserRolesAtLocation(String userId, Long locationId) {
+        return getUserRolesAtLocation(userId, locationId, null);
+    }
+
+    @Override
+    public Set<String> getUserRolesAtLocation(String userId, Long locationId, String jwtToken) {
         String url = customerServiceUrl + "/locations/" + locationId + "/roles";
         
         try {
             HttpHeaders headers = new HttpHeaders();
-            // TODO: Forward JWT token when security is fully integrated
+            if (jwtToken != null) {
+                headers.set(HttpHeaders.AUTHORIZATION, jwtToken);
+            }
             HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
             
             ResponseEntity<RolesResponse> response = restTemplate.exchange(

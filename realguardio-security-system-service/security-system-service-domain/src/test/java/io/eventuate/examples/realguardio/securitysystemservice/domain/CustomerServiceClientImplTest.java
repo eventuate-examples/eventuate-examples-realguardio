@@ -19,6 +19,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -97,5 +98,31 @@ class CustomerServiceClientImplTest {
 
         // Then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldForwardJwtTokenInAuthorizationHeader() {
+        // Given
+        String userId = "123";
+        Long locationId = 456L;
+        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        RolesResponse rolesResponse = new RolesResponse(Set.of("CAN_ARM"));
+        ResponseEntity<RolesResponse> responseEntity = ResponseEntity.ok(rolesResponse);
+
+        when(restTemplate.exchange(
+            eq(customerServiceUrl + "/locations/" + locationId + "/roles"),
+            eq(HttpMethod.GET),
+            argThat(entity -> {
+                HttpHeaders headers = ((HttpEntity<?>) entity).getHeaders();
+                return jwtToken.equals(headers.getFirst(HttpHeaders.AUTHORIZATION));
+            }),
+            eq(RolesResponse.class)
+        )).thenReturn(responseEntity);
+
+        // When
+        Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId, jwtToken);
+
+        // Then
+        assertThat(result).containsExactlyInAnyOrder("CAN_ARM");
     }
 }
