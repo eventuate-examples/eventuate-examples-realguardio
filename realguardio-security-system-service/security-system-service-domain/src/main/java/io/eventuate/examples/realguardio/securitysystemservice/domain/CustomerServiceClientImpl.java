@@ -8,6 +8,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -31,18 +34,18 @@ public class CustomerServiceClientImpl implements CustomerServiceClient {
 
     @Override
     public Set<String> getUserRolesAtLocation(String userId, Long locationId) {
-        return getUserRolesAtLocation(userId, locationId, null);
-    }
-
-    @Override
-    public Set<String> getUserRolesAtLocation(String userId, Long locationId, String jwtToken) {
         String url = customerServiceUrl + "/locations/" + locationId + "/roles";
         
         try {
             HttpHeaders headers = new HttpHeaders();
-            if (jwtToken != null) {
-                headers.set(HttpHeaders.AUTHORIZATION, jwtToken);
+            
+            // Get JWT token from Spring Security context
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
+                Jwt jwt = (Jwt) authentication.getPrincipal();
+                headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue());
             }
+            
             HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
             
             ResponseEntity<RolesResponse> response = restTemplate.exchange(
