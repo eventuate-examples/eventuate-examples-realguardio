@@ -40,7 +40,7 @@ class LocationRoleControllerTest {
     }
     
     @Test
-    void shouldReturn404WhenNoRolesFound() throws Exception {
+    void shouldReturnEmptySetWhenNoRolesFound() throws Exception {
         Long locationId = 999L;
         String userId = "123";
         
@@ -48,6 +48,7 @@ class LocationRoleControllerTest {
             .thenReturn(Set.of());
         
         mockMvc.perform(get("/locations/{locationId}/roles", locationId))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.roles").isEmpty());
     }
 }

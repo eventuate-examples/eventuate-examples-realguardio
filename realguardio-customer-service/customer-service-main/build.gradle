@@ -47,7 +47,10 @@ dependencies {
     componentTestImplementation "io.eventuate.examples.spring-authorization-server:authorization-server-test-containers:$eventuateExamplesSpringAuthorizationServerVersion"
     componentTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers"
     componentTestImplementation "io.eventuate.common:eventuate-common-testcontainers"
-    componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-commands"
+    componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-commands-starter"
+    componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka"
+    componentTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-producer"
+
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-consumer-kafka"
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-kafka-producer"
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-test-util"

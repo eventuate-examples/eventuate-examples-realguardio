@@ -25,10 +25,6 @@ public class LocationRoleController {
         
         Set<String> roles = locationRoleService.getUserRolesAtLocation(locationId);
         
-        if (roles.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        
         return ResponseEntity.ok(new RolesResponse(roles));
     }
 }

@@ -1,8 +1,6 @@
-package io.realguardio.orchestration;
+package io.eventuate.examples.realguardio.customerservice;
 
 import io.eventuate.common.json.mapper.JSonMapper;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
 import io.eventuate.tram.commands.common.Command;
 import io.eventuate.tram.commands.consumer.CommandHandlerParams;
 import io.eventuate.tram.commands.consumer.CommandReplyProducer;
@@ -57,8 +55,8 @@ public class ComponentTestSupport {
     return messages.get(0);
   }
 
-  public void sendReply(Message createCommandMessage, SecuritySystemCreated reply) {
-    CommandHandlerParams commandHandlerParams = new CommandHandlerParams(createCommandMessage, CreateSecuritySystemCommand.class, Optional.empty());
+  public void sendReply(Message createCommandMessage, Object reply) {
+    CommandHandlerParams commandHandlerParams = new CommandHandlerParams(createCommandMessage, reply.getClass(), Optional.empty());
     CommandReplyToken commandReplyToken = new CommandReplyToken(commandHandlerParams.getCorrelationHeaders(), commandHandlerParams.getDefaultReplyChannel().orElse(null));
 
     commandReplyProducer.sendReplies(commandReplyToken, withSuccess(reply));

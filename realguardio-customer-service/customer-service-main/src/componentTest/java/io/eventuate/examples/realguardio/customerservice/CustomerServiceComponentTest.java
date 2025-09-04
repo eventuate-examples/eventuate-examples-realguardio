@@ -1,26 +1,15 @@
 package io.eventuate.examples.realguardio.customerservice;
 
-import io.eventuate.common.testcontainers.DatabaseContainerFactory;
-import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
 import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
+import io.eventuate.examples.realguardio.customerservice.restapi.RolesResponse;
 import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
-import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
-import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.testcontainers.service.ServiceContainer;
-import io.eventuate.tram.commands.producer.CommandProducer;
 import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
-import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
-import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -31,46 +20,24 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.lifecycle.Startables;
 
 import java.util.Collections;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
-import static io.eventuate.util.test.async.Eventually.eventually;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(classes = CustomerServiceComponentTest.TestConfiguration.class)
-public class CustomerServiceComponentTest {
+@SpringBootTest(classes = CustomerServiceComponentTest.Config.class)
+public class CustomerServiceComponentTest extends AbstractCustomerServiceComponentTest {
 
-	protected static Logger logger = LoggerFactory.getLogger(CustomerServiceComponentTest.class);
-	private String replyTo;
 
-	@Configuration
-	@EnableAutoConfiguration
-	@Import({
-			EventuateKafkaTestCommandProducerConfiguration.class,
-			CommandOutboxTestSupportConfiguration.class
-	})
-	static class TestConfiguration {
+	@Override
+	protected String sendCommand(CreateLocationWithSecuritySystemCommand command, String replyTo) {
+		return commandProducer.send("customer-service",
+				command,
+				replyTo, Collections.emptyMap());
 	}
 
-	public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("customer-service-tests");
-
-	public static EventuateKafkaNativeContainer kafka = eventuateKafkaCluster.kafka
-			.withNetworkAliases("kafka")
-			.withReuse(true)
-			;
-
-	public static EventuateDatabaseContainer<?> database = DatabaseContainerFactory.makeVanillaDatabaseContainer()
-			.withNetwork(eventuateKafkaCluster.network)
-			.withNetworkAliases("database")
-			.withReuse(true)
-			;
-
-	public static AuthorizationServerContainerForServiceContainers iamService = new AuthorizationServerContainerForServiceContainers()
-			.withUserDb()
-			.withNetwork(eventuateKafkaCluster.network)
-			.withNetworkAliases("iam-service")
-			.withReuse(true)
-			;
+	@Configuration
+	@Import({AbstractConfig.class, EventuateKafkaTestCommandProducerConfiguration.class})
+	static class Config {
+	}
 
 	public static GenericContainer<?> service =
 
@@ -85,15 +52,17 @@ public class CustomerServiceComponentTest {
 			.withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC customer-service:"));
 		;
 
-	@Autowired
-	private CommandProducer commandProducer;
-
-	@Autowired
-	private CommandOutboxTestSupport commandOutboxTestSupport;
+	static {
+		iamService = new AuthorizationServerContainerForServiceContainers()
+				.withUserDb()
+				.withNetwork(eventuateKafkaCluster.network)
+				.withNetworkAliases("iam-service")
+				.withReuse(true);
+	}
 
 	@DynamicPropertySource
 	static void registerProperties(DynamicPropertyRegistry registry) {
-		Startables.deepStart(service, iamService).join();
+		Startables.deepStart(kafka, database, service, iamService).join();
 
 		kafka.registerProperties(registry::add);
 		database.registerProperties(registry::add);
@@ -106,7 +75,7 @@ public class CustomerServiceComponentTest {
 
 	@BeforeEach
 	void setupReplyConsumer() {
-		this.replyTo = UUID.randomUUID().toString();
+		baseUri = String.format("http://localhost:%d", service.getFirstMappedPort());
 	}
 
 	@Test
@@ -118,7 +87,7 @@ public class CustomerServiceComponentTest {
 	@Test
 	void healthEndpointReturnsOk() {
 		RestAssured.given()
-				.baseUri(String.format("http://localhost:%d", service.getFirstMappedPort()))
+				.baseUri(baseUri)
 				.when()
 				.get("/actuator/health")
 				.then()
@@ -132,7 +101,7 @@ public class CustomerServiceComponentTest {
 	@Test
 	void shouldReturn401WhenNoAuthenticationProvided() {
 		RestAssured.given()
-				.baseUri(String.format("http://localhost:%d", service.getFirstMappedPort()))
+				.baseUri(baseUri)
 				.when()
 				.get("/customers")
 				.then()
@@ -141,10 +110,10 @@ public class CustomerServiceComponentTest {
 	
 	@Test
 	void shouldReturn200WithValidJwtToken() {
-		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
-		
+		String accessToken = getAccessTokenForRealGuardIoAdmin();
+
 		RestAssured.given()
-				.baseUri(String.format("http://localhost:%d", service.getFirstMappedPort()))
+				.baseUri(baseUri)
 				.header("Authorization", "Bearer " + accessToken)
 				.when()
 				.get("/customers")
@@ -154,57 +123,18 @@ public class CustomerServiceComponentTest {
 
 	@Test
 	void shouldHandleCreateLocationWithSecuritySystemCommand() throws Exception {
-		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
-		String baseUri = String.format("http://localhost:%d", service.getFirstMappedPort());
+		String realGuardIOAdminAccessToken = getAccessTokenForRealGuardIoAdmin();
 
 		EmailAddress adminUser = Uniquifier.uniquify(new EmailAddress("admin@example.com"));
 
-		// Create customer
-		String customerJson = """
-        {
-            "name": "New Customer",
-            "initialAdministrator": {
-                "name": {
-                    "firstName": "Admin",
-                    "lastName": "User"
-                },
-                "emailAddress": {
-                    "email": "%s"
-                }
-            }
-        }
-        """.formatted(adminUser);
-		
-		Integer customerIdAsInteger = RestAssured.given()
-				.baseUri(baseUri)
-				.header("Authorization", "Bearer " + accessToken)
-				.contentType(ContentType.JSON)
-				.body(customerJson)
-				.when()
-				.post("/customers")
-				.then()
-				.statusCode(200)
-				.extract()
-				.path("customer.id");
-		long customerId = Long.valueOf(customerIdAsInteger);
+		CustomerSummary customerSummary = createCustomer(adminUser, realGuardIOAdminAccessToken);
 
 		long securitySystemId = System.currentTimeMillis();
-		String locationName = "Office Front Door";
+		var locationId = createLocationForSecuritySystem(customerSummary.customerId(), securitySystemId);
 
-		CreateLocationWithSecuritySystemCommand command = new CreateLocationWithSecuritySystemCommand(
-				customerId, locationName, securitySystemId);
+		RolesResponse rolesResponse = getRolesForLocation(realGuardIOAdminAccessToken, locationId);
 
-		logger.info("Sending CreateLocationWithSecuritySystemCommand: {}", command);
-		String commandId = commandProducer.send("customer-service",
-				command,
-				replyTo, Collections.emptyMap());
-		logger.info("Sent CreateLocationWithSecuritySystemCommand with id: {}.. waiting for reply", commandId);
-
-		// Wait for and verify reply
-		eventually(30, 500, TimeUnit.MILLISECONDS, () -> {
-			commandOutboxTestSupport.assertCommandReplyMessageSent(replyTo);
-		});
-		
+		assertThat(rolesResponse.getRoles()).isEmpty();
 	}
 
 
