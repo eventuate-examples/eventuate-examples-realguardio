@@ -8,9 +8,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -25,11 +22,14 @@ public class CustomerServiceClientImpl implements CustomerServiceClient {
 
     private final RestTemplate restTemplate;
     private final String customerServiceUrl;
+    private final JwtProvider jwtProvider;
 
     public CustomerServiceClientImpl(RestTemplate restTemplate, 
-                                     @Value("${customer.service.url:http://localhost:8081}") String customerServiceUrl) {
+                                     @Value("${customer.service.url:http://localhost:8081}") String customerServiceUrl,
+                                     JwtProvider jwtProvider) {
         this.restTemplate = restTemplate;
         this.customerServiceUrl = customerServiceUrl;
+        this.jwtProvider = jwtProvider;
     }
 
     @Override
@@ -39,12 +39,9 @@ public class CustomerServiceClientImpl implements CustomerServiceClient {
         try {
             HttpHeaders headers = new HttpHeaders();
             
-            // Get JWT token from Spring Security context
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
-                Jwt jwt = (Jwt) authentication.getPrincipal();
-                headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + jwt.getTokenValue());
-            }
+            // Get JWT token from JwtProvider
+            String jwtToken = jwtProvider.getCurrentJwtToken();
+            headers.set(HttpHeaders.AUTHORIZATION, jwtToken);
             
             HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
             
