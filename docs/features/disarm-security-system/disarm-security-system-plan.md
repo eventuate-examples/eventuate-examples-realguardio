@@ -246,45 +246,45 @@ Steps:
 This thread integrates the Customer Service client to enforce location-based permissions.
 
 ```text
-[ ] Integrate location-based authorization in SecuritySystemService
+[x] Integrate location-based authorization in SecuritySystemService
 
 Steps:
-[ ] 1. Write test in SecuritySystemServiceTest: admin bypasses location check when disarming
-[ ] 2. Make the test pass:
+[x] 1. Write test in SecuritySystemServiceTest: admin bypasses location check when disarming
+[x] 2. Make the test pass:
      - Inject CustomerServiceClient (mock in test)
      - Add isCustomerEmployee() helper method
      - Update disarm() method to check if user is customer employee
      - Skip location check for admin
-[ ] 3. Refactor and run all tests
-[ ] 4. Write test: employee with CAN_DISARM permission can disarm
-[ ] 5. Make the test pass:
+[x] 3. Refactor and run all tests
+[x] 4. Write test: employee with CAN_DISARM permission can disarm
+[x] 5. Make the test pass:
      - Add validateLocationPermission() method
      - Add extractJwtFromCurrentAuthentication() method
      - Call validateLocationPermission for employees in disarm()
-[ ] 6. Refactor and run all tests
-[ ] 7. Write test: employee without CAN_DISARM permission gets ForbiddenException
-[ ] 8. Make the test pass:
+[x] 6. Refactor and run all tests
+[x] 7. Write test: employee without CAN_DISARM permission gets ForbiddenException
+[x] 8. Make the test pass:
      - Create ForbiddenException class
      - Throw ForbiddenException when permission missing
-[ ] 9. Refactor and run all tests
-[ ] 10. Write test: admin bypasses location check when arming
-[ ] 11. Make the test pass:
+[x] 9. Refactor and run all tests
+[x] 10. Write test: admin bypasses location check when arming
+[x] 11. Make the test pass:
      - Update arm() method similar to disarm()
-[ ] 12. Refactor and run all tests
-[ ] 13. Write test: employee with CAN_ARM permission can arm
-[ ] 14. Make the test pass:
+[x] 12. Refactor and run all tests
+[x] 13. Write test: employee with CAN_ARM permission can arm
+[x] 14. Make the test pass:
      - Call validateLocationPermission for employees in arm()
-[ ] 15. Refactor and run all tests
-[ ] 16. Write test: employee without CAN_ARM permission gets ForbiddenException
-[ ] 17. Make the test pass:
+[x] 15. Refactor and run all tests
+[x] 16. Write test: employee without CAN_ARM permission gets ForbiddenException
+[x] 17. Make the test pass:
      - Ensure arm() throws ForbiddenException when permission missing
-[ ] 18. Refactor and run all tests
-[ ] 19. Write test: handle Customer Service unavailable
-[ ] 20. Make the test pass:
+[x] 18. Refactor and run all tests
+[x] 19. Write test: handle Customer Service unavailable
+[x] 20. Make the test pass:
      - Create ServiceUnavailableException class
      - Handle service failures in validateLocationPermission
-[ ] 21. Refactor and run all tests
-[ ] 22. Commit the changes
+[x] 21. Refactor and run all tests
+[x] 22. Commit the changes
 ```
 
 ## Steel Thread 9: Add Audit Logging

@@ -5,6 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -13,21 +18,30 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.springframework.web.client.ResourceAccessException;
 
 @ExtendWith(MockitoExtension.class)
 class SecuritySystemServiceTest {
 
     @Mock
     private SecuritySystemRepository securitySystemRepository;
+    
+    @Mock
+    private CustomerServiceClient customerServiceClient;
 
     private SecuritySystemService securitySystemService;
 
     @BeforeEach
     void setUp() {
-        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository);
+        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient);
     }
 
     @Test
@@ -116,5 +130,261 @@ class SecuritySystemServiceTest {
         assertThat(result.getState()).isEqualTo(SecuritySystemState.ARMED);
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
+    }
+    
+    @Test
+    void adminShouldBypassLocationCheckWhenDisarming() throws Exception {
+        // Given
+        Long systemId = 1L;
+        Long locationId = 456L;
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        setId(securitySystem, systemId);
+        securitySystem.setLocationId(locationId);
+        
+        // Set up admin authentication
+        Authentication adminAuth = new TestingAuthenticationToken(
+            "admin@example.com", 
+            null, 
+            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_ADMIN"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(adminAuth);
+        
+        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
+        when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // When
+        SecuritySystem result = securitySystemService.disarm(systemId);
+        
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getState()).isEqualTo(SecuritySystemState.DISARMED);
+        verify(securitySystemRepository).findById(systemId);
+        verify(securitySystemRepository).save(securitySystem);
+        // Admin should not trigger location permission check
+        verify(customerServiceClient, never()).getUserRolesAtLocation(anyString(), anyLong());
+        
+        // Clean up
+        SecurityContextHolder.clearContext();
+    }
+    
+    @Test
+    void employeeWithCanDisarmPermissionShouldDisarm() throws Exception {
+        // Given
+        Long systemId = 1L;
+        Long locationId = 456L;
+        String userId = "employee@example.com";
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        setId(securitySystem, systemId);
+        securitySystem.setLocationId(locationId);
+        
+        // Set up employee authentication
+        Authentication employeeAuth = new TestingAuthenticationToken(
+            userId, 
+            null, 
+            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        
+        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
+        when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .thenReturn(new HashSet<>(Arrays.asList("CAN_DISARM", "VIEW_ALERTS")));
+        
+        // When
+        SecuritySystem result = securitySystemService.disarm(systemId);
+        
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getState()).isEqualTo(SecuritySystemState.DISARMED);
+        verify(securitySystemRepository).findById(systemId);
+        verify(securitySystemRepository).save(securitySystem);
+        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
+        
+        // Clean up
+        SecurityContextHolder.clearContext();
+    }
+    
+    @Test
+    void employeeWithoutCanDisarmPermissionShouldGetForbiddenException() throws Exception {
+        // Given
+        Long systemId = 1L;
+        Long locationId = 456L;
+        String userId = "employee@example.com";
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        setId(securitySystem, systemId);
+        securitySystem.setLocationId(locationId);
+        
+        // Set up employee authentication
+        Authentication employeeAuth = new TestingAuthenticationToken(
+            userId, 
+            null, 
+            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        
+        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
+        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .thenReturn(new HashSet<>(Arrays.asList("VIEW_ALERTS", "CAN_ARM"))); // Has CAN_ARM but not CAN_DISARM
+        
+        // When & Then
+        assertThatThrownBy(() -> securitySystemService.disarm(systemId))
+            .isInstanceOf(ForbiddenException.class)
+            .hasMessageContaining("User lacks CAN_DISARM permission for location 456");
+        
+        verify(securitySystemRepository).findById(systemId);
+        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
+        verify(securitySystemRepository, never()).save(any());
+        
+        // Clean up
+        SecurityContextHolder.clearContext();
+    }
+    
+    @Test
+    void adminShouldBypassLocationCheckWhenArming() throws Exception {
+        // Given
+        Long systemId = 1L;
+        Long locationId = 456L;
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
+        setId(securitySystem, systemId);
+        securitySystem.setLocationId(locationId);
+        
+        // Set up admin authentication
+        Authentication adminAuth = new TestingAuthenticationToken(
+            "admin@example.com", 
+            null, 
+            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_ADMIN"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(adminAuth);
+        
+        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
+        when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // When
+        SecuritySystem result = securitySystemService.arm(systemId);
+        
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getState()).isEqualTo(SecuritySystemState.ARMED);
+        verify(securitySystemRepository).findById(systemId);
+        verify(securitySystemRepository).save(securitySystem);
+        // Admin should not trigger location permission check
+        verify(customerServiceClient, never()).getUserRolesAtLocation(anyString(), anyLong());
+        
+        // Clean up
+        SecurityContextHolder.clearContext();
+    }
+    
+    @Test
+    void employeeWithCanArmPermissionShouldArm() throws Exception {
+        // Given
+        Long systemId = 1L;
+        Long locationId = 456L;
+        String userId = "employee@example.com";
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
+        setId(securitySystem, systemId);
+        securitySystem.setLocationId(locationId);
+        
+        // Set up employee authentication
+        Authentication employeeAuth = new TestingAuthenticationToken(
+            userId, 
+            null, 
+            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        
+        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
+        when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .thenReturn(new HashSet<>(Arrays.asList("CAN_ARM", "VIEW_ALERTS")));
+        
+        // When
+        SecuritySystem result = securitySystemService.arm(systemId);
+        
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getState()).isEqualTo(SecuritySystemState.ARMED);
+        verify(securitySystemRepository).findById(systemId);
+        verify(securitySystemRepository).save(securitySystem);
+        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
+        
+        // Clean up
+        SecurityContextHolder.clearContext();
+    }
+    
+    @Test
+    void employeeWithoutCanArmPermissionShouldGetForbiddenException() throws Exception {
+        // Given
+        Long systemId = 1L;
+        Long locationId = 456L;
+        String userId = "employee@example.com";
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
+        setId(securitySystem, systemId);
+        securitySystem.setLocationId(locationId);
+        
+        // Set up employee authentication
+        Authentication employeeAuth = new TestingAuthenticationToken(
+            userId, 
+            null, 
+            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        
+        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
+        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .thenReturn(new HashSet<>(Arrays.asList("VIEW_ALERTS", "CAN_DISARM"))); // Has CAN_DISARM but not CAN_ARM
+        
+        // When & Then
+        assertThatThrownBy(() -> securitySystemService.arm(systemId))
+            .isInstanceOf(ForbiddenException.class)
+            .hasMessageContaining("User lacks CAN_ARM permission for location 456");
+        
+        verify(securitySystemRepository).findById(systemId);
+        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
+        verify(securitySystemRepository, never()).save(any());
+        
+        // Clean up
+        SecurityContextHolder.clearContext();
+    }
+    
+    @Test
+    void shouldHandleCustomerServiceUnavailable() throws Exception {
+        // Given
+        Long systemId = 1L;
+        Long locationId = 456L;
+        String userId = "employee@example.com";
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        setId(securitySystem, systemId);
+        securitySystem.setLocationId(locationId);
+        
+        // Set up employee authentication
+        Authentication employeeAuth = new TestingAuthenticationToken(
+            userId, 
+            null, 
+            Arrays.asList(new SimpleGrantedAuthority("ROLE_REALGUARDIO_CUSTOMER_EMPLOYEE"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(employeeAuth);
+        
+        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
+        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
+            .thenThrow(new ResourceAccessException("Connection refused"));
+        
+        // When & Then
+        assertThatThrownBy(() -> securitySystemService.disarm(systemId))
+            .isInstanceOf(ServiceUnavailableException.class)
+            .hasMessageContaining("Authorization service temporarily unavailable");
+        
+        verify(securitySystemRepository).findById(systemId);
+        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
+        verify(securitySystemRepository, never()).save(any());
+        
+        // Clean up
+        SecurityContextHolder.clearContext();
     }
 }
