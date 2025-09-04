@@ -46,7 +46,7 @@ public class LocationRoleServiceImpl implements LocationRoleService {
     }
     
     private Set<String> findTeamRolesForEmployeeAtLocation(String userName, Long locationId) {
-        // TODO: Implement team-based role retrieval when TeamLocationRoleRepository has appropriate query methods
-        return Set.of();
+        return new HashSet<>(teamLocationRoleRepository.findTeamRolesByUserNameAndLocationId(
+                userName, locationId));
     }
 }

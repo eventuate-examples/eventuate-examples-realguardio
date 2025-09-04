@@ -194,23 +194,23 @@ Steps:
 This thread enhances the Customer Service to include team-based roles in the response.
 
 ```text
-[ ] Enhance Customer Service to include team-based roles
+[x] Enhance Customer Service to include team-based roles
 
 Steps:
-[ ] 1. Write unit test in LocationRoleServiceTest:
+[x] 1. Write unit test in LocationRoleServiceTest:
      - Test aggregates direct and team-based roles
      - Test handles user with only team roles
      - Test handles user with both direct and team roles
-[ ] 2. Add repository method to find team-based roles:
+[x] 2. Add repository method to find team-based roles:
      - findTeamRolesAtLocation(employeeId, locationId)
      - Join team_members, team_location_roles tables
-[ ] 3. Update LocationRoleService.getUserRolesAtLocation:
+[x] 3. Update LocationRoleService.getUserRolesAtLocation:
      - Query both direct and team-based roles
      - Return union of both sets
-[ ] 4. Write integration test to verify team roles are included
-[ ] 5. Run all tests and make them pass
-[ ] 6. Run all tests to ensure nothing is broken
-[ ] 7. Commit the changes
+[x] 4. Write integration test to verify team roles are included
+[x] 5. Run all tests and make them pass
+[x] 6. Run all tests to ensure nothing is broken
+[x] 7. Commit the changes
 ```
 
 ## Steel Thread 7: Create Customer Service Client in Security Service

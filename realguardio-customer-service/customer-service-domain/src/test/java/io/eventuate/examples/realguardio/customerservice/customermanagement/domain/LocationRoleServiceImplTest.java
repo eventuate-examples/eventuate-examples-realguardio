@@ -96,4 +96,69 @@ class LocationRoleServiceImplTest {
         // Then
         assertThat(result).isEmpty();
     }
+    
+    @Test
+    void shouldAggregateDirectAndTeamBasedRoles() {
+        // Given
+        String userName = "user@example.com";
+        Long locationId = 456L;
+        
+        List<String> directRoles = List.of("CAN_ARM", "VIEW_ALERTS");
+        List<String> teamRoles = List.of("CAN_DISARM", "VIEW_ALERTS");
+        
+        when(userNameSupplier.getCurrentUserEmail()).thenReturn(userName);
+        when(locationRoleRepository.findRoleNamesByUserNameAndLocationId(userName, locationId))
+            .thenReturn(directRoles);
+        when(teamLocationRoleRepository.findTeamRolesByUserNameAndLocationId(userName, locationId))
+            .thenReturn(teamRoles);
+        
+        // When
+        Set<String> result = locationRoleService.getUserRolesAtLocation(locationId);
+        
+        // Then
+        assertThat(result).containsExactlyInAnyOrder("CAN_ARM", "CAN_DISARM", "VIEW_ALERTS");
+    }
+    
+    @Test
+    void shouldHandleUserWithOnlyTeamRoles() {
+        // Given
+        String userName = "user@example.com";
+        Long locationId = 456L;
+        
+        List<String> teamRoles = List.of("CAN_ARM", "CAN_DISARM");
+        
+        when(userNameSupplier.getCurrentUserEmail()).thenReturn(userName);
+        when(locationRoleRepository.findRoleNamesByUserNameAndLocationId(userName, locationId))
+            .thenReturn(List.of());
+        when(teamLocationRoleRepository.findTeamRolesByUserNameAndLocationId(userName, locationId))
+            .thenReturn(teamRoles);
+        
+        // When
+        Set<String> result = locationRoleService.getUserRolesAtLocation(locationId);
+        
+        // Then
+        assertThat(result).containsExactlyInAnyOrder("CAN_ARM", "CAN_DISARM");
+    }
+    
+    @Test
+    void shouldHandleUserWithBothDirectAndTeamRoles() {
+        // Given
+        String userName = "user@example.com";
+        Long locationId = 456L;
+        
+        List<String> directRoles = List.of("CAN_ARM");
+        List<String> teamRoles = List.of("CAN_DISARM", "MANAGE_USERS");
+        
+        when(userNameSupplier.getCurrentUserEmail()).thenReturn(userName);
+        when(locationRoleRepository.findRoleNamesByUserNameAndLocationId(userName, locationId))
+            .thenReturn(directRoles);
+        when(teamLocationRoleRepository.findTeamRolesByUserNameAndLocationId(userName, locationId))
+            .thenReturn(teamRoles);
+        
+        // When
+        Set<String> result = locationRoleService.getUserRolesAtLocation(locationId);
+        
+        // Then
+        assertThat(result).containsExactlyInAnyOrder("CAN_ARM", "CAN_DISARM", "MANAGE_USERS");
+    }
 }

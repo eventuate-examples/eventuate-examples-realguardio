@@ -106,5 +106,15 @@ class CustomerRepositoryIntegrationTest {
 
         assertThat(customerEmployeeLocationRoleRepository.findRoleNamesByUserNameAndLocationId(userName, locationId)).isEmpty();
     }
+    
+    @Test
+    void shouldFindTeamRolesAtLocation() {
+        // Given
+        String userName = "team-member-%s@example.com".formatted(System.currentTimeMillis());
+        long locationId = System.currentTimeMillis();
+        
+        // Should return empty when no team roles exist
+        assertThat(teamLocationRoleRepository.findTeamRolesByUserNameAndLocationId(userName, locationId)).isEmpty();
+    }
 
 }
