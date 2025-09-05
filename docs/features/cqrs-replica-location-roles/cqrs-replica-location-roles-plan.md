@@ -110,49 +110,49 @@ Implement the event consumer that processes CustomerEmployeeAssignedLocationRole
 
 ### Implementation Tasks
 
-[ ] **Task 3.1: Write component test for event consumption**
+[x] **Task 3.1: Write component test for event consumption**
 
 ```text
 Write a test that verifies the Security Service can consume events and update the database.
 
 Steps:
-[ ] Create LocationRolesReplicaServiceTest or add to SecurityServiceTest
-[ ] Write test shouldConsumeEventAndUpdateDatabase()
-[ ] Use in-memory message broker or test utilities
-[ ] Publish a test CustomerEmployeeAssignedLocationRole event
-[ ] Verify the database is updated with correct data
-[ ] Run test - it should fail (red phase)
+[x] Create LocationRolesReplicaServiceTest or add to SecurityServiceTest
+[x] Write test shouldConsumeEventAndUpdateDatabase()
+[x] Use in-memory message broker or test utilities
+[x] Publish a test CustomerEmployeeAssignedLocationRole event
+[x] Verify the database is updated with correct data
+[x] Run test - it should fail (red phase)
 ```
 
-[ ] **Task 3.2: Implement LocationRolesReplicaService**
+[x] **Task 3.2: Implement LocationRolesReplicaService**
 
 ```text
 Create the service layer for managing the replica data.
 
 Steps:
-[ ] Create LocationRolesReplicaService class with @Service and @Transactional
-[ ] Inject JdbcTemplate
-[ ] Implement saveLocationRole(userName, locationId, roleName) method
-[ ] Use JDBC to insert into customer_employee_location_role table
-[ ] Run test - still failing (no event consumer yet)
+[x] Create LocationRolesReplicaService class with @Service and @Transactional
+[x] Inject JdbcTemplate
+[x] Implement saveLocationRole(userName, locationId, roleName) method
+[x] Use JDBC to insert into customer_employee_location_role table
+[x] Run test - still failing (no event consumer yet)
 ```
 
-[ ] **Task 3.3: Implement event consumer**
+[x] **Task 3.3: Implement event consumer**
 
 ```text
 Create the event consumer that handles incoming events.
 
 Steps:
-[ ] Create CustomerEmployeeLocationEventConsumer class
-[ ] Inject LocationRolesReplicaService
-[ ] Create domainEventHandlers() method returning DomainEventHandlers
-[ ] Use DomainEventHandlersBuilder.forAggregateType("Customer").onEvent(CustomerEmployeeAssignedLocationRole.class, this::handle).build()
-[ ] In handler method, extract event from DomainEventEnvelope and call replicaService.saveLocationRole()
-[ ] Create @Configuration class with @Bean for DomainEventDispatcher
-[ ] Inject DomainEventDispatcherFactory and use it to create dispatcher with unique subscriberId
-[ ] Run test - should now pass (green phase)
-[ ] Run all Security Service tests
-[ ] Commit changes with message "Implement event consumer for location roles replica"
+[x] Create CustomerEmployeeLocationEventConsumer class
+[x] Inject LocationRolesReplicaService
+[x] Create domainEventHandlers() method returning DomainEventHandlers
+[x] Use DomainEventHandlersBuilder.forAggregateType("Customer").onEvent(CustomerEmployeeAssignedLocationRole.class, this::handle).build()
+[x] In handler method, extract event from DomainEventEnvelope and call replicaService.saveLocationRole()
+[x] Create @Configuration class with @Bean for DomainEventDispatcher
+[x] Inject DomainEventDispatcherFactory and use it to create dispatcher with unique subscriberId
+[x] Run test - should now pass (green phase)
+[x] Run all Security Service tests
+[x] Commit changes with message "Implement event consumer for location roles replica"
 ```
 
 ## Steel Thread 4: Query API for Replica Data

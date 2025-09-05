@@ -5,6 +5,8 @@ dependencies {
     
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.eventuate.tram.core:eventuate-tram-spring-in-memory'
+    testImplementation 'io.eventuate.tram.core:eventuate-tram-spring-events-publisher-starter'
     testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
     testRuntimeOnly 'com.h2database:h2'
 }
