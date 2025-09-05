@@ -15,7 +15,6 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,13 +55,13 @@ public class LocationRolesReplicaServiceTest {
 
         // Then - verify the database is updated using LocationRolesReplicaService
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<Map<String, Object>> results = locationRolesReplicaService.findLocationRoles(userName, locationId);
+            List<LocationRole> results = locationRolesReplicaService.findLocationRoles(userName, locationId);
             
             assertThat(results).hasSize(1);
-            Map<String, Object> row = results.get(0);
-            assertThat(row.get("user_name")).isEqualTo(userName);
-            assertThat(row.get("location_id")).isEqualTo(locationId);
-            assertThat(row.get("role_name")).isEqualTo(roleName);
+            LocationRole role = results.get(0);
+            assertThat(role.userName()).isEqualTo(userName);
+            assertThat(role.locationId()).isEqualTo(locationId);
+            assertThat(role.roleName()).isEqualTo(roleName);
         });
     }
 
@@ -79,14 +78,14 @@ public class LocationRolesReplicaServiceTest {
         );
 
         // When - call findLocationRoles
-        List<Map<String, Object>> results = locationRolesReplicaService.findLocationRoles(userName, locationId);
+        List<LocationRole> results = locationRolesReplicaService.findLocationRoles(userName, locationId);
 
         // Then - verify the correct data is returned
         assertThat(results).hasSize(1);
-        Map<String, Object> row = results.get(0);
-        assertThat(row.get("user_name")).isEqualTo(userName);
-        assertThat(row.get("location_id")).isEqualTo(locationId);
-        assertThat(row.get("role_name")).isEqualTo(roleName);
+        LocationRole role = results.get(0);
+        assertThat(role.userName()).isEqualTo(userName);
+        assertThat(role.locationId()).isEqualTo(locationId);
+        assertThat(role.roleName()).isEqualTo(roleName);
     }
 
 }

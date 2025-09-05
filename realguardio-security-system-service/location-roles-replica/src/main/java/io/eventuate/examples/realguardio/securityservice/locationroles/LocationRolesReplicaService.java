@@ -2,17 +2,25 @@ package io.eventuate.examples.realguardio.securityservice.locationroles;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional
 public class LocationRolesReplicaService {
     
     private final JdbcTemplate jdbcTemplate;
+    
+    private final RowMapper<LocationRole> locationRoleRowMapper = (rs, rowNum) -> 
+        new LocationRole(
+            rs.getLong("id"),
+            rs.getString("user_name"),
+            rs.getLong("location_id"),
+            rs.getString("role_name")
+        );
     
     @Autowired
     public LocationRolesReplicaService(JdbcTemplate jdbcTemplate) {
@@ -24,8 +32,8 @@ public class LocationRolesReplicaService {
         jdbcTemplate.update(sql, userName, locationId, roleName);
     }
     
-    public List<Map<String, Object>> findLocationRoles(String userName, Long locationId) {
-        String sql = "SELECT * FROM customer_employee_location_role WHERE user_name = ? AND location_id = ?";
-        return jdbcTemplate.queryForList(sql, userName, locationId);
+    public List<LocationRole> findLocationRoles(String userName, Long locationId) {
+        String sql = "SELECT id, user_name, location_id, role_name FROM customer_employee_location_role WHERE user_name = ? AND location_id = ?";
+        return jdbcTemplate.query(sql, locationRoleRowMapper, userName, locationId);
     }
 }
