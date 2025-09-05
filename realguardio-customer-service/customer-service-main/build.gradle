@@ -15,6 +15,8 @@ dependencies {
     implementation project(":customer-service-iam-integration")
     implementation project(":customer-service-api-messaging")
 
+    implementation 'io.eventuate.tram.core:eventuate-tram-spring-events-publisher-starter'
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

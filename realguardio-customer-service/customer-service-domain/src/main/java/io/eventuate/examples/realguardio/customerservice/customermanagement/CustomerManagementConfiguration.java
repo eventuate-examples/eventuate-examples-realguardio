@@ -11,6 +11,7 @@ import io.eventuate.examples.realguardio.customerservice.organizationmanagement.
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.MemberService;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.OrganizationService;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
+import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +33,8 @@ public class CustomerManagementConfiguration {
                                          TeamLocationRoleRepository teamLocationRoleRepository,
                                          OrganizationService organizationService,
                                          MemberService memberService,
-                                         UserNameSupplier userNameSupplier) {
+                                         UserNameSupplier userNameSupplier,
+                                         DomainEventPublisher domainEventPublisher) {
     return new CustomerService(
         customerRepository,
         customerEmployeeRepository,
@@ -42,6 +44,7 @@ public class CustomerManagementConfiguration {
         teamLocationRoleRepository,
         organizationService,
         memberService,
-        userNameSupplier);
+        userNameSupplier,
+        domainEventPublisher);
   }
 }

@@ -5,11 +5,14 @@ import io.eventuate.examples.realguardio.customerservice.customermanagement.Cust
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.LoggedInUser;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.TestContext;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.TestCustomerFactory;
+import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.exception.NotAuthorizedException;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
 import io.eventuate.examples.realguardio.customerservice.security.UserService;
+import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,9 +22,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.util.List;
+
 import static io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerServiceTestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest(classes = CustomerServiceTest.Config.class)
 class CustomerServiceTest {
@@ -54,6 +62,9 @@ class CustomerServiceTest {
 
   @MockitoBean
   private UserService userService;
+
+  @MockitoBean
+  private DomainEventPublisher domainEventPublisher;
 
   @Autowired
   private LoggedInUser loggedInUser;
@@ -252,6 +263,35 @@ class CustomerServiceTest {
 
     assertThatThrownBy(customer2::createCustomerEmployee)
         .isInstanceOf(NotAuthorizedException.class) ;
+  }
+
+  @Test
+  public void shouldPublishEventWhenAssigningLocationRole() {
+    // Given
+    var customer = testCustomerFactory.createCustomer();
+    var marySmith = customer.createCustomerEmployee();
+    var location = customer.createLocation();
+    loggedInUser.withUser(customer);
+
+    // When
+    customer.assignLocationRole(marySmith, location, SECURITY_SYSTEM_ARMER_ROLE);
+
+    // Then - verify the role was assigned
+    customer.assertEmployeeLocationRoles(marySmith, location).containsExactly(SECURITY_SYSTEM_ARMER_ROLE);
+
+    // Verify that a CustomerEmployeeAssignedLocationRole event was published
+    ArgumentCaptor<List> eventsCaptor = ArgumentCaptor.forClass(List.class);
+    verify(domainEventPublisher).publish(eq("Customer"), any(String.class), eventsCaptor.capture());
+    
+    List<?> events = eventsCaptor.getValue();
+    assertThat(events).hasSize(1);
+    Object event = events.get(0);
+    assertThat(event).isInstanceOf(CustomerEmployeeAssignedLocationRole.class);
+    
+    CustomerEmployeeAssignedLocationRole publishedEvent = (CustomerEmployeeAssignedLocationRole) event;
+    // We need to get the userName for marySmith - for now we'll just verify the structure
+    assertThat(publishedEvent.locationId()).isEqualTo(location.getId());
+    assertThat(publishedEvent.roleName()).isEqualTo(SECURITY_SYSTEM_ARMER_ROLE);
   }
 
 

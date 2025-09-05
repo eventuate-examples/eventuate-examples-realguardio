@@ -6,12 +6,14 @@ dependencies {
     implementation 'jakarta.persistence:jakarta.persistence-api'
     implementation 'org.springframework:spring-tx'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.eventuate.tram.core:eventuate-tram-spring-events'
 
     testImplementation project(":test-utils")
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mockito:mockito-junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'io.eventuate.tram.core:eventuate-tram-spring-in-memory'
     testRuntimeOnly 'com.h2database:h2'
 
 

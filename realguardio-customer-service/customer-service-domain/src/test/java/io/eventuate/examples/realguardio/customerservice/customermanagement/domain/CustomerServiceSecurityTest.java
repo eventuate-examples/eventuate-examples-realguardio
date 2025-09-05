@@ -5,6 +5,7 @@ import io.eventuate.examples.realguardio.customerservice.customermanagement.Cust
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.MockUser;
 import io.eventuate.examples.realguardio.customerservice.security.SecurityConfiguration;
 import io.eventuate.examples.realguardio.customerservice.security.UserService;
+import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -38,6 +39,9 @@ public class CustomerServiceSecurityTest {
 
     @MockitoBean
     private UserService userService;
+    
+    @MockitoBean
+    private DomainEventPublisher domainEventPublisher;
 
     @Test
     void shouldDenyCreateCustomerWithoutAuthentication() {

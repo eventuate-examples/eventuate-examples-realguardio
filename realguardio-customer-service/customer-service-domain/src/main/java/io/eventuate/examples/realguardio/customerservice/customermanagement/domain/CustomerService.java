@@ -2,6 +2,7 @@ package io.eventuate.examples.realguardio.customerservice.customermanagement.dom
 
 import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
 import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
+import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.Member;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.MemberRole;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.Organization;
@@ -9,9 +10,12 @@ import io.eventuate.examples.realguardio.customerservice.organizationmanagement.
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.MemberService;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.OrganizationService;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
+import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
 
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +37,7 @@ public class CustomerService {
     private final OrganizationService organizationService;
     private final MemberService memberService;
     private final UserNameSupplier userNameSupplier;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Autowired
     public CustomerService(CustomerRepository customerRepository,
@@ -43,7 +48,8 @@ public class CustomerService {
                           TeamLocationRoleRepository teamLocationRoleRepository,
                           OrganizationService organizationService,
                           MemberService memberService,
-                          UserNameSupplier userNameSupplier) {
+                          UserNameSupplier userNameSupplier,
+                          DomainEventPublisher domainEventPublisher) {
         this.customerRepository = customerRepository;
         this.customerEmployeeRepository = customerEmployeeRepository;
         this.locationRepository = locationRepository;
@@ -53,6 +59,7 @@ public class CustomerService {
         this.organizationService = organizationService;
         this.memberService = memberService;
         this.userNameSupplier = userNameSupplier;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     /**
@@ -232,6 +239,7 @@ public class CustomerService {
      * @param roleName the name of the role to assign
      * @return the created customer employee location role
      */
+    @Transactional
     public CustomerEmployeeLocationRole assignLocationRole(Long customerId, Long customerEmployeeId, Long locationId, String roleName) {
         Customer customer = customerRepository.findRequiredById(customerId);
 
@@ -243,7 +251,22 @@ public class CustomerService {
         // And that team and employee belong to the same customer
 
         CustomerEmployeeLocationRole role = new CustomerEmployeeLocationRole(customerId, customerEmployeeId, locationId, roleName);
-        return customerEmployeeLocationRoleRepository.save(role);
+        CustomerEmployeeLocationRole savedRole = customerEmployeeLocationRoleRepository.save(role);
+        
+        // Get the member's email address to use as userName
+        Member member = memberService.findMemberById(customerEmployee.getMemberId());
+        String userName = member.getEmailAddress().email();
+        
+        // Publish the event
+        domainEventPublisher.publish(
+            "Customer",
+            customerId.toString(),
+            Collections.singletonList(
+                new CustomerEmployeeAssignedLocationRole(userName, locationId, roleName)
+            )
+        );
+        
+        return savedRole;
     }
 
     /**
