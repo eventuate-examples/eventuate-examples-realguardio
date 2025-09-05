@@ -43,19 +43,16 @@ echo
 # Use a Kafka image with admin tools to inspect the broker
 KAFKA_TOOLS_IMAGE="confluentinc/cp-kafka:latest"
 
-# Set timeout for commands
-export KAFKA_OPTS="-Djava.security.auth.login.config=/dev/null"
-
 echo "KAFKA TOPICS:"
 echo "-------------"
-timeout 5 docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-    kafka-topics --bootstrap-server $KAFKA_HOSTNAME:9092 --list 2>/dev/null || echo "No topics found or connection timeout"
+docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
+    kafka-topics --bootstrap-server $KAFKA_HOSTNAME:9093 --list
 
 echo
 echo "TOPIC DETAILS:"
 echo "--------------"
-TOPICS=$(timeout 5 docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-    kafka-topics --bootstrap-server $KAFKA_HOSTNAME:9092 --list 2>/dev/null)
+TOPICS=$(docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
+    kafka-topics --bootstrap-server $KAFKA_HOSTNAME:9093 --list 2>/dev/null)
 
 if [ ! -z "$TOPICS" ]; then
     for topic in $TOPICS; do
@@ -63,8 +60,8 @@ if [ ! -z "$TOPICS" ]; then
         topic=$(echo $topic | tr -d '\r')
         if [ ! -z "$topic" ]; then
             echo "Topic: $topic"
-            timeout 5 docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-                kafka-topics --bootstrap-server $KAFKA_HOSTNAME:9092 --describe --topic $topic 2>/dev/null
+            docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
+                kafka-topics --bootstrap-server $KAFKA_HOSTNAME:9093 --describe --topic $topic
             echo
         fi
     done
@@ -75,23 +72,23 @@ fi
 echo
 echo "CONSUMER GROUPS:"
 echo "----------------"
-timeout 5 docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-    kafka-consumer-groups --bootstrap-server $KAFKA_HOSTNAME:9092 --list 2>/dev/null || echo "No consumer groups found or connection timeout"
+docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
+    kafka-consumer-groups --bootstrap-server $KAFKA_HOSTNAME:9093 --list
 
 echo
 echo "CONSUMER GROUP DETAILS:"
 echo "-----------------------"
-GROUPS=$(timeout 5 docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-    kafka-consumer-groups --bootstrap-server $KAFKA_HOSTNAME:9092 --list 2>/dev/null)
+GROUPS=$(docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
+    kafka-consumer-groups --bootstrap-server $KAFKA_HOSTNAME:9093 --list 2>/dev/null | grep -v '^[[:space:]]*$')
 
 if [ ! -z "$GROUPS" ]; then
-    for group in $GROUPS; do
-        # Remove any carriage returns from group names
-        group=$(echo $group | tr -d '\r')
-        if [ ! -z "$group" ]; then
+    echo "$GROUPS" | while IFS= read -r group; do
+        # Remove any carriage returns and whitespace from group names
+        group=$(echo "$group" | tr -d '\r' | xargs)
+        if [ ! -z "$group" ] && [ "$group" != "" ]; then
             echo "Consumer Group: $group"
-            timeout 5 docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-                kafka-consumer-groups --bootstrap-server $KAFKA_HOSTNAME:9092 --describe --group $group 2>/dev/null
+            docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
+                kafka-consumer-groups --bootstrap-server $KAFKA_HOSTNAME:9093 --describe --group "$group"
             echo
         fi
     done

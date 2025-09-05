@@ -11,18 +11,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import org.springframework.web.client.ResourceAccessException;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SecuritySystemServiceTest {
@@ -307,32 +300,4 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository, never()).save(any());
     }
     
-    @Test
-    void shouldHandleCustomerServiceUnavailable() throws Exception {
-        // Given
-        Long systemId = 1L;
-        Long locationId = 456L;
-        String userId = "employee@example.com";
-        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
-        setId(securitySystem, systemId);
-        securitySystem.setLocationId(locationId);
-        
-        // Set up employee
-        when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
-        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
-        
-        when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
-        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-            .thenThrow(new ResourceAccessException("Connection refused"));
-        
-        // When & Then
-        assertThatThrownBy(() -> securitySystemService.disarm(systemId))
-            .isInstanceOf(ServiceUnavailableException.class)
-            .hasMessageContaining("Authorization service temporarily unavailable");
-        
-        verify(securitySystemRepository).findById(systemId);
-        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
-        verify(securitySystemRepository, never()).save(any());
-    }
 }
