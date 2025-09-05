@@ -68,6 +68,9 @@ dependencies {
     // Assertions
     endToEndTestImplementation 'org.assertj:assertj-core:3.24.2'
     
+    // Awaitility for polling/waiting
+    endToEndTestImplementation 'org.awaitility:awaitility:4.2.0'
+    
     // JSON Processing
     endToEndTestImplementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
     
@@ -136,12 +139,26 @@ task dockerComposeUp(type: Exec) {
 
     dependsOn "assembleServices"
 
-    commandLine 'docker', 'compose', 'up', '-d', '--build', '--wait', "realguardio-iam-service", "cdc"
+    if (project.hasProperty('endToEndTestNoBuild'))
+        commandLine 'docker', 'compose', 'up', '-d', '--wait'
+    else
+        commandLine 'docker', 'compose', 'up', '-d', '--build', '--wait'
 
     // Optional: Set the working directory if docker-compose.yml is not in the project root
     // workingDir '../'
 }
 
+task dockerComposeBuild(type: Exec) {
+    description = 'Starts all services using docker compose'
+    group = 'application'
+
+    dependsOn "assembleServices"
+
+    commandLine 'docker', 'compose', 'build'
+
+    // Optional: Set the working directory if docker-compose.yml is not in the project root
+    // workingDir '../'
+}
 if (project.hasProperty('endToEndTestMode') && endToEndTestMode == 'DockerCompose')
     endToEndTest.dependsOn dockerComposeUp
 

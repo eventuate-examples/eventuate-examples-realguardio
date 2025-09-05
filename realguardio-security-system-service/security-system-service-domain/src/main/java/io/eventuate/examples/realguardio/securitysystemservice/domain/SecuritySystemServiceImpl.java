@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -34,6 +35,11 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     @Override
     public List<SecuritySystem> findAll() {
         return securitySystemRepository.findAll();
+    }
+    
+    @Override
+    public Optional<SecuritySystem> findById(Long id) {
+        return securitySystemRepository.findById(id);
     }
     
     @Override

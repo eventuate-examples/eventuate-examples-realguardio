@@ -37,7 +37,12 @@ for dir in realguardio-orchestration-service realguardio-customer-service realgu
         if has_uncommitted_changes "$dir"; then
             echo "Found uncommitted changes in $dir, running gradlew check..."
             cd "$ROOT_DIR/$dir"
-            ./gradlew check
+            if [ "$dir" = "end-to-end-tests" ]; then
+                # Skip end-to-end tests in pre-commit since they require Docker
+                ./gradlew test
+            else
+                ./gradlew check
+            fi
         else
             echo "No uncommitted changes in $dir, skipping checks"
         fi

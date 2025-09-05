@@ -22,6 +22,13 @@ public class SecuritySystemController {
     return new SecuritySystems(securitySystemService.findAll());
   }
   
+  @GetMapping("/securitysystems/{id}")
+  public ResponseEntity<SecuritySystem> getSecuritySystem(@PathVariable("id") Long id) {
+    return securitySystemService.findById(id)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
+  }
+  
   @PutMapping("/securitysystems/{id}")
   @PreAuthorize("hasRole('REALGUARDIO_ADMIN') or hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
   public ResponseEntity<SecuritySystem> updateSecuritySystem(

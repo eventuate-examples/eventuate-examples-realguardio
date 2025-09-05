@@ -1,9 +1,12 @@
 package io.eventuate.examples.realguardio.securitysystemservice.domain;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SecuritySystemService {
     List<SecuritySystem> findAll();
+    
+    Optional<SecuritySystem> findById(Long id);
     
     Long createSecuritySystem(String locationName);
     

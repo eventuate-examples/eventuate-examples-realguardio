@@ -1,6 +1,5 @@
 package io.eventuate.examples.realguardio.securitysystemservice.restapi;
 
-import io.eventuate.examples.realguardio.securitysystemservice.domain.NotFoundException;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAction;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
@@ -17,6 +16,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -120,6 +120,35 @@ class SecuritySystemControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnSecuritySystemById() throws Exception {
+        Long systemId = 1L;
+        SecuritySystem system = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
+                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        setId(system, systemId);
+        system.setLocationId(456L);
+        
+        when(securitySystemService.findById(systemId)).thenReturn(Optional.of(system));
+        
+        mockMvc.perform(get("/securitysystems/{id}", systemId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.locationName").value("Office Front Door"))
+                .andExpect(jsonPath("$.state").value("ARMED"))
+                .andExpect(jsonPath("$.locationId").value(456))
+                .andExpect(jsonPath("$.actions[0]").value("DISARM"));
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistentSecuritySystem() throws Exception {
+        Long systemId = 999L;
+        
+        when(securitySystemService.findById(systemId)).thenReturn(Optional.empty());
+        
+        mockMvc.perform(get("/securitysystems/{id}", systemId))
+                .andExpect(status().isNotFound());
     }
 
 }

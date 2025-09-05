@@ -97,6 +97,7 @@ services:
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CUSTOMER_SERVICE_URL: http://realguardio-customer-service:8080
     depends_on:
       - security-system-service-db
       - kafka
