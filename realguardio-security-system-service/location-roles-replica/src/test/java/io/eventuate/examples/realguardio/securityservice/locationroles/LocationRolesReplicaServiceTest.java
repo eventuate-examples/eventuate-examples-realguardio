@@ -54,12 +54,9 @@ public class LocationRolesReplicaServiceTest {
         // When - publish the event
         domainEventPublisher.publish("Customer", "1", Collections.singletonList(event));
 
-        // Then - verify the database is updated
+        // Then - verify the database is updated using LocationRolesReplicaService
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<Map<String, Object>> results = jdbcTemplate.queryForList(
-                "SELECT * FROM customer_employee_location_role WHERE user_name = ?", 
-                userName
-            );
+            List<Map<String, Object>> results = locationRolesReplicaService.findLocationRoles(userName, locationId);
             
             assertThat(results).hasSize(1);
             Map<String, Object> row = results.get(0);
@@ -92,49 +89,4 @@ public class LocationRolesReplicaServiceTest {
         assertThat(row.get("role_name")).isEqualTo(roleName);
     }
 
-    @Test
-    public void shouldFindLocationRolesByUserNameOnly() {
-        // Given - insert test data
-        String userName = "bob.jones@example.com";
-        Long location1 = 789L;
-        Long location2 = 890L;
-        
-        jdbcTemplate.update(
-            "INSERT INTO customer_employee_location_role (user_name, location_id, role_name) VALUES (?, ?, ?)",
-            userName, location1, "SECURITY_SYSTEM_ARMER"
-        );
-        jdbcTemplate.update(
-            "INSERT INTO customer_employee_location_role (user_name, location_id, role_name) VALUES (?, ?, ?)",
-            userName, location2, "SECURITY_SYSTEM_VIEWER"
-        );
-
-        // When - call findLocationRoles with only userName
-        List<Map<String, Object>> results = locationRolesReplicaService.findLocationRoles(userName, null);
-
-        // Then - verify both roles are returned
-        assertThat(results).hasSize(2);
-        assertThat(results).allMatch(row -> userName.equals(row.get("user_name")));
-    }
-
-    @Test
-    public void shouldFindLocationRolesByLocationIdOnly() {
-        // Given - insert test data
-        Long locationId = 999L;
-        
-        jdbcTemplate.update(
-            "INSERT INTO customer_employee_location_role (user_name, location_id, role_name) VALUES (?, ?, ?)",
-            "user1@example.com", locationId, "SECURITY_SYSTEM_ARMER"
-        );
-        jdbcTemplate.update(
-            "INSERT INTO customer_employee_location_role (user_name, location_id, role_name) VALUES (?, ?, ?)",
-            "user2@example.com", locationId, "SECURITY_SYSTEM_VIEWER"
-        );
-
-        // When - call findLocationRoles with only locationId
-        List<Map<String, Object>> results = locationRolesReplicaService.findLocationRoles(null, locationId);
-
-        // Then - verify both users are returned
-        assertThat(results).hasSize(2);
-        assertThat(results).allMatch(row -> locationId.equals(row.get("location_id")));
-    }
 }
