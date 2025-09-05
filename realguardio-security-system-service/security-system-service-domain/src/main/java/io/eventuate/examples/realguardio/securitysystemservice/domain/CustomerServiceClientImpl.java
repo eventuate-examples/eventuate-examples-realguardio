@@ -41,6 +41,8 @@ public class CustomerServiceClientImpl implements CustomerServiceClient {
 
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
+        logger.info("Requesting roles for user {} at location {} from URL: {}", userId, locationId, url);
+
         ResponseEntity<RolesResponse> response = restTemplate.exchange(
             url,
             HttpMethod.GET,

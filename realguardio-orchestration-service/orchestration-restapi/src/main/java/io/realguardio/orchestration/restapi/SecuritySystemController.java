@@ -39,7 +39,7 @@ public class SecuritySystemController {
                       .body(new CreateSecuritySystemResponse(securitySystemId));
                 })
                 .exceptionally(ex -> {
-                    logger.error("Error creating security system", ex);
+                    logger.error("Error creating security system: " + ex.getMessage(), ex);
                     if (ex.getCause() instanceof TimeoutException) {
                         throw new ServiceUnavailableException("Service temporarily unavailable");
                     }

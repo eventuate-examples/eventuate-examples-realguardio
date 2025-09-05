@@ -80,6 +80,8 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
           .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
           .withEnv("SPRING_PROFILES_ACTIVE", "docker")
           .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
+          .withEnv("CUSTOMER_SERVICE_URL", "http://customer-service:8080")
+
           .withReuse(true)
           .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC security-service:"));
 
@@ -92,7 +94,7 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
       .withReuse(false)
       .withExposedPorts(8080)
       .dependsOn(customerService, securitySystemService, orchestrationService)
-      .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("cdc:"));
+      .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC cdc:"));
 
 
   @Override

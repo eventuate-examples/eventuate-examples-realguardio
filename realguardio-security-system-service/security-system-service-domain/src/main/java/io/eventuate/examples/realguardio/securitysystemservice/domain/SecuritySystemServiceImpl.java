@@ -1,5 +1,7 @@
 package io.eventuate.examples.realguardio.securitysystemservice.domain;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,7 +12,9 @@ import java.util.Set;
 @Service
 @Transactional
 public class SecuritySystemServiceImpl implements SecuritySystemService {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(SecuritySystemServiceImpl.class);
+
     private final SecuritySystemRepository securitySystemRepository;
     private final CustomerServiceClient customerServiceClient;
     private final UserNameSupplier userNameSupplier;
@@ -105,20 +109,15 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     
     private void validateLocationPermission(Long locationId, String requiredRole) {
         String userId = userNameSupplier.getCurrentUserName();
-        
-        try {
-            Set<String> roles = customerServiceClient.getUserRolesAtLocation(userId, locationId);
-            
-            if (!roles.contains(requiredRole)) {
-                throw new ForbiddenException(
-                    String.format("User lacks %s permission for location %d", 
-                                requiredRole, locationId)
-                );
-            }
-        } catch (ForbiddenException e) {
-            throw e; // Re-throw ForbiddenException as-is
-        } catch (Exception e) {
-            throw new ServiceUnavailableException("Authorization service temporarily unavailable", e);
+
+        Set<String> roles = customerServiceClient.getUserRolesAtLocation(userId, locationId);
+
+        if (!roles.contains(requiredRole)) {
+            logger.warn("User {} lacks {} permission for location {}", userId, requiredRole, locationId);
+            throw new ForbiddenException(
+                String.format("User lacks %s permission for location %d",
+                    requiredRole, locationId)
+            );
         }
     }
 }

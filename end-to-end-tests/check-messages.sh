@@ -41,12 +41,22 @@ show_database_messages() {
     
     echo "Messages:"
     run_query "$container" "$user" "$db_name" "SELECT id, destination, 
+           left(headers, 100) as headers_preview,
            left(payload, 100) as payload_preview,
            published, creation_time 
            FROM public.message 
            ORDER BY creation_time DESC 
            LIMIT 10;" 2>/dev/null || \
     run_query "$container" "$user" "$db_name" "SELECT * FROM public.message ORDER BY id DESC LIMIT 10;"
+    
+    echo
+    echo "Received Messages:"
+    run_query "$container" "$user" "$db_name" "SELECT consumer_id, message_id, 
+           creation_time, published
+           FROM public.received_messages 
+           ORDER BY creation_time DESC 
+           LIMIT 10;" 2>/dev/null || \
+    run_query "$container" "$user" "$db_name" "SELECT * FROM public.received_messages ORDER BY creation_time DESC LIMIT 10;"
     
     echo
 }
@@ -107,3 +117,17 @@ run_query "$ORCHESTRATION_DB_CONTAINER" "postgresuser" "eventuate" "SELECT COUNT
 
 echo -n "Security System messages: "
 run_query "$SECURITY_DB_CONTAINER" "postgresuser" "eventuate" "SELECT COUNT(*) FROM public.message;" 2>/dev/null | grep -E '[0-9]+' | head -1 || echo "0"
+
+echo
+echo "=== REPLICATION SLOTS ==="
+echo "-----------------------------------------"
+echo "Customer DB replication slots:"
+run_query "$CUSTOMER_DB_CONTAINER" "postgresuser" "eventuate" "SELECT * FROM pg_replication_slots;"
+
+echo
+echo "Orchestration DB replication slots:"
+run_query "$ORCHESTRATION_DB_CONTAINER" "postgresuser" "eventuate" "SELECT * FROM pg_replication_slots;"
+
+echo
+echo "Security System DB replication slots:"
+run_query "$SECURITY_DB_CONTAINER" "postgresuser" "eventuate" "SELECT * FROM pg_replication_slots;"
