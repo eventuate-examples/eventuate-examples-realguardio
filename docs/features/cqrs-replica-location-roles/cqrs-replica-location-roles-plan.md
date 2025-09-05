@@ -162,46 +162,46 @@ Provide a REST API to query the replicated location role data.
 
 ### Implementation Tasks
 
-[ ] **Task 4.1: Write test for query functionality**
+[x] **Task 4.1: Write test for query functionality**
 
 ```text
 Write tests for querying location roles from the replica.
 
 Steps:
-[ ] Add test method to LocationRolesReplicaServiceTest
-[ ] Test findLocationRoles() with different parameter combinations
-[ ] Test filtering by userName
-[ ] Test filtering by locationId
-[ ] Run tests - they should fail (red phase)
+[x] Add test method to LocationRolesReplicaServiceTest
+[x] Test findLocationRoles() with different parameter combinations
+[x] Test filtering by userName
+[x] Test filtering by locationId
+[x] Run tests - they should fail (red phase)
 ```
 
-[ ] **Task 4.2: Implement query methods in service**
+[x] **Task 4.2: Implement query methods in service**
 
 ```text
 Add query functionality to LocationRolesReplicaService.
 
 Steps:
-[ ] Create LocationRole DTO/record class
-[ ] Implement findLocationRoles(userName, locationId) in service
-[ ] Build dynamic SQL query based on provided parameters
-[ ] Use JdbcTemplate to execute query and map results
-[ ] Run tests - should pass (green phase)
+[x] Create LocationRole DTO/record class
+[x] Implement findLocationRoles(userName, locationId) in service
+[x] Build dynamic SQL query based on provided parameters
+[x] Use JdbcTemplate to execute query and map results
+[x] Run tests - should pass (green phase)
 ```
 
-[ ] **Task 4.3: Create REST controller**
+[x] **Task 4.3: Create REST controller**
 
 ```text
 Implement the REST API endpoint for querying location roles.
 
 Steps:
-[ ] Create LocationRolesController with @RestController
-[ ] Add @RequestMapping("/location-roles")
-[ ] Inject LocationRolesReplicaService
-[ ] Implement GET endpoint with optional userName and locationId parameters
-[ ] Return list of LocationRole objects
-[ ] Write integration test for the REST endpoint
-[ ] Run all tests
-[ ] Commit changes with message "Add query API for location roles replica"
+[x] Create LocationRolesController with @RestController
+[x] Add @RequestMapping("/location-roles")
+[x] Inject LocationRolesReplicaService
+[x] Implement GET endpoint with optional userName and locationId parameters
+[x] Return list of LocationRole objects
+[x] Write integration test for the REST endpoint
+[x] Run all tests
+[x] Commit changes with message "Add query API for location roles replica"
 ```
 
 ## Steel Thread 5: Component Integration Tests
@@ -211,17 +211,17 @@ Verify the complete event flow works within each service using component tests.
 
 ### Implementation Tasks
 
-[ ] **Task 5.1: Update Customer Service component test**
+[x] **Task 5.1: Update Customer Service component test**
 
 ```text
 Verify events are written to the outbox table in Customer Service.
 
 Steps:
-[ ] Update CustomerServiceInProcessComponentTest
-[ ] Add test to verify event is written to outbox when assignLocationRole() is called
-[ ] Use actual database and Eventuate Tram
-[ ] Verify outbox contains CustomerEmployeeAssignedLocationRole event
-[ ] Run test - adjust implementation if needed
+[x] Update CustomerServiceInProcessComponentTest
+[x] Add test to verify event is written to outbox when assignLocationRole() is called
+[x] Use actual database and Eventuate Tram
+[x] Verify outbox contains CustomerEmployeeAssignedLocationRole event
+[x] Run test - adjust implementation if needed
 ```
 
 [ ] **Task 5.2: Update Security Service component test**

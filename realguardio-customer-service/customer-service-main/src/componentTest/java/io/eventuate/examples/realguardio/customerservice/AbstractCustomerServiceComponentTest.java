@@ -41,18 +41,25 @@ public abstract class AbstractCustomerServiceComponentTest {
   static class AbstractConfig {
   }
 
-  public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("customer-service-tests");
+  public static EventuateKafkaNativeCluster eventuateKafkaCluster;
 
-  public static EventuateKafkaNativeContainer kafka = eventuateKafkaCluster.kafka
-      .withNetworkAliases("kafka")
-      .withReuse(true)
-      ;
 
-  public static EventuateDatabaseContainer<?> database = DatabaseContainerFactory.makeVanillaDatabaseContainer()
-      .withNetwork(eventuateKafkaCluster.network)
-      .withNetworkAliases("database")
-      .withReuse(true)
-      ;
+  public static EventuateKafkaNativeContainer kafka;
+
+
+  public static EventuateDatabaseContainer<?> database;
+
+
+  protected static void makeContainers(String networkSuffix) {
+      eventuateKafkaCluster = new EventuateKafkaNativeCluster("customer-service-tests-" + networkSuffix);
+      kafka = eventuateKafkaCluster.kafka
+          .withNetworkAliases("kafka")
+          .withReuse(true);
+      database = DatabaseContainerFactory.makeVanillaDatabaseContainer()
+          .withNetwork(eventuateKafkaCluster.network)
+          .withNetworkAliases("database")
+          .withReuse(true);
+  }
 
   public static AuthorizationServerContainer iamService;
 

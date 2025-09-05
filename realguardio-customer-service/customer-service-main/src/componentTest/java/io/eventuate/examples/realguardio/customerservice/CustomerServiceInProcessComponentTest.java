@@ -41,15 +41,19 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 	@Autowired
 	private DirectToKafkaCommandProducer directToKafkaCommandProducer;
 
+	@Autowired
+	private ComponentTestSupport componentTestSupport;
+
 	@LocalServerPort
 	private int port;
 
 	static {
+		makeContainers(CustomerServiceInProcessComponentTest.class.getSimpleName());
 		iamService = new AuthorizationServerContainerForLocalTests()
 				.withUserDb()
 				.withNetwork(eventuateKafkaCluster.network)
 				.withNetworkAliases("iam-service")
-				.withReuse(true);
+				.withReuse(false);
 	}
 
 	@DynamicPropertySource
@@ -98,6 +102,12 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 		assignDisarmRoleToSelfAtLocation(companyAdminAccessToken, customerSummary, locationId);
 
 		assertThat(getRolesForLocation(companyAdminAccessToken, locationId).getRoles()).contains("DISARM");
+
+		componentTestSupport.assertDomainEventInOutbox(
+			"Customer",
+			String.valueOf(customerSummary.customerId()),
+			"io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole"
+		);
 
 	}
 

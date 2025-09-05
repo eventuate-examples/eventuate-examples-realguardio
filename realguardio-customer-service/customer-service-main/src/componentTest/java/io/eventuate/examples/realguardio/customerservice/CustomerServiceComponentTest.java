@@ -39,6 +39,15 @@ public class CustomerServiceComponentTest extends AbstractCustomerServiceCompone
 	static class Config {
 	}
 
+	static {
+		makeContainers(CustomerServiceComponentTest.class.getSimpleName());
+		iamService = new AuthorizationServerContainerForServiceContainers()
+				.withUserDb()
+				.withNetwork(eventuateKafkaCluster.network)
+				.withNetworkAliases("iam-service")
+				.withReuse(false); // Cant re
+	}
+
 	public static GenericContainer<?> service =
 
 		ServiceContainer.makeFromDockerfileInFileSystem("../Dockerfile-local")
@@ -52,13 +61,6 @@ public class CustomerServiceComponentTest extends AbstractCustomerServiceCompone
 			.withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC customer-service:"));
 		;
 
-	static {
-		iamService = new AuthorizationServerContainerForServiceContainers()
-				.withUserDb()
-				.withNetwork(eventuateKafkaCluster.network)
-				.withNetworkAliases("iam-service")
-				.withReuse(true);
-	}
 
 	@DynamicPropertySource
 	static void registerProperties(DynamicPropertyRegistry registry) {

@@ -27,7 +27,7 @@ public class ComponentTestSupport {
   protected static Logger logger = LoggerFactory.getLogger(ComponentTestSupport.class);
 
   @Autowired
-  private JdbcTemplate jdbcTemplate;
+  public JdbcTemplate jdbcTemplate;
 
   @Autowired
   private CommandOutboxTestSupport commandOutboxTestSupport;
@@ -62,6 +62,29 @@ public class ComponentTestSupport {
     commandReplyProducer.sendReplies(commandReplyToken, withSuccess(reply));
   }
 
-
+  public void assertDomainEventInOutbox(String aggregateType, String aggregateId, String eventType) {
+    eventually(10, 500, TimeUnit.MILLISECONDS, () -> {
+      List<Map<String, Object>> events = jdbcTemplate.queryForList(
+          "SELECT * FROM message WHERE destination = ?",
+          aggregateType);
+      
+      boolean foundEvent = events.stream().anyMatch(event -> {
+        String headersJson = (String) event.get("headers");
+        Map<String, Object> headers = JSonMapper.fromJson(headersJson, Map.class);
+        
+        String eventAggregateId = (String) headers.get("event-aggregate-id");
+        String eventTypeHeader = (String) headers.get("event-type");
+        
+        return aggregateId.equals(eventAggregateId) && eventType.equals(eventTypeHeader);
+      });
+      
+      assertThat(foundEvent)
+          .withFailMessage("Expected to find event %s for aggregate %s with id %s in outbox, but found: %s", 
+              eventType, aggregateType, aggregateId, events)
+          .isTrue();
+    });
+    
+    logger.info("Verified {} event was written to outbox for {} with id {}", eventType, aggregateType, aggregateId);
+  }
 
 }
