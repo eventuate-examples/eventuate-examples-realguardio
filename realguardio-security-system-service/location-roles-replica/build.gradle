@@ -1,0 +1,10 @@
+dependencies {
+    implementation 'io.eventuate.tram.core:eventuate-tram-spring-events-subscriber-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.eventuate.tram.core:eventuate-tram-spring-in-memory'
+    testImplementation 'org.assertj:assertj-core'
+    testRuntimeOnly 'com.h2database:h2'
+}

@@ -63,44 +63,44 @@ Set up the Security Service infrastructure to consume events and store them in a
 
 ### Implementation Tasks
 
-[ ] **Task 2.1: Create location-roles-replica subproject structure**
+[x] **Task 2.1: Create location-roles-replica subproject structure**
 
 ```text
 Create a new subproject for the location roles replica functionality in the Security Service.
 
 Steps:
-[ ] Create directory structure: security-service/location-roles-replica
-[ ] Add the subproject to settings.gradle
-[ ] Create build.gradle with dependencies:
+[x] Create directory structure: security-service/location-roles-replica
+[x] Add the subproject to settings.gradle
+[x] Create build.gradle with dependencies:
     - io.eventuate.tram.core:eventuate-tram-spring-events-subscriber-starter
     - spring-boot-starter-jdbc
     - spring-boot-starter-web
-[ ] Create main source directory structure
-[ ] Run ./gradlew build to verify setup
+[x] Create main source directory structure
+[x] Run ./gradlew build to verify setup
 ```
 
-[ ] **Task 2.2: Copy event class to Security Service**
+[x] **Task 2.2: Copy event class to Security Service**
 
 ```text
 Create a copy of the CustomerEmployeeAssignedLocationRole event class in the Security Service.
 
 Steps:
-[ ] Create package io.eventuate.examples.realguardio.customerservice.domain in location-roles-replica
-[ ] Copy CustomerEmployeeAssignedLocationRole event class to this package (must be exact same package!)
-[ ] Ensure it implements DomainEvent interface
-[ ] Verify the package and class name match exactly with Customer Service version
+[x] Create package io.eventuate.examples.realguardio.customerservice.domain in location-roles-replica
+[x] Copy CustomerEmployeeAssignedLocationRole event class to this package (must be exact same package!)
+[x] Ensure it implements DomainEvent interface
+[x] Verify the package and class name match exactly with Customer Service version
 ```
 
-[ ] **Task 2.3: Create database schema for replica**
+[x] **Task 2.3: Create database schema for replica**
 
 ```text
 Create the database table for storing location role replicas.
 
 Steps:
-[ ] Create SQL migration file for customer_employee_location_role table
-[ ] Include columns: id (BIGSERIAL PRIMARY KEY), user_name (VARCHAR), location_id (BIGINT), role_name (VARCHAR), created_at (TIMESTAMP)
-[ ] Add migration to appropriate location for Security Service database
-[ ] Run migration to create table
+[x] Create SQL migration file for customer_employee_location_role table
+[x] Include columns: id (BIGSERIAL PRIMARY KEY), user_name (VARCHAR), location_id (BIGINT), role_name (VARCHAR), created_at (TIMESTAMP)
+[x] Add migration to appropriate location for Security Service database
+[x] Run migration to create table
 ```
 
 ## Steel Thread 3: Event Consumer Implementation
