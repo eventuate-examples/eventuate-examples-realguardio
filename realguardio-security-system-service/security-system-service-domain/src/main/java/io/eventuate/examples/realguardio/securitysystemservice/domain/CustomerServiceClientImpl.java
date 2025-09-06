@@ -7,12 +7,14 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Set;
 
 @Component
+@Profile("!UseRolesReplica")
 public class CustomerServiceClientImpl implements CustomerServiceClient {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomerServiceClientImpl.class);
