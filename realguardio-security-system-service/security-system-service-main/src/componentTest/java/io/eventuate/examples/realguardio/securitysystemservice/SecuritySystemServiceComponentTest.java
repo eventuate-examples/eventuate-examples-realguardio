@@ -2,16 +2,16 @@ package io.eventuate.examples.realguardio.securitysystemservice;
 
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
+import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.UpdateCreationFailedCommand;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationNoted;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaConfiguration;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.testcontainers.service.ServiceContainer;
 import io.eventuate.tram.commands.producer.CommandProducer;
+import io.eventuate.tram.events.publisher.DomainEventPublisher;
+import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration;
 import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
@@ -21,10 +21,13 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
@@ -37,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 
 import static io.eventuate.util.test.async.Eventually.eventually;
 import static org.assertj.core.api.Assertions.assertThat;
-import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration;
 
 @SpringBootTest(classes = SecuritySystemServiceComponentTest.TestConfiguration.class)
 public class SecuritySystemServiceComponentTest {
@@ -51,8 +53,15 @@ public class SecuritySystemServiceComponentTest {
 			EventuateKafkaTestCommandProducerConfiguration.class,
 			CommandOutboxTestSupportConfiguration.class,
 			EventuateTramFlywayMigrationConfiguration.class,
+			LocationRolesReplicaConfiguration.class
 	})
 	static class TestConfiguration {
+
+		@Bean
+		DirectToKafkaDomainEventPublisher directToKafkaCommandProducer(@Value("${eventuatelocal.kafka.bootstrap.servers}") String bootstrapServer) {
+			return new DirectToKafkaDomainEventPublisher(bootstrapServer);
+		}
+
 	}
 
 	public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("security-system-service-tests");
@@ -93,6 +102,15 @@ public class SecuritySystemServiceComponentTest {
 
 	@Autowired
 	private CommandOutboxTestSupport commandOutboxTestSupport;
+
+	@Autowired
+	private DomainEventPublisher domainEventPublisher;
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@Autowired
+	private DirectToKafkaDomainEventPublisher directToKafkaDomainEventPublisher;
 
 	@DynamicPropertySource
 	static void registerProperties(DynamicPropertyRegistry registry) {
@@ -173,6 +191,50 @@ public class SecuritySystemServiceComponentTest {
 			// Note: Further verification of reply content would require access to the actual reply,
 			// which is not directly available through CommandOutboxTestSupport
 			logger.info("SecuritySystemCreated reply received");
+		});
+	}
+
+	@Test
+	void shouldConsumeLocationRoleAssignedEventAndUpdateReplica() throws Exception {
+		// This test verifies that if we publish an event from Customer Service,
+		// the Security Service would consume it and update its replica.
+
+		// Arrange
+		String userName = "test.user@example.com";
+		Long locationId = System.currentTimeMillis();
+		String roleName = "DISARM";
+		String customerId = Long.toString(System.currentTimeMillis());
+		
+		// Publish the domain event
+		logger.info("Publishing CustomerEmployeeAssignedLocationRole event");
+		CustomerEmployeeAssignedLocationRole event = new CustomerEmployeeAssignedLocationRole(userName, locationId, roleName);
+		directToKafkaDomainEventPublisher.publish("Customer", customerId, event);
+		
+		// Wait for event to be published to outbox and then processed by the service container
+		logger.info("Waiting for event to be consumed and processed by the service");
+		eventually(30, 500, TimeUnit.MILLISECONDS, () -> {
+			// Verify the location role can be queried via REST API
+			String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
+			
+			var response = RestAssured.given()
+				.baseUri(String.format("http://localhost:%d", service.getFirstMappedPort()))
+				.header("Authorization", "Bearer " + accessToken)
+				.queryParam("userName", userName)
+				.queryParam("locationId", locationId)
+				.when()
+				.get("/location-roles")
+				.then()
+				.statusCode(200)
+				.extract()
+				.body()
+				.jsonPath();
+			
+			assertThat(response.getList("$")).isNotEmpty();
+			assertThat(response.getString("[0].userName")).isEqualTo(userName);
+			assertThat(response.getLong("[0].locationId")).isEqualTo(locationId);
+			assertThat(response.getString("[0].roleName")).isEqualTo(roleName);
+			
+			logger.info("Location role successfully retrieved via REST API");
 		});
 	}
 

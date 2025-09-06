@@ -13,6 +13,7 @@ dependencies {
     implementation project(':security-system-service-persistence')
     implementation project(':security-system-service-restapi')
     implementation project(':security-system-api-messaging')
+    implementation project(':location-roles-replica')
     
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
@@ -37,6 +38,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     
     componentTestImplementation project(':security-system-api-messaging')
+    componentTestImplementation project(':location-roles-replica')
     componentTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     componentTestImplementation 'io.rest-assured:rest-assured'
     componentTestImplementation 'org.postgresql:postgresql'
@@ -53,6 +55,8 @@ dependencies {
     componentTestImplementation "org.testcontainers:testcontainers"
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-outbox-commands"
     componentTestImplementation 'io.eventuate.tram.core:eventuate-tram-spring-flyway'
+    componentTestImplementation 'io.eventuate.tram.core:eventuate-tram-spring-events-publisher-starter'
+    componentTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-producer"
 
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-webflux'

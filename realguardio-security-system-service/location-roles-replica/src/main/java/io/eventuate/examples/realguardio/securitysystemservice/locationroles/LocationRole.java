@@ -1,4 +1,4 @@
-package io.eventuate.examples.realguardio.securityservice.locationroles;
+package io.eventuate.examples.realguardio.securitysystemservice.locationroles;
 
 public record LocationRole(
     Long id,

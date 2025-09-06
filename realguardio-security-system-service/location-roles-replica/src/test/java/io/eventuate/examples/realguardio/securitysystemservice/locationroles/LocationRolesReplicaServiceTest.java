@@ -1,7 +1,6 @@
-package io.eventuate.examples.realguardio.securityservice.locationroles;
+package io.eventuate.examples.realguardio.securitysystemservice.locationroles;
 
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
-import io.eventuate.tram.events.common.DomainEvent;
 import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import io.eventuate.tram.spring.inmemory.TramInMemoryConfiguration;
 import org.junit.jupiter.api.Test;
