@@ -171,3 +171,9 @@ run = [
     "DOCKERFILE_SUFFIX=-local ./gradlew -P endToEndTestMode=DockerCompose clean build",
     "mise compose-down"
 ]
+
+[tasks.gh-run-list]
+run = "gh run list --limit=3"
+
+[tasks.gh-run-watch]
+run = "gh run watch $(gh run list --limit=1 --json databaseId --jq '.[0].databaseId')"
