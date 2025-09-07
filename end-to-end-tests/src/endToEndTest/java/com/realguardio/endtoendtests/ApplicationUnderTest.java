@@ -28,4 +28,6 @@ public interface ApplicationUnderTest {
   int getIamPort();
 
   String iamServiceHostAndPort();
+
+  default void useLocationRolesReplica() {};
 }

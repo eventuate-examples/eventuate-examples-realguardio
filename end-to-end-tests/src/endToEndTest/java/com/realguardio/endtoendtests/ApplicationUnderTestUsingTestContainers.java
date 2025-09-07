@@ -112,6 +112,11 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
   }
 
   @Override
+  public void useLocationRolesReplica() {
+    securitySystemService.withEnv("SPRING_PROFILES_ACTIVE", "UseRolesReplica");
+  }
+
+  @Override
   public int getCustomerServicePort() {
     return customerService.getFirstMappedPort();
   }
