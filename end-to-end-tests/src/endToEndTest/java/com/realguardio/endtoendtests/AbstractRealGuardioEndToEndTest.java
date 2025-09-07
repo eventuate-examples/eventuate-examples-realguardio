@@ -12,6 +12,7 @@ import io.restassured.RestAssured;
 import io.restassured.config.ObjectMapperConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -57,25 +58,43 @@ public abstract class AbstractRealGuardioEndToEndTest {
     
     @Test
     void shouldCreateCustomerAndSecuritySystem() {
-        // Create customer first using REALGUARDIO_ADMIN token
+
         CustomerCreationResult customerResult = createCustomerWithAdmin();
+
         CreateCustomerResponse customerResponse = customerResult.response();
         long customerId = customerResponse.customer().id();
         long adminEmployeeId = customerResponse.initialAdministrator().id();
         String adminEmail = customerResult.adminEmail();
 
-        assertThat(customerId).isGreaterThan(0);
+        String adminAuthToken = getTokenForCustomerAdmin(adminEmail);
 
+        Long securitySystemId = createSecuritySystem(customerId);
+
+        Long locationId = verifySecuritySystemHasLocationID(securitySystemId, adminAuthToken);
+
+        assignPermissionsToLocation(adminEmployeeId, locationId, adminAuthToken, customerId);
+
+        waitForUntilPermissionsHaveBeenAssigned(adminAuthToken, adminEmail, locationId);
+
+        armSecuritySystem(securitySystemId, adminAuthToken);
+
+        verifySecuritySystemArmed(adminAuthToken, securitySystemId);
+    }
+
+    private static String getTokenForCustomerAdmin(String adminEmail) {
         // Get JWT token for the customer's initial administrator that was created in IAM
         // The admin user has been created in IAM service during customer creation
         // We need to use their credentials for subsequent operations
         String adminAuthToken = JwtTokenHelper.getJwtTokenForUser(
-            aut.getIamPort(), 
-            aut.iamServiceHostAndPort(), 
-            adminEmail, 
+            aut.getIamPort(),
+            aut.iamServiceHostAndPort(),
+            adminEmail,
             "password"  // Default password - in real scenario this would be set/changed
         );
-        
+        return adminAuthToken;
+    }
+
+    private @NotNull Long createSecuritySystem(long customerId) {
         String locationName = "Office Main Entrance";
 
         // Step 1: Use the Orchestration Service REST to create a security system (still using REALGUARDIO_ADMIN token)
@@ -106,10 +125,13 @@ public abstract class AbstractRealGuardioEndToEndTest {
         Long securitySystemId = createResponse.securitySystemId();
         assertThat(securitySystemId).isNotNull();
         logger.info("Security system created with ID: {}", securitySystemId);
+        return securitySystemId;
+    }
 
+    private static Long verifySecuritySystemHasLocationID(Long securitySystemId, String adminAuthToken) {
         // Step 2: Use the Security Service API to verify that newly created SecuritySystem has been assigned a location ID
         logger.info("Step 2: Waiting for security system {} to be assigned a location ID", securitySystemId);
-        
+
         Long locationId = await().atMost(60, TimeUnit.SECONDS)
             .pollInterval(2, TimeUnit.SECONDS)
             .until(() -> {
@@ -134,10 +156,13 @@ public abstract class AbstractRealGuardioEndToEndTest {
             }, loc -> loc != null && loc > 0);
 
         logger.info("Security system {} has been assigned location ID: {}", securitySystemId, locationId);
+        return locationId;
+    }
 
+    private static void assignPermissionsToLocation(long adminEmployeeId, Long locationId, String adminAuthToken, long customerId) {
         // Step 3: Use the Customer Service REST API to assign the Customer's administrator arm/disarm rights to the location
         logger.info("Step 3: Assigning arm/disarm rights for employee {} at location {}", adminEmployeeId, locationId);
-        
+
         // First assign CAN_ARM role
         String assignArmRoleJson = """
         {
@@ -158,7 +183,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
             .then()
             .log().all()
             .statusCode(200);
-            
+
         // Also assign CAN_DISARM role
         String assignDisarmRoleJson = """
         {
@@ -167,7 +192,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
             "roleName": "CAN_DISARM"
         }
         """.formatted(adminEmployeeId, locationId);
-        
+
         RestAssured.given()
             .baseUri("http://localhost:" + aut.getCustomerServicePort())
             .header("Authorization", "Bearer " + adminAuthToken)  // Using admin's token
@@ -181,20 +206,18 @@ public abstract class AbstractRealGuardioEndToEndTest {
             .statusCode(200);
 
         logger.info("Arm/disarm rights assigned successfully");
+    }
 
-        // Wait for event to be published to outbox and then processed by the service container
-
-        waitForUntilPermissionsHaveBeenAssigned(adminAuthToken, adminEmail, locationId);
-
+    private static void armSecuritySystem(Long securitySystemId, String adminAuthToken) {
         // Step 4: Use the Security Service API to arm the security system
         logger.info("Step 4: Arming security system {}", securitySystemId);
-        
+
         String armRequestJson = """
         {
             "action": "ARM"
         }
         """;
-        
+
         RestAssured.given()
             .baseUri("http://localhost:" + aut.getSecurityServicePort())
             .header("Authorization", "Bearer " + adminAuthToken)
@@ -208,8 +231,9 @@ public abstract class AbstractRealGuardioEndToEndTest {
             .statusCode(200);
 
         logger.info("Security system {} armed successfully", securitySystemId);
+    }
 
-        // Verify the system is armed
+    private static void verifySecuritySystemArmed(String adminAuthToken, Long securitySystemId) {
         String state = RestAssured.given()
             .baseUri("http://localhost:" + aut.getSecurityServicePort())
             .header("Authorization", "Bearer " + adminAuthToken)
@@ -222,7 +246,6 @@ public abstract class AbstractRealGuardioEndToEndTest {
             .getString("state");
 
         assertThat(state).isEqualTo("ARMED");
-        logger.info("Test completed successfully - Security system {} is in state: {}", securitySystemId, state);
     }
 
     protected abstract void waitForUntilPermissionsHaveBeenAssigned(String adminAuthToken, String adminEmail, Long locationId);
