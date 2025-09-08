@@ -164,10 +164,12 @@ class CustomerServiceTest {
 
     loggedInUser.withUser(customer);
 
+    long idOfNonExistentCustomer = System.currentTimeMillis();
+
     // When & Then
 
-    assertThatThrownBy(() -> 
-        customerService.assignRole(System.currentTimeMillis(), johnDoe.customerEmployee().getId(), SECURITY_SYSTEM_DISARMER_ROLE))
+    assertThatThrownBy(() ->
+        customerService.assignRole(idOfNonExistentCustomer, johnDoe.customerEmployee().getId(), SECURITY_SYSTEM_DISARMER_ROLE))
         .isInstanceOf(DataRetrievalFailureException.class);
   }
 

@@ -16,7 +16,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -132,11 +131,9 @@ public class CustomerService {
     public MemberRole assignRole(Long customerId, Long customerEmployeeId, String roleName) {
         Customer customer = customerRepository.findRequiredById(customerId);
 
-        CustomerEmployee customerEmployee = customerEmployeeRepository.findRequiredById(customerEmployeeId);
-
         requireCustomerAdminRole(customerId);
 
-        return organizationService.assignRole(customer.getOrganizationId(), customerEmployee.getMemberId(), roleName);
+        return assignRoleInternal(customerId, customerEmployeeId, roleName);
     }
 
     public MemberRole assignRoleInternal(Long customerId, Long customerEmployeeId, String roleName) {
