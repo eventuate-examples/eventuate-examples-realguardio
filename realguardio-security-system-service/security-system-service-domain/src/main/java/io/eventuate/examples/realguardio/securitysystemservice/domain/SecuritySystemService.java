@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SecuritySystemService {
-    List<SecuritySystem> findAll();
+    List<SecuritySystemWithActions> findAll();
     
     Optional<SecuritySystem> findById(Long id);
     

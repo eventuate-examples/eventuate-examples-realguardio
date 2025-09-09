@@ -62,7 +62,7 @@ class LocationRoleServiceImplTest {
         Long customerId = 789L;
         String userName = "user132@example.com";
 
-        List<String> directRoles = List.of("CAN_ARM", "CAN_DISARM");
+        List<String> directRoles = List.of("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER");
         when(locationRoleRepository.findRoleNamesByUserNameAndLocationId(userName, locationId))
             .thenReturn(directRoles);
 
@@ -72,7 +72,7 @@ class LocationRoleServiceImplTest {
         Set<String> result = locationRoleService.getUserRolesAtLocation(locationId);
         
         // Then
-        assertThat(result).containsExactlyInAnyOrder("CAN_ARM", "CAN_DISARM");
+        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER");
     }
     
     @Test
@@ -103,8 +103,8 @@ class LocationRoleServiceImplTest {
         String userName = "user@example.com";
         Long locationId = 456L;
         
-        List<String> directRoles = List.of("CAN_ARM", "VIEW_ALERTS");
-        List<String> teamRoles = List.of("CAN_DISARM", "VIEW_ALERTS");
+        List<String> directRoles = List.of("SECURITY_SYSTEM_ARMER", "VIEW_ALERTS");
+        List<String> teamRoles = List.of("SECURITY_SYSTEM_DISARMER", "VIEW_ALERTS");
         
         when(userNameSupplier.getCurrentUserEmail()).thenReturn(userName);
         when(locationRoleRepository.findRoleNamesByUserNameAndLocationId(userName, locationId))
@@ -116,7 +116,7 @@ class LocationRoleServiceImplTest {
         Set<String> result = locationRoleService.getUserRolesAtLocation(locationId);
         
         // Then
-        assertThat(result).containsExactlyInAnyOrder("CAN_ARM", "CAN_DISARM", "VIEW_ALERTS");
+        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "VIEW_ALERTS");
     }
     
     @Test
@@ -125,7 +125,7 @@ class LocationRoleServiceImplTest {
         String userName = "user@example.com";
         Long locationId = 456L;
         
-        List<String> teamRoles = List.of("CAN_ARM", "CAN_DISARM");
+        List<String> teamRoles = List.of("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER");
         
         when(userNameSupplier.getCurrentUserEmail()).thenReturn(userName);
         when(locationRoleRepository.findRoleNamesByUserNameAndLocationId(userName, locationId))
@@ -137,7 +137,7 @@ class LocationRoleServiceImplTest {
         Set<String> result = locationRoleService.getUserRolesAtLocation(locationId);
         
         // Then
-        assertThat(result).containsExactlyInAnyOrder("CAN_ARM", "CAN_DISARM");
+        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER");
     }
     
     @Test
@@ -146,8 +146,8 @@ class LocationRoleServiceImplTest {
         String userName = "user@example.com";
         Long locationId = 456L;
         
-        List<String> directRoles = List.of("CAN_ARM");
-        List<String> teamRoles = List.of("CAN_DISARM", "MANAGE_USERS");
+        List<String> directRoles = List.of("SECURITY_SYSTEM_ARMER");
+        List<String> teamRoles = List.of("SECURITY_SYSTEM_DISARMER", "MANAGE_USERS");
         
         when(userNameSupplier.getCurrentUserEmail()).thenReturn(userName);
         when(locationRoleRepository.findRoleNamesByUserNameAndLocationId(userName, locationId))
@@ -159,6 +159,6 @@ class LocationRoleServiceImplTest {
         Set<String> result = locationRoleService.getUserRolesAtLocation(locationId);
         
         // Then
-        assertThat(result).containsExactlyInAnyOrder("CAN_ARM", "CAN_DISARM", "MANAGE_USERS");
+        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "MANAGE_USERS");
     }
 }

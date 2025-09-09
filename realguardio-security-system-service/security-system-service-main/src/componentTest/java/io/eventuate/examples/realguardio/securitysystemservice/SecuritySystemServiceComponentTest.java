@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,7 +49,7 @@ public class SecuritySystemServiceComponentTest {
 	private String replyTo;
 
 	@Configuration
-	@EnableAutoConfiguration
+	@EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class})
 	@Import({
 			EventuateKafkaTestCommandProducerConfiguration.class,
 			CommandOutboxTestSupportConfiguration.class,
@@ -60,6 +61,11 @@ public class SecuritySystemServiceComponentTest {
 		@Bean
 		DirectToKafkaDomainEventPublisher directToKafkaCommandProducer(@Value("${eventuatelocal.kafka.bootstrap.servers}") String bootstrapServer) {
 			return new DirectToKafkaDomainEventPublisher(bootstrapServer);
+		}
+
+		@Bean
+		UserService userService() {
+			return new UserServiceImpl();
 		}
 
 	}
@@ -112,6 +118,9 @@ public class SecuritySystemServiceComponentTest {
 	@Autowired
 	private DirectToKafkaDomainEventPublisher directToKafkaDomainEventPublisher;
 
+	@Autowired
+	private UserService userService;
+
 	@DynamicPropertySource
 	static void registerProperties(DynamicPropertyRegistry registry) {
 		Startables.deepStart(service, iamService).join();
@@ -151,7 +160,7 @@ public class SecuritySystemServiceComponentTest {
 	}
 
 	@Test
-	void shouldReturn401WhenNoAuthenticationProvided() {
+	void getSecuritySystemsShouldReturn401WhenNoAuthenticationProvided() {
 		RestAssured.given()
 				.baseUri(String.format("http://localhost:%d", service.getFirstMappedPort()))
 				.when()
@@ -161,9 +170,26 @@ public class SecuritySystemServiceComponentTest {
 	}
 	
 	@Test
-	void shouldReturn200WithValidJwtToken() {
+	void getSecuritySystemsShouldReturn403WithRealGuardAdmin() {
 		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
 		
+		RestAssured.given()
+				.baseUri(String.format("http://localhost:%d", service.getFirstMappedPort()))
+				.header("Authorization", "Bearer " + accessToken)
+				.when()
+				.get("/securitysystems")
+				.then()
+				.statusCode(403);
+	}
+
+	@Test
+	void getSecuritySystemsShouldReturn200WithCustomerEmployee() {
+
+		String customerEmployeeEmail = "customerEmployee%s@realguard.io".formatted(System.currentTimeMillis());
+		userService.createCustomerEmployeeUser(customerEmployeeEmail);
+
+		String accessToken = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), "iam-service:9000", customerEmployeeEmail, "password");
+
 		RestAssured.given()
 				.baseUri(String.format("http://localhost:%d", service.getFirstMappedPort()))
 				.header("Authorization", "Bearer " + accessToken)

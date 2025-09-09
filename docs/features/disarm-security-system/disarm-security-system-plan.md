@@ -256,13 +256,13 @@ Steps:
      - Update disarm() method to check if user is customer employee
      - Skip location check for admin
 [x] 3. Refactor and run all tests
-[x] 4. Write test: employee with CAN_DISARM permission can disarm
+[x] 4. Write test: employee with SECURITY_SYSTEM_DISARMER permission can disarm
 [x] 5. Make the test pass:
      - Add validateLocationPermission() method
      - Add extractJwtFromCurrentAuthentication() method
      - Call validateLocationPermission for employees in disarm()
 [x] 6. Refactor and run all tests
-[x] 7. Write test: employee without CAN_DISARM permission gets ForbiddenException
+[x] 7. Write test: employee without SECURITY_SYSTEM_DISARMER permission gets ForbiddenException
 [x] 8. Make the test pass:
      - Create ForbiddenException class
      - Throw ForbiddenException when permission missing
@@ -271,11 +271,11 @@ Steps:
 [x] 11. Make the test pass:
      - Update arm() method similar to disarm()
 [x] 12. Refactor and run all tests
-[x] 13. Write test: employee with CAN_ARM permission can arm
+[x] 13. Write test: employee with SECURITY_SYSTEM_ARMER permission can arm
 [x] 14. Make the test pass:
      - Call validateLocationPermission for employees in arm()
 [x] 15. Refactor and run all tests
-[x] 16. Write test: employee without CAN_ARM permission gets ForbiddenException
+[x] 16. Write test: employee without SECURITY_SYSTEM_ARMER permission gets ForbiddenException
 [x] 17. Make the test pass:
      - Ensure arm() throws ForbiddenException when permission missing
 [x] 18. Refactor and run all tests

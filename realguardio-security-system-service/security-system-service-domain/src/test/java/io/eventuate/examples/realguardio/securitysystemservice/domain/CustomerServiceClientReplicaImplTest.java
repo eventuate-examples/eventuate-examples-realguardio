@@ -36,8 +36,8 @@ class CustomerServiceClientReplicaImplTest {
         Long locationId = 456L;
         
         List<LocationRole> locationRoles = Arrays.asList(
-            new LocationRole(1L, userId, locationId, "CAN_ARM"),
-            new LocationRole(2L, userId, locationId, "CAN_DISARM")
+            new LocationRole(1L, userId, locationId, "SECURITY_SYSTEM_ARMER"),
+            new LocationRole(2L, userId, locationId, "SECURITY_SYSTEM_DISARMER")
         );
         
         when(locationRolesReplicaService.findLocationRoles(userId, locationId))
@@ -47,7 +47,7 @@ class CustomerServiceClientReplicaImplTest {
         Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId);
 
         // Then
-        assertThat(result).containsExactlyInAnyOrder("CAN_ARM", "CAN_DISARM");
+        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER");
     }
 
     @Test
@@ -73,8 +73,8 @@ class CustomerServiceClientReplicaImplTest {
         Long locationId = 456L;
         
         List<LocationRole> locationRoles = Arrays.asList(
-            new LocationRole(1L, userId, locationId, "CAN_VIEW"),
-            new LocationRole(2L, userId, locationId, "CAN_VIEW"),
+            new LocationRole(1L, userId, locationId, "SECURITY_SYSTEM_VIEWER"),
+            new LocationRole(2L, userId, locationId, "SECURITY_SYSTEM_VIEWER"),
             new LocationRole(3L, userId, locationId, "CAN_EDIT")
         );
         
@@ -85,6 +85,6 @@ class CustomerServiceClientReplicaImplTest {
         Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId);
 
         // Then
-        assertThat(result).containsExactlyInAnyOrder("CAN_VIEW", "CAN_EDIT");
+        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_VIEWER", "CAN_EDIT");
     }
 }

@@ -7,8 +7,3 @@ CREATE TABLE security_system (
     version BIGINT
 );
 
-CREATE TABLE security_system_actions (
-    security_system_id BIGINT NOT NULL,
-    actions VARCHAR(50),
-    FOREIGN KEY (security_system_id) REFERENCES security_system(id)
-);

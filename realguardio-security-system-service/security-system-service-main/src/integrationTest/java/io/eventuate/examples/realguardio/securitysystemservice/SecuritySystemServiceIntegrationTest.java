@@ -3,10 +3,11 @@ package io.eventuate.examples.realguardio.securitysystemservice;
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.securitysystemservice.db.DBInitializer;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAction;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemWithActions;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystems;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaService;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
@@ -14,26 +15,21 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.lifecycle.Startables;
-import org.testcontainers.utility.DockerImageName;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,8 +38,30 @@ class SecuritySystemServiceIntegrationTest {
 
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(SecuritySystemServiceIntegrationTest.class);
 
+    @TestConfiguration
+    public static class Config {
+        @Bean
+        UserService userService() {
+            return new UserServiceImpl();
+        }
+
+        @Bean
+        LocationRolesReplicaService locationRolesReplicaService(JdbcTemplate jdbcTemplate) {
+            return new LocationRolesReplicaService(jdbcTemplate);
+        }
+    }
+
     @Autowired
     private TestRestTemplate restTemplate;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private LocationRolesReplicaService locationRolesReplicaService;
+
+    @Autowired
+    private DBInitializer dbInitializer;
 
     public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("customer-service-tests");
 
@@ -93,7 +111,18 @@ class SecuritySystemServiceIntegrationTest {
     @Test 
     void shouldReturnSecuritySystemsWithValidToken() {
         // Get JWT token from IAM service
-        String token = JwtTokenHelper.getJwtToken(iamService.getMappedPort(9000));
+        String customerEmployeeEmail = "customerEmployee%s@realguard.io".formatted(System.currentTimeMillis());
+        userService.createCustomerEmployeeUser(customerEmployeeEmail);
+
+        long locationId = System.currentTimeMillis();
+
+        dbInitializer.initializeForLocation(locationId);
+
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_ARMER");
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_DISARMER");
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_ACKNOWLEDGER");
+
+        String token = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, customerEmployeeEmail, "password");
         
         // Make request with token
         HttpHeaders headers = new HttpHeaders();
@@ -114,25 +143,24 @@ class SecuritySystemServiceIntegrationTest {
         
         // Verify the data
         var systems = response.getBody().securitySystems();
-        assertThat(systems).extracting(SecuritySystem::getLocationName)
-                .containsExactlyInAnyOrder(DBInitializer.LOCATION_OAKLAND_OFFICE, 
-                        DBInitializer.LOCATION_BERKELEY_OFFICE, 
+        assertThat(systems).extracting(SecuritySystemWithActions::locationName)
+                .containsExactlyInAnyOrder(DBInitializer.LOCATION_OAKLAND_OFFICE,
+                        DBInitializer.LOCATION_BERKELEY_OFFICE,
                         DBInitializer.LOCATION_HAYWARD_OFFICE);
         
         // Verify specific system details
         var oaklandOffice = systems.stream()
-                .filter(s -> s.getLocationName().equals(DBInitializer.LOCATION_OAKLAND_OFFICE))
+                .filter(s -> s.locationName().equals(DBInitializer.LOCATION_OAKLAND_OFFICE))
                 .findFirst()
                 .orElseThrow();
-        assertThat(oaklandOffice.getState()).isEqualTo(SecuritySystemState.ARMED);
-        assertThat(oaklandOffice.getActions()).containsExactly(SecuritySystemAction.DISARM);
+        assertThat(oaklandOffice.state()).isEqualTo(SecuritySystemState.ARMED);
+        assertThat(oaklandOffice.actions()).containsExactly(SecuritySystemAction.DISARM);
         
         var haywardOffice = systems.stream()
-                .filter(s -> s.getLocationName().equals(DBInitializer.LOCATION_HAYWARD_OFFICE))
+                .filter(s -> s.locationName().equals(DBInitializer.LOCATION_HAYWARD_OFFICE))
                 .findFirst()
                 .orElseThrow();
-        assertThat(haywardOffice.getState()).isEqualTo(SecuritySystemState.ALARMED);
-        assertThat(haywardOffice.getActions()).containsExactlyInAnyOrder(
-                SecuritySystemAction.ACKNOWLEDGE, SecuritySystemAction.DISARM);
+        assertThat(haywardOffice.state()).isEqualTo(SecuritySystemState.ALARMED);
+        assertThat(haywardOffice.actions()).containsExactly(SecuritySystemAction.ACKNOWLEDGE, SecuritySystemAction.DISARM);
     }
 }

@@ -40,6 +40,8 @@ class ComponentTestsPlugin implements Plugin<Project> {
             classpath = project.sourceSets.componentTest.runtimeClasspath
             if (project.tasks.findByName("integrationTest"))
                 shouldRunAfter("integrationTest")
+            if (project.tasks.findByName("test"))
+                shouldRunAfter("test")
             // Ensures that JAR is built prior to building images
             dependsOn("assemble")
             systemProperty "eventuate.servicecontainer.serviceimage.version", project.version

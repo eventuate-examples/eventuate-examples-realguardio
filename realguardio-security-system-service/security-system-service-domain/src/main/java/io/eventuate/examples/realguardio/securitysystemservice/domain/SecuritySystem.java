@@ -1,7 +1,15 @@
 package io.eventuate.examples.realguardio.securitysystemservice.domain;
 
-import jakarta.persistence.*;
-import java.util.Set;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "security_system")
@@ -16,11 +24,7 @@ public class SecuritySystem {
     
     @Enumerated(EnumType.STRING)
     private SecuritySystemState state;
-    
-    @ElementCollection(fetch = FetchType.EAGER)
-    @Enumerated(EnumType.STRING)
-    private Set<SecuritySystemAction> actions;
-    
+
     private Long locationId;
     
     private String rejectionReason;
@@ -36,12 +40,6 @@ public class SecuritySystem {
         this.state = state;
     }
 
-    public SecuritySystem(String locationName, SecuritySystemState state, Set<SecuritySystemAction> actions) {
-        this.locationName = locationName;
-        this.state = state;
-        this.actions = actions;
-    }
-
     public Long getId() {
         return id;
     }
@@ -52,10 +50,6 @@ public class SecuritySystem {
 
     public SecuritySystemState getState() {
         return state;
-    }
-
-    public Set<SecuritySystemAction> getActions() {
-        return actions;
     }
 
     public void setId(Long id) {

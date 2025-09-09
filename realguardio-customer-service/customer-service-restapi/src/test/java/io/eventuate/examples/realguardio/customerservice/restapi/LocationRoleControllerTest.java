@@ -28,7 +28,7 @@ class LocationRoleControllerTest {
     void shouldReturnRolesForUserAtLocation() throws Exception {
         Long locationId = 456L;
         String userId = "123";
-        Set<String> expectedRoles = Set.of("CAN_ARM", "CAN_DISARM", "VIEW_ALERTS");
+        Set<String> expectedRoles = Set.of("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "VIEW_ALERTS");
         
         when(locationRoleService.getUserRolesAtLocation(locationId))
             .thenReturn(expectedRoles);

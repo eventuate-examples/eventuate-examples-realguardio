@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,27 +40,27 @@ class SecuritySystemServiceTest {
     @Test
     void shouldReturnAllSecuritySystems() throws Exception {
         // Given
-        SecuritySystem system1 = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED, 
-                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
-        setId(system1, 1L);
-        
-        SecuritySystem system2 = new SecuritySystem("Office Back Door", SecuritySystemState.DISARMED, 
-                new HashSet<>());
-        setId(system2, 2L);
-        
-        List<SecuritySystem> expectedSystems = Arrays.asList(system1, system2);
-        when(securitySystemRepository.findAll()).thenReturn(expectedSystems);
+
+        // new HashSet<>(Arrays.asList(SecuritySystemAction.ARM))
+        SecuritySystemProjection system1 = new SecuritySystemProjectionImpl(1L, "Office Front Door", SecuritySystemState.ARMED, Set.of());
+
+        // new HashSet<>()
+
+        SecuritySystemProjection system2 = new SecuritySystemProjectionImpl(2L, "Office Back Door", SecuritySystemState.DISARMED, Set.of());
+
+        List<SecuritySystemProjection> expectedSystems = List.of(system1, system2);
+        when(securitySystemRepository.findAllAccessible(any())).thenReturn(expectedSystems);
         
         // When
-        List<SecuritySystem> actualSystems = securitySystemService.findAll();
+        List<SecuritySystemWithActions> actualSystems = securitySystemService.findAll();
         
         // Then
         assertThat(actualSystems).hasSize(2);
-        assertThat(actualSystems).containsExactlyElementsOf(expectedSystems);
-        assertThat(actualSystems.get(0).getLocationName()).isEqualTo("Office Front Door");
-        assertThat(actualSystems.get(0).getState()).isEqualTo(SecuritySystemState.ARMED);
-        assertThat(actualSystems.get(1).getLocationName()).isEqualTo("Office Back Door");
-        assertThat(actualSystems.get(1).getState()).isEqualTo(SecuritySystemState.DISARMED);
+        // assertThat(actualSystems).containsExactlyElementsOf(expectedSystems);
+        assertThat(actualSystems.get(0).locationName()).isEqualTo("Office Front Door");
+        assertThat(actualSystems.get(0).state()).isEqualTo(SecuritySystemState.ARMED);
+        assertThat(actualSystems.get(1).locationName()).isEqualTo("Office Back Door");
+        assertThat(actualSystems.get(1).state()).isEqualTo(SecuritySystemState.DISARMED);
     }
     
     private void setId(SecuritySystem system, Long id) throws Exception {
@@ -71,10 +72,10 @@ class SecuritySystemServiceTest {
     @Test
     void shouldReturnEmptyListWhenNoSystemsExist() {
         // Given
-        when(securitySystemRepository.findAll()).thenReturn(List.of());
+        when(securitySystemRepository.findAllAccessible(any())).thenReturn(List.of());
         
         // When
-        List<SecuritySystem> actualSystems = securitySystemService.findAll();
+        List<SecuritySystemWithActions> actualSystems = securitySystemService.findAll();
         
         // Then
         assertThat(actualSystems).isEmpty();
@@ -84,8 +85,8 @@ class SecuritySystemServiceTest {
     void shouldDisarmSecuritySystem() throws Exception {
         // Given
         Long systemId = 1L;
-        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        // new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM))
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(456L);
         
@@ -106,8 +107,8 @@ class SecuritySystemServiceTest {
     void shouldArmSecuritySystem() throws Exception {
         // Given
         Long systemId = 1L;
-        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
+        // new HashSet<>(Arrays.asList(SecuritySystemAction.ARM))
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(456L);
         
@@ -129,8 +130,8 @@ class SecuritySystemServiceTest {
         // Given
         Long systemId = 1L;
         Long locationId = 456L;
-        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        // new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM))
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
@@ -158,8 +159,8 @@ class SecuritySystemServiceTest {
         Long systemId = 1L;
         Long locationId = 456L;
         String userId = "employee@example.com";
-        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        // new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM))
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
@@ -170,7 +171,7 @@ class SecuritySystemServiceTest {
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-            .thenReturn(new HashSet<>(Arrays.asList("CAN_DISARM", "VIEW_ALERTS")));
+            .thenReturn(new HashSet<>(Arrays.asList("SECURITY_SYSTEM_DISARMER", "VIEW_ALERTS")));
         
         // When
         SecuritySystem result = securitySystemService.disarm(systemId);
@@ -189,8 +190,8 @@ class SecuritySystemServiceTest {
         Long systemId = 1L;
         Long locationId = 456L;
         String userId = "employee@example.com";
-        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        // new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM))
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
@@ -200,12 +201,12 @@ class SecuritySystemServiceTest {
         
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-            .thenReturn(new HashSet<>(Arrays.asList("VIEW_ALERTS", "CAN_ARM"))); // Has CAN_ARM but not CAN_DISARM
+            .thenReturn(new HashSet<>(Arrays.asList("VIEW_ALERTS", "SECURITY_SYSTEM_ARMER"))); // Has SECURITY_SYSTEM_ARMER but not SECURITY_SYSTEM_DISARMER
         
         // When & Then
         assertThatThrownBy(() -> securitySystemService.disarm(systemId))
             .isInstanceOf(ForbiddenException.class)
-            .hasMessageContaining("User lacks CAN_DISARM permission for location 456");
+            .hasMessageContaining("User lacks SECURITY_SYSTEM_DISARMER permission for location 456");
         
         verify(securitySystemRepository).findById(systemId);
         verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
@@ -217,8 +218,8 @@ class SecuritySystemServiceTest {
         // Given
         Long systemId = 1L;
         Long locationId = 456L;
-        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
+        // new HashSet<>(Arrays.asList(SecuritySystemAction.ARM))
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
@@ -246,8 +247,8 @@ class SecuritySystemServiceTest {
         Long systemId = 1L;
         Long locationId = 456L;
         String userId = "employee@example.com";
-        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
+        // new HashSet<>(Arrays.asList(SecuritySystemAction.ARM))
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
@@ -258,7 +259,7 @@ class SecuritySystemServiceTest {
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-            .thenReturn(new HashSet<>(Arrays.asList("CAN_ARM", "VIEW_ALERTS")));
+            .thenReturn(new HashSet<>(Arrays.asList("SECURITY_SYSTEM_ARMER", "VIEW_ALERTS")));
         
         // When
         SecuritySystem result = securitySystemService.arm(systemId);
@@ -277,8 +278,8 @@ class SecuritySystemServiceTest {
         Long systemId = 1L;
         Long locationId = 456L;
         String userId = "employee@example.com";
-        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
+        // new HashSet<>(Arrays.asList(SecuritySystemAction.ARM))
+        SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
         
@@ -288,12 +289,12 @@ class SecuritySystemServiceTest {
         
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-            .thenReturn(new HashSet<>(Arrays.asList("VIEW_ALERTS", "CAN_DISARM"))); // Has CAN_DISARM but not CAN_ARM
+            .thenReturn(new HashSet<>(Arrays.asList("VIEW_ALERTS", "SECURITY_SYSTEM_DISARMER"))); // Has SECURITY_SYSTEM_DISARMER but not SECURITY_SYSTEM_ARMER
         
         // When & Then
         assertThatThrownBy(() -> securitySystemService.arm(systemId))
             .isInstanceOf(ForbiddenException.class)
-            .hasMessageContaining("User lacks CAN_ARM permission for location 456");
+            .hasMessageContaining("User lacks SECURITY_SYSTEM_ARMER permission for location 456");
         
         verify(securitySystemRepository).findById(systemId);
         verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);

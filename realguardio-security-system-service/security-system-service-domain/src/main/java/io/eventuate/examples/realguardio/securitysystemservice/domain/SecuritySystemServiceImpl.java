@@ -37,10 +37,13 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     }
     
     @Override
-    public List<SecuritySystem> findAll() {
-        return securitySystemRepository.findAll();
+    public List<SecuritySystemWithActions> findAll() {
+        return securitySystemRepository.findAllAccessible(userNameSupplier.getCurrentUserName())
+            .stream()
+            .map(SecuritySystemProjection::toSecuritySystemWithActions)
+            .toList();
     }
-    
+
     @Override
     public Optional<SecuritySystem> findById(Long id) {
         return securitySystemRepository.findById(id);
@@ -82,7 +85,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         
         // Check location-based authorization for customer employees
         if (userNameSupplier.isCustomerEmployee()) {
-            validateLocationPermission(securitySystem.getLocationId(), "CAN_ARM");
+            validateLocationPermission(securitySystem.getLocationId(), "SECURITY_SYSTEM_ARMER");
         }
         
         securitySystem.arm();
@@ -100,7 +103,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         
         // Check location-based authorization for customer employees
         if (userNameSupplier.isCustomerEmployee()) {
-            validateLocationPermission(securitySystem.getLocationId(), "CAN_DISARM");
+            validateLocationPermission(securitySystem.getLocationId(), "SECURITY_SYSTEM_DISARMER");
         }
         
         securitySystem.disarm();

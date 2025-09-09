@@ -6,7 +6,11 @@ import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySy
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystems;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class SecuritySystemController {
@@ -18,11 +22,13 @@ public class SecuritySystemController {
   }
 
   @GetMapping("/securitysystems")
+  @PreAuthorize("hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
   public SecuritySystems getSecuritySystems() {
     return new SecuritySystems(securitySystemService.findAll());
   }
   
   @GetMapping("/securitysystems/{id}")
+  @PreAuthorize("hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
   public ResponseEntity<SecuritySystem> getSecuritySystem(@PathVariable("id") Long id) {
     return securitySystemService.findById(id)
         .map(ResponseEntity::ok)

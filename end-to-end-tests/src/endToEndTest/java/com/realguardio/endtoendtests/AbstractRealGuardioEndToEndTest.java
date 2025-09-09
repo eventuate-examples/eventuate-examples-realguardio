@@ -163,12 +163,12 @@ public abstract class AbstractRealGuardioEndToEndTest {
         // Step 3: Use the Customer Service REST API to assign the Customer's administrator arm/disarm rights to the location
         logger.info("Step 3: Assigning arm/disarm rights for employee {} at location {}", adminEmployeeId, locationId);
 
-        // First assign CAN_ARM role
+        // First assign SECURITY_SYSTEM_ARMER role
         String assignArmRoleJson = """
         {
             "employeeId": %d,
             "locationId": %d,
-            "roleName": "CAN_ARM"
+            "roleName": "SECURITY_SYSTEM_ARMER"
         }
         """.formatted(adminEmployeeId, locationId);
 
@@ -184,12 +184,12 @@ public abstract class AbstractRealGuardioEndToEndTest {
             .log().all()
             .statusCode(200);
 
-        // Also assign CAN_DISARM role
+        // Also assign SECURITY_SYSTEM_DISARMER role
         String assignDisarmRoleJson = """
         {
             "employeeId": %d,
             "locationId": %d,
-            "roleName": "CAN_DISARM"
+            "roleName": "SECURITY_SYSTEM_DISARMER"
         }
         """.formatted(adminEmployeeId, locationId);
 

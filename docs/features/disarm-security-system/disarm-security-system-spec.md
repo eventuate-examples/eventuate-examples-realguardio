@@ -78,7 +78,7 @@ Authorization: Bearer <jwt-token>
 **Response (200 OK):**
 ```json
 {
-  "roles": ["CAN_ARM", "CAN_DISARM", "VIEW_ALERTS"]
+  "roles": ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "VIEW_ALERTS"]
 }
 ```
 
@@ -134,7 +134,7 @@ Check locationId != null → No → Return 400
     ↓ Yes
 Call Customer Service /locations/{id}/roles
     ↓
-Check for CAN_ARM or CAN_DISARM → No → Return 403
+Check for SECURITY_SYSTEM_ARMER or SECURITY_SYSTEM_DISARMER → No → Return 403
     ↓ Yes
 Authorize Operation
 ```
@@ -145,8 +145,8 @@ Authorize Operation
 |-----------|--------|------------------------|
 | REALGUARDIO_ADMIN | ARM | None (bypass check) |
 | REALGUARDIO_ADMIN | DISARM | None (bypass check) |
-| REALGUARDIO_CUSTOMER_EMPLOYEE | ARM | CAN_ARM |
-| REALGUARDIO_CUSTOMER_EMPLOYEE | DISARM | CAN_DISARM |
+| REALGUARDIO_CUSTOMER_EMPLOYEE | ARM | SECURITY_SYSTEM_ARMER |
+| REALGUARDIO_CUSTOMER_EMPLOYEE | DISARM | SECURITY_SYSTEM_DISARMER |
 
 ### Customer Service Role Aggregation
 
@@ -223,7 +223,7 @@ public class SecuritySystemService {
         
         // Check location-based authorization for customer employees
         if (isCustomerEmployee()) {
-            validateLocationPermission(securitySystem.getLocationId(), "CAN_ARM");
+            validateLocationPermission(securitySystem.getLocationId(), "SECURITY_SYSTEM_ARMER");
         }
         
         // Arm the system
@@ -242,7 +242,7 @@ public class SecuritySystemService {
         
         // Check location-based authorization for customer employees
         if (isCustomerEmployee()) {
-            validateLocationPermission(securitySystem.getLocationId(), "CAN_DISARM");
+            validateLocationPermission(securitySystem.getLocationId(), "SECURITY_SYSTEM_DISARMER");
         }
         
         // Disarm the system
@@ -429,7 +429,7 @@ public class SecuritySystem {
 ```json
 {
   "error": "FORBIDDEN",
-  "message": "User lacks CAN_ARM permission for location 456",
+  "message": "User lacks SECURITY_SYSTEM_ARMER permission for location 456",
   "timestamp": "2024-01-15T10:30:00Z",
   "path": "/securitysystems/123"
 }
@@ -525,14 +525,14 @@ public class SecuritySystemIntegrationTest {
     
     @Test
     public void testDisarmSystemAsEmployeeWithPermission() {
-        // Given: Employee JWT with CAN_DISARM at location
+        // Given: Employee JWT with SECURITY_SYSTEM_DISARMER at location
         // When: PUT /securitysystems/1 with DISARM action
         // Then: System is disarmed, 200 OK returned
     }
     
     @Test
     public void testArmSystemAsEmployeeWithoutPermission() {
-        // Given: Employee JWT without CAN_ARM at location
+        // Given: Employee JWT without SECURITY_SYSTEM_ARMER at location
         // When: PUT /securitysystems/1 with ARM action
         // Then: 403 Forbidden returned
     }
@@ -682,8 +682,8 @@ public class SecurityConfig {
 ## Acceptance Criteria
 
 1. ✅ Admin can arm/disarm any security system
-2. ✅ Employee with CAN_ARM can arm systems at their location
-3. ✅ Employee with CAN_DISARM can disarm systems at their location
+2. ✅ Employee with SECURITY_SYSTEM_ARMER can arm systems at their location
+3. ✅ Employee with SECURITY_SYSTEM_DISARMER can disarm systems at their location
 4. ✅ Employee without permission receives 403 error
 5. ✅ System without locationId returns 400 error
 6. ✅ All operations are logged for audit

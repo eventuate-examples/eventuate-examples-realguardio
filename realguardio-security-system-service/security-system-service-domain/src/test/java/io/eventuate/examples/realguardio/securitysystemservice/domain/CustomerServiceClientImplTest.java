@@ -62,13 +62,13 @@ class CustomerServiceClientImplTest {
             .willReturn(aResponse()
                 .withStatus(200)
                 .withHeader("Content-Type", "application/json")
-                .withBody("{\"roles\":[\"CAN_ARM\",\"CAN_DISARM\"]}")));
+                .withBody("{\"roles\":[\"SECURITY_SYSTEM_ARMER\",\"SECURITY_SYSTEM_DISARMER\"]}")));
 
         // When
         Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId);
 
         // Then
-        assertThat(result).containsExactlyInAnyOrder("CAN_ARM", "CAN_DISARM");
+        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER");
         
         verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
             .withHeader("Authorization", equalTo(jwtToken)));
@@ -205,7 +205,7 @@ class CustomerServiceClientImplTest {
             .willReturn(aResponse()
                 .withStatus(200)
                 .withHeader("Content-Type", "application/json")
-                .withBody("{\"roles\":[\"CAN_VIEW\"]}")));
+                .withBody("{\"roles\":[\"SECURITY_SYSTEM_VIEWER\"]}")));
 
         // When
         customerServiceClient.getUserRolesAtLocation(userId, locationId);

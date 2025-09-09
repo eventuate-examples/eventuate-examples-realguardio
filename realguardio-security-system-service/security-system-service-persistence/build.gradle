@@ -10,7 +10,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mockito:mockito-junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
-    
+
+    integrationTestImplementation project(':location-roles-replica')
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     integrationTestImplementation 'org.postgresql:postgresql'
     integrationTestImplementation 'org.testcontainers:postgresql'

@@ -81,13 +81,13 @@ Updated endpoint: `GET /locations/{locationId}/roles` - Returns the current user
 ### Q5: What specific roles should a REALGUARDIO_CUSTOMER_EMPLOYEE have at a location to perform ARM/DISARM operations?
 
 A) Single role `SECURITY_OPERATOR` - allows both ARM and DISARM
-B) Separate roles: `CAN_ARM` and `CAN_DISARM` - granular control
+B) Separate roles: `SECURITY_SYSTEM_ARMER` and `SECURITY_SYSTEM_DISARMER` - granular control
 C) Role hierarchy: `SECURITY_MANAGER` (can do both), `SECURITY_GUARD` (can only disarm)
 D) Custom - please specify
 
 **Default suggestion:** Option A - A single `SECURITY_OPERATOR` role keeps it simple while providing the necessary access control at the location level.
 
-**Answer:** B - Separate roles: `CAN_ARM` and `CAN_DISARM` for granular control
+**Answer:** B - Separate roles: `SECURITY_SYSTEM_ARMER` and `SECURITY_SYSTEM_DISARMER` for granular control
 
 ---
 
@@ -119,12 +119,12 @@ Since employees can have roles at locations through both:
 
 When checking if a user can ARM/DISARM, should we:
 
-A) Check BOTH direct roles AND team roles - user needs `CAN_ARM`/`CAN_DISARM` from either source
+A) Check BOTH direct roles AND team roles - user needs `SECURITY_SYSTEM_ARMER`/`SECURITY_SYSTEM_DISARMER` from either source
 B) Direct roles only - ignore team roles for security operations
 C) Team roles take precedence - check team roles first, fall back to direct roles
 D) Require the role from BOTH sources for extra security
 
-**Default suggestion:** Option A - Aggregate roles from both sources. If the user has the required role (`CAN_ARM` or `CAN_DISARM`) from either their direct assignment OR their team membership, allow the operation.
+**Default suggestion:** Option A - Aggregate roles from both sources. If the user has the required role (`SECURITY_SYSTEM_ARMER` or `SECURITY_SYSTEM_DISARMER`) from either their direct assignment OR their team membership, allow the operation.
 
 **Answer:** The CustomerService endpoint should return the union of all roles (direct via CustomerEmployeeLocationRole and indirect via Team membership)
 
@@ -186,14 +186,14 @@ D) Event sourcing - emit domain events for each operation
 
 ### Q11: What should be the exact response format from the CustomerService GET /locations/{locationId}/roles endpoint?
 
-A) Simple array: `["CAN_ARM", "CAN_DISARM", "OTHER_ROLE"]`
-B) Object with roles array: `{"roles": ["CAN_ARM", "CAN_DISARM"]}`
-C) Detailed object: `{"locationId": 123, "userId": 456, "roles": ["CAN_ARM"], "source": ["direct", "team"]}`
+A) Simple array: `["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "OTHER_ROLE"]`
+B) Object with roles array: `{"roles": ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER"]}`
+C) Detailed object: `{"locationId": 123, "userId": 456, "roles": ["SECURITY_SYSTEM_ARMER"], "source": ["direct", "team"]}`
 D) Custom - please specify
 
 **Default suggestion:** Option A - Simple array of role names is sufficient for the authorization check.
 
-**Answer:** B - Object with roles array: `{"roles": ["CAN_ARM", "CAN_DISARM"]}`
+**Answer:** B - Object with roles array: `{"roles": ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER"]}`
 
 ---
 
@@ -223,8 +223,8 @@ For users with `REALGUARDIO_CUSTOMER_EMPLOYEE` role:
 2. Get SecuritySystem's locationId
 3. Call CustomerService: `GET /locations/{locationId}/roles` with forwarded JWT
 4. Check if returned roles include:
-   - `CAN_ARM` for ARM action
-   - `CAN_DISARM` for DISARM action
+   - `SECURITY_SYSTEM_ARMER` for ARM action
+   - `SECURITY_SYSTEM_DISARMER` for DISARM action
 5. If authorized, proceed with operation
 6. If not authorized, return 403 Forbidden
 
@@ -237,7 +237,7 @@ For users with `REALGUARDIO_ADMIN` role:
 **New Endpoint:** `GET /locations/{locationId}/roles`
 - **Path Parameter:** `locationId` - Location ID (Long)
 - **Authorization:** Bearer token (user identity extracted from JWT)
-- **Response:** `{"roles": ["CAN_ARM", "CAN_DISARM", ...]}`
+- **Response:** `{"roles": ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", ...]}`
 - **Logic:** Return union of:
   - Direct roles from CustomerEmployeeLocationRole
   - Indirect roles from Team memberships (TeamLocationRole)

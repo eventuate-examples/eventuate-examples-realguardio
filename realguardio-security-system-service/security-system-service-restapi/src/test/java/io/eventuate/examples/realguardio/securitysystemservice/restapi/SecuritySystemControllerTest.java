@@ -4,19 +4,19 @@ import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySy
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAction;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemWithActions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,20 +30,15 @@ class SecuritySystemControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private SecuritySystemService securitySystemService;
 
     @Test
     void shouldReturnSecuritySystems() throws Exception {
-        SecuritySystem system1 = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
-        setId(system1, 1L);
-        
-        SecuritySystem system2 = new SecuritySystem("Office Back Door", SecuritySystemState.DISARMED,
-                new HashSet<>());
-        setId(system2, 2L);
-        
-        List<SecuritySystem> systems = Arrays.asList(system1, system2);
+        var system1 = new SecuritySystemWithActions(1L, "Office Front Door", SecuritySystemState.ARMED, Set.of(SecuritySystemAction.ARM));
+        var system2 = new SecuritySystemWithActions(2L,"Office Back Door", SecuritySystemState.DISARMED, Set.of());
+
+        var systems = Arrays.asList(system1, system2);
         
         when(securitySystemService.findAll()).thenReturn(systems);
         
@@ -58,8 +53,8 @@ class SecuritySystemControllerTest {
                 .andExpect(jsonPath("$.securitySystems[1].state").value("DISARMED"));
     }
     
-    private void setId(SecuritySystem system, Long id) throws Exception {
-        Field idField = SecuritySystem.class.getDeclaredField("id");
+    private void setId(Object system, Long id) throws Exception {
+        Field idField = system.getClass().getDeclaredField("id");
         idField.setAccessible(true);
         idField.set(system, id);
     }
@@ -67,8 +62,7 @@ class SecuritySystemControllerTest {
     @Test
     void shouldDisarmSecuritySystem() throws Exception {
         Long systemId = 1L;
-        SecuritySystem disarmedSystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.ARM)));
+        SecuritySystem disarmedSystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED);
         setId(disarmedSystem, systemId);
         disarmedSystem.setLocationId(456L);
         
@@ -83,15 +77,13 @@ class SecuritySystemControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.locationName").value("Office Front Door"))
                 .andExpect(jsonPath("$.state").value("DISARMED"))
-                .andExpect(jsonPath("$.locationId").value(456))
-                .andExpect(jsonPath("$.actions[0]").value("ARM"));
+                .andExpect(jsonPath("$.locationId").value(456));
     }
 
     @Test
     void shouldArmSecuritySystem() throws Exception {
         Long systemId = 1L;
-        SecuritySystem armedSystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        SecuritySystem armedSystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED);
         setId(armedSystem, systemId);
         armedSystem.setLocationId(456L);
         
@@ -106,8 +98,7 @@ class SecuritySystemControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.locationName").value("Office Front Door"))
                 .andExpect(jsonPath("$.state").value("ARMED"))
-                .andExpect(jsonPath("$.locationId").value(456))
-                .andExpect(jsonPath("$.actions[0]").value("DISARM"));
+                .andExpect(jsonPath("$.locationId").value(456));
     }
 
     @Test
@@ -125,8 +116,7 @@ class SecuritySystemControllerTest {
     @Test
     void shouldReturnSecuritySystemById() throws Exception {
         Long systemId = 1L;
-        SecuritySystem system = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED,
-                new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM)));
+        SecuritySystem system = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED);
         setId(system, systemId);
         system.setLocationId(456L);
         
@@ -137,8 +127,8 @@ class SecuritySystemControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.locationName").value("Office Front Door"))
                 .andExpect(jsonPath("$.state").value("ARMED"))
-                .andExpect(jsonPath("$.locationId").value(456))
-                .andExpect(jsonPath("$.actions[0]").value("DISARM"));
+                .andExpect(jsonPath("$.locationId").value(456));
+//                .andExpect(jsonPath("$.actions[0]").value("DISARM"));
     }
 
     @Test
