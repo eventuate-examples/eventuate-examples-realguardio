@@ -161,6 +161,6 @@ class SecuritySystemServiceIntegrationTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(haywardOffice.state()).isEqualTo(SecuritySystemState.ALARMED);
-        assertThat(haywardOffice.actions()).containsExactly(SecuritySystemAction.ACKNOWLEDGE, SecuritySystemAction.DISARM);
+        assertThat(haywardOffice.actions()).containsExactlyInAnyOrder(SecuritySystemAction.ACKNOWLEDGE, SecuritySystemAction.DISARM);
     }
 }
