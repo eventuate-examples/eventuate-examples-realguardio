@@ -22,7 +22,7 @@ public class SecuritySystemController {
   }
 
   @GetMapping("/securitysystems")
-  @PreAuthorize("hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
+  @PreAuthorize("hasRole('REALGUARDIO_ADMIN') or hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
   public SecuritySystems getSecuritySystems() {
     return new SecuritySystems(securitySystemService.findAll());
   }

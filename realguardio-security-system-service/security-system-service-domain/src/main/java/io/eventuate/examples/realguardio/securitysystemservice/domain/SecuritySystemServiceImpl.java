@@ -38,10 +38,23 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     
     @Override
     public List<SecuritySystemWithActions> findAll() {
-        return securitySystemRepository.findAllAccessible(userNameSupplier.getCurrentUserName())
-            .stream()
-            .map(SecuritySystemProjection::toSecuritySystemWithActions)
-            .toList();
+        if (userNameSupplier.isCustomerEmployee())
+            return securitySystemRepository.findAllAccessible(userNameSupplier.getCurrentUserName())
+                .stream()
+                .map(SecuritySystemProjection::toSecuritySystemWithActions)
+                .toList();
+        else
+            return securitySystemRepository.findAll().stream()
+                .map(this::toSecuritySystemWithActions)
+                .toList();
+    }
+
+    private SecuritySystemWithActions toSecuritySystemWithActions(SecuritySystem securitySystem) {
+        return new SecuritySystemWithActions(
+
+            securitySystem.getLocationName(), securitySystem.getState(),
+            Set.of(SecuritySystemAction.ARM, SecuritySystemAction.DISARM)
+        );
     }
 
     @Override
