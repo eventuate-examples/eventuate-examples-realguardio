@@ -9,7 +9,10 @@ query() {
 
 source ./set-oso-env.sh
 
-query has_permission User:alice String:disarm SecuritySystem:ss1
-query has_permission User:alice String:disarm SecuritySystem:ss2
-query has_permission User:bob String:disarm SecuritySystem:ss2
-query has_permission User:bob String:disarm SecuritySystem:ss1
+query has_permission CustomerEmployee:alice String:disarm SecuritySystem:ss1
+query has_permission CustomerEmployee:alice String:disarm SecuritySystem:ss2
+
+query has_permission CustomerEmployee:bob String:disarm SecuritySystem:ss2
+query has_permission CustomerEmployee:bob String:disarm SecuritySystem:ss1
+
+query has_permission CustomerEmployee:mary String:disarm SecuritySystem:ss3

@@ -1,4 +1,4 @@
-actor User {}
+actor CustomerEmployee {}
 
 resource Customer {
   roles = ["DISARM"];               # role at the organization
