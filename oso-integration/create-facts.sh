@@ -1,0 +1,15 @@
+#! /bin/bash -e
+
+# has_role(User{"alice"}, "DISARM", Customer{"acme"})
+# has_relation(Location{"loc1"}, "customer", Customer{"acme"})
+# has_relation(SecuritySystem{"ss1"}, "location", Location{"loc1"});
+
+source ./set-oso-env.sh
+
+oso-cloud tell has_role User:alice DISARM Customer:acme
+oso-cloud tell has_relation Location:loc1 customer Customer:acme
+oso-cloud tell has_relation SecuritySystem:ss1 location Location:loc1
+
+oso-cloud tell has_role User:bob DISARM Customer:foo
+oso-cloud tell has_relation Location:loc2 customer Customer:foo
+oso-cloud tell has_relation SecuritySystem:ss2 location Location:loc2

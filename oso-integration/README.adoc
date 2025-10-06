@@ -1,0 +1,39 @@
+= Oso Cloud integration 
+
+== Local development
+
+Here's how to https://www.osohq.com/docs/develop/local-dev/env-setup[run Oso Cloud locally].
+
+=== Install the Oso Cloud CLI
+
+First, install the Oso Cloud CLI:
+
+----
+curl -L https://cloud.osohq.com/install.sh | bash
+----
+
+=== Run the Oso Dev Server
+
+Next, run the Oso dev server (container image):
+
+----
+./start-oso-dev-server.sh
+----
+
+The server reads the policies in `policies/main.polar`.
+
+=== Create some facts
+
+Next, creates some facts:
+
+----
+./create-facts.sh
+----
+
+=== Run some queries
+
+Finally, run queries to see has permission:
+
+----
+./run-queries.sh
+----
