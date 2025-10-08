@@ -1,3 +1,4 @@
+
 #! /bin/bash -e
 
 # has_role(CustomerEmployee{"alice"}, "DISARM", Customer{"acme"})

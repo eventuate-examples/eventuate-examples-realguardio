@@ -1,0 +1,3 @@
+rootProject.name = 'realguardio-oso-integration'
+
+include 'oso-service'
