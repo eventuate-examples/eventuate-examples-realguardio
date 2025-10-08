@@ -37,7 +37,7 @@ public class OsoServiceTest {
 
   @Test
   public void shouldCreateRoleForCustomerEmployeeAtCustomer() {
-    osoService.createRoleForCustomerEmployeeAtCustomer("alice", "acme", "DISARM");
+    osoService.createRole("CustomerEmployee", "alice", "DISARM", "Customer", "acme");
     osoService.createRelation("Location", "loc1", "customer", "Customer", "acme");
     osoService.createRelation("SecuritySystem", "ss1", "location", "Location", "loc1");
 

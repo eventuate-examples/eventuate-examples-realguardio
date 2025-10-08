@@ -17,13 +17,13 @@ public class OsoService {
     this.oso = oso;
   }
 
-  public void createRoleForCustomerEmployeeAtCustomer(String customerEmployeeId, String customerID, String role) {
+  public void createRole(String actorType, String actorId, String role, String resourceType, String resourceId) {
     try {
       oso.insert(new Fact(
               "has_role",
-              new Value("CustomerEmployee", customerEmployeeId),
+              new Value(actorType, actorId),
               new Value(role),
-              new Value("Customer", customerID)
+              new Value(resourceType, resourceId)
       ));
     } catch (IOException | ApiException e) {
       throw new RuntimeException(e);
