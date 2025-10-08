@@ -179,7 +179,7 @@ public class SecuritySystemServiceComponentTest {
 				.when()
 				.get("/securitysystems")
 				.then()
-				.statusCode(403);
+				.statusCode(200);
 	}
 
 	@Test

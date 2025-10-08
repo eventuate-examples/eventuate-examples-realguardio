@@ -38,8 +38,12 @@ class SecuritySystemServiceTest {
     }
 
     @Test
-    void shouldReturnAllSecuritySystems() throws Exception {
+    void shouldReturnAllSecuritySystems() {
         // Given
+        String userId = "user123";
+
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
+        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
 
         // new HashSet<>(Arrays.asList(SecuritySystemAction.ARM))
         SecuritySystemProjection system1 = new SecuritySystemProjectionImpl(1L, "Office Front Door", SecuritySystemState.ARMED, Set.of());
@@ -49,7 +53,7 @@ class SecuritySystemServiceTest {
         SecuritySystemProjection system2 = new SecuritySystemProjectionImpl(2L, "Office Back Door", SecuritySystemState.DISARMED, Set.of());
 
         List<SecuritySystemProjection> expectedSystems = List.of(system1, system2);
-        when(securitySystemRepository.findAllAccessible(any())).thenReturn(expectedSystems);
+        when(securitySystemRepository.findAllAccessible(userId)).thenReturn(expectedSystems);
         
         // When
         List<SecuritySystemWithActions> actualSystems = securitySystemService.findAll();
@@ -72,7 +76,12 @@ class SecuritySystemServiceTest {
     @Test
     void shouldReturnEmptyListWhenNoSystemsExist() {
         // Given
-        when(securitySystemRepository.findAllAccessible(any())).thenReturn(List.of());
+        String userId = "user123";
+
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
+        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
+
+        when(securitySystemRepository.findAllAccessible(userId)).thenReturn(List.of());
         
         // When
         List<SecuritySystemWithActions> actualSystems = securitySystemService.findAll();
