@@ -11,10 +11,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SpringBootTest
 @Testcontainers
 public class OsoServiceTest {
-
   @Container
   static GenericContainer<?> osoDevServer = new GenericContainer<>("public.ecr.aws/osohq/dev-server:latest")
           .withExposedPorts(8080)
@@ -37,5 +38,10 @@ public class OsoServiceTest {
   @Test
   public void shouldCreateRoleForCustomerEmployeeAtCustomer() {
     osoService.createRoleForCustomerEmployeeAtCustomer("alice", "acme", "DISARM");
+    osoService.createRelation("Location", "loc1", "customer", "Customer", "acme");
+    osoService.createRelation("SecuritySystem", "ss1", "location", "Location", "loc1");
+
+    assertThat(osoService.authorize("CustomerEmployee", "alice", "disarm", "SecuritySystem", "ss1")).isTrue();
+    assertThat(osoService.authorize("CustomerEmployee", "alice", "disarm", "SecuritySystem", "ss2")).isFalse();
   }
 }

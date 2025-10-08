@@ -29,4 +29,29 @@ public class OsoService {
       throw new RuntimeException(e);
     }
   }
+
+  public void createRelation(String resourceType, String resourceId, String relation, String targetType, String targetId) {
+    try {
+      oso.insert(new Fact(
+              "has_relation",
+              new Value(resourceType, resourceId),
+              new Value(relation),
+              new Value(targetType, targetId)
+      ));
+    } catch (IOException | ApiException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public boolean authorize(String actorType, String actorId, String action, String resourceType, String resourceId) {
+    try {
+      return oso.authorize(
+              new Value(actorType, actorId),
+              action,
+              new Value(resourceType, resourceId)
+      );
+    } catch (IOException | ApiException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }
