@@ -1,7 +1,6 @@
 # Gradle
 .gradle/
 build/
-!gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
@@ -52,3 +51,5 @@ bin/
 
 # Local properties
 local.properties
+
+!gradle/wrapper/gradle-wrapper.jar
