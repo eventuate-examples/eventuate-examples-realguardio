@@ -35,13 +35,52 @@ public class OsoServiceTest {
   @Autowired
   private OsoService osoService;
 
+
   @Test
-  public void shouldCreateRoleForCustomerEmployeeAtCustomer() {
+  public void shouldAuthorizeBobForCustomerAcme() {
     osoService.createRole("CustomerEmployee", "alice", "DISARM", "Customer", "acme");
     osoService.createRelation("Location", "loc1", "customer", "Customer", "acme");
     osoService.createRelation("SecuritySystem", "ss1", "location", "Location", "loc1");
 
-    assertThat(osoService.authorize("CustomerEmployee", "alice", "disarm", "SecuritySystem", "ss1")).isTrue();
-    assertThat(osoService.authorize("CustomerEmployee", "alice", "disarm", "SecuritySystem", "ss2")).isFalse();
+    assertIsAuthorized("alice", "disarm", "ss1");
+    assertIsNotAuthorized("alice", "disarm", "ss2");
   }
+
+  @Test
+  public void shouldAuthorizeBobForCustomerFoo() {
+    osoService.createRole("CustomerEmployee", "bob", "DISARM", "Customer", "foo");
+    osoService.createRelation("Location", "loc2", "customer", "Customer", "foo");
+    osoService.createRelation("SecuritySystem", "ss2", "location", "Location", "loc2");
+
+    assertIsAuthorized("bob", "disarm", "ss2");
+    assertIsNotAuthorized("bob", "disarm", "ss1");
+  }
+
+  @Test
+  public void shouldAuthorizeMaryForLocation() {
+    osoService.createRole("CustomerEmployee", "mary", "DISARM", "Location", "loc3");
+    osoService.createRelation("SecuritySystem", "ss3", "location", "Location", "loc3");
+
+    assertIsAuthorized("mary", "disarm", "ss3");
+  }
+
+  @Test
+  public void shouldAuthorizeCharlieViaTeamMembership() {
+    osoService.createRelation("Team", "ops-t1", "members", "CustomerEmployee", "charlie");
+    osoService.createRole("Team", "ops-t1", "DISARM", "Location", "loc1");
+    osoService.createRelation("SecuritySystem", "ss1", "location", "Location", "loc1");
+
+    assertIsAuthorized("charlie", "disarm", "ss1");
+    assertIsNotAuthorized("charlie", "disarm", "ss2");
+    assertIsNotAuthorized("charlie", "disarm", "ss3");
+  }
+
+  private void assertIsAuthorized(String user, String action, String securitySystem) {
+    assertThat(osoService.authorize("CustomerEmployee", user, action, "SecuritySystem", securitySystem)).isTrue();
+  }
+
+  private void assertIsNotAuthorized(String user, String action, String securitySystem) {
+    assertThat(osoService.authorize("CustomerEmployee", user, action, "SecuritySystem", securitySystem)).isFalse();
+  }
+
 }
