@@ -144,10 +144,10 @@ run = """
 for dir in realguardio-*/; do
   if [ -f "$dir/build.gradle" ]; then
     echo "Building $dir..."
-    (cd "$dir" && ./gradlew build) || exit 1
+    (cd "$dir" && ./gradlew build $GRADLE_BUILD_OPTIONS) || exit 1
   fi
 done
-(cd end-to-end-tests; ./gradlew build) || exit 1
+(cd end-to-end-tests; ./gradlew build $GRADLE_BUILD_OPTIONS) || exit 1
 """
 
 [tasks.reset-db]

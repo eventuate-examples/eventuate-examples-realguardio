@@ -40,7 +40,7 @@ jobs:
       run: docker images
 
     - name: Build Java services
-      run: mise build
+      run: GRADLE_BUILD_OPTIONS=--build-cache mise build
 
     - name: Run backend end-to-end tests with compose
       run: mise backend-end-to-end-with-compose
