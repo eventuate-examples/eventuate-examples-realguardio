@@ -21,7 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR"
 
 cd # Process each directory
-for dir in realguardio-orchestration-service realguardio-customer-service realguardio-security-system-service end-to-end-tests; do
+for dir in realguardio-orchestration-service  oso-integration realguardio-customer-service realguardio-security-system-serviceend-to-end-tests; do
        cd "$ROOT_DIR"
        if [ -d "$dir" ]; then
         echo ""
