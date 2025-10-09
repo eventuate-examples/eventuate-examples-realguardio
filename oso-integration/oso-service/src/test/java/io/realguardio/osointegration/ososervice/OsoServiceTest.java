@@ -38,19 +38,20 @@ public class OsoServiceTest {
 
   @Test
   public void shouldAuthorizeBobForCustomerAcme() {
-    osoService.createRole("CustomerEmployee", "alice", "DISARM", "Customer", "acme");
-    osoService.createRelation("Location", "loc1", "customer", "Customer", "acme");
-    osoService.createRelation("SecuritySystem", "ss1", "location", "Location", "loc1");
+    createRoleInCustomer("alice", "acme");
+    createLocationForCustomer("loc1", "acme");
+    assignSecuritySystemToLocation("ss1", "loc1");
 
     assertIsAuthorized("alice", "disarm", "ss1");
     assertIsNotAuthorized("alice", "disarm", "ss2");
   }
 
+
   @Test
   public void shouldAuthorizeBobForCustomerFoo() {
-    osoService.createRole("CustomerEmployee", "bob", "DISARM", "Customer", "foo");
-    osoService.createRelation("Location", "loc2", "customer", "Customer", "foo");
-    osoService.createRelation("SecuritySystem", "ss2", "location", "Location", "loc2");
+    createRoleInCustomer("bob", "foo");
+    createLocationForCustomer("loc2", "foo");
+    assignSecuritySystemToLocation("ss2", "loc2");
 
     assertIsAuthorized("bob", "disarm", "ss2");
     assertIsNotAuthorized("bob", "disarm", "ss1");
@@ -58,21 +59,45 @@ public class OsoServiceTest {
 
   @Test
   public void shouldAuthorizeMaryForLocation() {
-    osoService.createRole("CustomerEmployee", "mary", "DISARM", "Location", "loc3");
-    osoService.createRelation("SecuritySystem", "ss3", "location", "Location", "loc3");
+    createRoleAtLocation("mary", "loc3");
+    assignSecuritySystemToLocation("ss3", "loc3");
 
     assertIsAuthorized("mary", "disarm", "ss3");
   }
 
   @Test
   public void shouldAuthorizeCharlieViaTeamMembership() {
-    osoService.createRelation("Team", "ops-t1", "members", "CustomerEmployee", "charlie");
-    osoService.createRole("Team", "ops-t1", "DISARM", "Location", "loc1");
-    osoService.createRelation("SecuritySystem", "ss1", "location", "Location", "loc1");
+    addToTeam("charlie", "ops-t1");
+    createTeamRoleAtLocation("ops-t1", "loc1");
+    assignSecuritySystemToLocation("ss1", "loc1");
 
     assertIsAuthorized("charlie", "disarm", "ss1");
     assertIsNotAuthorized("charlie", "disarm", "ss2");
     assertIsNotAuthorized("charlie", "disarm", "ss3");
+  }
+
+  private void createTeamRoleAtLocation(String team, String location) {
+    osoService.createRole("Team", team, "DISARM", "Location", location);
+  }
+
+  private void createLocationForCustomer(String location, String customer) {
+    osoService.createRelation("Location", location, "customer", "Customer", customer);
+  }
+
+  private void assignSecuritySystemToLocation(String securitySystem, String location) {
+    osoService.createRelation("SecuritySystem", securitySystem, "location", "Location", location);
+  }
+
+  private void addToTeam(String user, String team) {
+    osoService.createRelation("Team", team, "members", "CustomerEmployee", user);
+  }
+
+  private void createRoleInCustomer(String user, String company) {
+    osoService.createRole("CustomerEmployee", user, "DISARM", "Customer", company);
+  }
+
+  private void createRoleAtLocation(String user, String location) {
+    osoService.createRole("CustomerEmployee", user, "DISARM", "Location", location);
   }
 
   private void assertIsAuthorized(String user, String action, String securitySystem) {
