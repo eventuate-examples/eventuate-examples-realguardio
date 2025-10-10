@@ -15,4 +15,5 @@ public class OsoCloudConfig {
                  @Value("${oso.auth}") String osoAuth) {
     return new Oso(osoAuth, URI.create(osoUrl));
   }
+
 }

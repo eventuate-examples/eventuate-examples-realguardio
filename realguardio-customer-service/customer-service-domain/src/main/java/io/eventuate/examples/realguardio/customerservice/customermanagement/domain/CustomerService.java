@@ -145,6 +145,14 @@ public class CustomerService {
             throw new IllegalArgumentException("Customer employee does not belong to the specified customer");
         }
 
+        domainEventPublisher.publish(
+            "Customer",
+            customerId.toString(),
+            Collections.singletonList(
+                new CustomerEmployeeAssignedCustomerRole(customerEmployeeId, roleName)
+            )
+        );
+
         return organizationService.assignRole(customer.getOrganizationId(), customerEmployee.getMemberId(), roleName);
     }
 
@@ -161,7 +169,19 @@ public class CustomerService {
         // Security-todo Verify that caller has COMPANY_ROLE_ADMIN
 
         Location location = new Location(name, customerId);
-        return locationRepository.save(location);
+
+
+        Location savedLocation = locationRepository.save(location);
+
+        domainEventPublisher.publish(
+            "Customer",
+            customerId.toString(),
+            Collections.singletonList(
+                new LocationCreatedForCustomer(savedLocation.getId())
+            )
+        );
+
+        return savedLocation;
     }
 
     public void addSecuritySystemToLocation(Long locationId, Long securitySystemId) {
@@ -169,6 +189,15 @@ public class CustomerService {
 
         Location location = locationRepository.findRequiredById(locationId);
         location.addSecuritySystem(securitySystemId);
+
+        domainEventPublisher.publish(
+            "Customer",
+            location.getCustomerId().toString(),
+            Collections.singletonList(
+                new SecuritySystemAssignedToLocation(locationId, securitySystemId)
+            )
+        );
+
     }
     
     /**

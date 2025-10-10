@@ -1,0 +1,8 @@
+apply plugin: "org.springframework.boot"
+
+dependencies {
+    implementation(project(":oso-service"))
+
+    implementation "org.springframework.boot:spring-boot-starter"
+
+}

@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(':oso-service')
+    implementation 'io.eventuate.tram.core:eventuate-tram-spring-events-subscriber-starter'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.eventuate.tram.core:eventuate-tram-spring-in-memory'
+    testImplementation 'io.eventuate.tram.core:eventuate-tram-spring-events-publisher-starter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
+    testImplementation 'org.mockito:mockito-core'
+}

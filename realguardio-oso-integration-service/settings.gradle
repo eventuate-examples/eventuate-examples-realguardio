@@ -1,3 +1,5 @@
-rootProject.name = 'realguardio-oso-integration'
+rootProject.name = 'realguardio-oso-integration-service'
 
 include 'oso-service'
+include 'oso-integration-service'
+include 'oso-event-subscribers'

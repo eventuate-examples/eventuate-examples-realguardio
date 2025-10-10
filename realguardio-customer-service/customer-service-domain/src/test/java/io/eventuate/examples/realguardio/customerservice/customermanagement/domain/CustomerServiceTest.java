@@ -12,7 +12,7 @@ import io.eventuate.examples.realguardio.customerservice.security.UserService;
 import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -275,25 +275,27 @@ class CustomerServiceTest {
     var location = customer.createLocation();
     loggedInUser.withUser(customer);
 
+    // Clear any previous interactions
+    Mockito.clearInvocations(domainEventPublisher);
+
     // When
     customer.assignLocationRole(marySmith, location, SECURITY_SYSTEM_ARMER_ROLE);
 
     // Then - verify the role was assigned
     customer.assertEmployeeLocationRoles(marySmith, location).containsExactly(SECURITY_SYSTEM_ARMER_ROLE);
 
-    // Verify that a CustomerEmployeeAssignedLocationRole event was published
-    ArgumentCaptor<List> eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(domainEventPublisher).publish(eq("Customer"), any(String.class), eventsCaptor.capture());
-    
-    List<?> events = eventsCaptor.getValue();
-    assertThat(events).hasSize(1);
-    Object event = events.get(0);
-    assertThat(event).isInstanceOf(CustomerEmployeeAssignedLocationRole.class);
-    
-    CustomerEmployeeAssignedLocationRole publishedEvent = (CustomerEmployeeAssignedLocationRole) event;
-    // We need to get the userName for marySmith - for now we'll just verify the structure
-    assertThat(publishedEvent.locationId()).isEqualTo(location.getId());
-    assertThat(publishedEvent.roleName()).isEqualTo(SECURITY_SYSTEM_ARMER_ROLE);
+    CustomerEmployeeAssignedLocationRole expectedEvent =
+        new CustomerEmployeeAssignedLocationRole(
+            marySmith.employeeDetails().emailAddress().email(),
+            location.getId(),
+            SECURITY_SYSTEM_ARMER_ROLE
+        );
+
+    verify(domainEventPublisher).publish(
+        eq("Customer"),
+        any(String.class),
+        eq(List.of(expectedEvent))
+    );
   }
 
 

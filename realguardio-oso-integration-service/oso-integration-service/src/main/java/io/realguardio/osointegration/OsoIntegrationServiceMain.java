@@ -1,11 +1,12 @@
-package io.realguardio.osointegration.ososervice;
+package io.realguardio.osointegration;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class OsoServiceApplication {
+public class OsoIntegrationServiceMain {
+
   public static void main(String[] args) {
-    SpringApplication.run(OsoServiceApplication.class, args);
+    SpringApplication.run(OsoIntegrationServiceMain.class, args);
   }
 }
