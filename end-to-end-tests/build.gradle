@@ -134,6 +134,17 @@ task assembleServices {
 
 }
 
+task publishOsoIntegrationServiceToMavenLocal(type: GradleBuild) {
+    description = 'Publishes OSO integration service to Maven Local'
+    group = 'build setup'
+    dir = '../realguardio-oso-integration-service'
+    tasks = ['publishToMavenLocal']
+}
+
+tasks.named('compileEndToEndTestJava') {
+    dependsOn publishOsoIntegrationServiceToMavenLocal
+}
+
 task dockerComposeUp(type: Exec) {
     description = 'Starts all services using docker compose'
     group = 'application'
