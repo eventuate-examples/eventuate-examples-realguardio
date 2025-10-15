@@ -7,16 +7,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SecuritySystemServiceTest {
@@ -30,11 +32,14 @@ class SecuritySystemServiceTest {
     @Mock
     private UserNameSupplier userNameSupplier;
 
+    @Mock
+    private SecuritySystemActionAuthorizer securitySystemActionAuthorizer;
+
     private SecuritySystemService securitySystemService;
 
     @BeforeEach
     void setUp() {
-        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient, userNameSupplier);
+        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient, userNameSupplier, securitySystemActionAuthorizer);
     }
 
     @Test
@@ -143,23 +148,23 @@ class SecuritySystemServiceTest {
         SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
-        
+
         // Set up admin (not a customer employee)
         when(userNameSupplier.isCustomerEmployee()).thenReturn(false);
-        
+
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        
+
         // When
         SecuritySystem result = securitySystemService.disarm(systemId);
-        
+
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getState()).isEqualTo(SecuritySystemState.DISARMED);
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
-        // Admin should not trigger location permission check
-        verify(customerServiceClient, never()).getUserRolesAtLocation(anyString(), anyLong());
+        // Admin should not trigger authorization check
+        verify(securitySystemActionAuthorizer, never()).verifyCanDisarm(anyLong());
     }
     
     @Test
@@ -167,30 +172,26 @@ class SecuritySystemServiceTest {
         // Given
         Long systemId = 1L;
         Long locationId = 456L;
-        String userId = "employee@example.com";
         // new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM))
         SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
-        
+
         // Set up employee
         when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
-        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
-        
+
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-            .thenReturn(new HashSet<>(Arrays.asList("SECURITY_SYSTEM_DISARMER", "VIEW_ALERTS")));
-        
+
         // When
         SecuritySystem result = securitySystemService.disarm(systemId);
-        
+
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getState()).isEqualTo(SecuritySystemState.DISARMED);
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
-        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
+        verify(securitySystemActionAuthorizer).verifyCanDisarm(systemId);
     }
     
     @Test
@@ -198,27 +199,25 @@ class SecuritySystemServiceTest {
         // Given
         Long systemId = 1L;
         Long locationId = 456L;
-        String userId = "employee@example.com";
         // new HashSet<>(Arrays.asList(SecuritySystemAction.DISARM))
         SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.ARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
-        
+
         // Set up employee
         when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
-        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
-        
+
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
-        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-            .thenReturn(new HashSet<>(Arrays.asList("VIEW_ALERTS", "SECURITY_SYSTEM_ARMER"))); // Has SECURITY_SYSTEM_ARMER but not SECURITY_SYSTEM_DISARMER
-        
+        doThrow(new ForbiddenException("User lacks SECURITY_SYSTEM_DISARMER permission for location 456"))
+            .when(securitySystemActionAuthorizer).verifyCanDisarm(systemId);
+
         // When & Then
         assertThatThrownBy(() -> securitySystemService.disarm(systemId))
             .isInstanceOf(ForbiddenException.class)
             .hasMessageContaining("User lacks SECURITY_SYSTEM_DISARMER permission for location 456");
-        
+
         verify(securitySystemRepository).findById(systemId);
-        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
+        verify(securitySystemActionAuthorizer).verifyCanDisarm(systemId);
         verify(securitySystemRepository, never()).save(any());
     }
     
@@ -231,23 +230,23 @@ class SecuritySystemServiceTest {
         SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
-        
+
         // Set up admin (not a customer employee)
         when(userNameSupplier.isCustomerEmployee()).thenReturn(false);
-        
+
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        
+
         // When
         SecuritySystem result = securitySystemService.arm(systemId);
-        
+
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getState()).isEqualTo(SecuritySystemState.ARMED);
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
-        // Admin should not trigger location permission check
-        verify(customerServiceClient, never()).getUserRolesAtLocation(anyString(), anyLong());
+        // Admin should not trigger authorization check
+        verify(securitySystemActionAuthorizer, never()).verifyCanArm(anyLong());
     }
     
     @Test
@@ -255,30 +254,26 @@ class SecuritySystemServiceTest {
         // Given
         Long systemId = 1L;
         Long locationId = 456L;
-        String userId = "employee@example.com";
         // new HashSet<>(Arrays.asList(SecuritySystemAction.ARM))
         SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
-        
+
         // Set up employee
         when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
-        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
-        
+
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         when(securitySystemRepository.save(any(SecuritySystem.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-            .thenReturn(new HashSet<>(Arrays.asList("SECURITY_SYSTEM_ARMER", "VIEW_ALERTS")));
-        
+
         // When
         SecuritySystem result = securitySystemService.arm(systemId);
-        
+
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getState()).isEqualTo(SecuritySystemState.ARMED);
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
-        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
+        verify(securitySystemActionAuthorizer).verifyCanArm(systemId);
     }
     
     @Test
@@ -286,27 +281,25 @@ class SecuritySystemServiceTest {
         // Given
         Long systemId = 1L;
         Long locationId = 456L;
-        String userId = "employee@example.com";
         // new HashSet<>(Arrays.asList(SecuritySystemAction.ARM))
         SecuritySystem securitySystem = new SecuritySystem("Office Front Door", SecuritySystemState.DISARMED);
         setId(securitySystem, systemId);
         securitySystem.setLocationId(locationId);
-        
+
         // Set up employee
         when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
-        when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
-        
+
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
-        when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-            .thenReturn(new HashSet<>(Arrays.asList("VIEW_ALERTS", "SECURITY_SYSTEM_DISARMER"))); // Has SECURITY_SYSTEM_DISARMER but not SECURITY_SYSTEM_ARMER
-        
+        doThrow(new ForbiddenException("User lacks SECURITY_SYSTEM_ARMER permission for location 456"))
+            .when(securitySystemActionAuthorizer).verifyCanArm(systemId);
+
         // When & Then
         assertThatThrownBy(() -> securitySystemService.arm(systemId))
             .isInstanceOf(ForbiddenException.class)
             .hasMessageContaining("User lacks SECURITY_SYSTEM_ARMER permission for location 456");
-        
+
         verify(securitySystemRepository).findById(systemId);
-        verify(customerServiceClient).getUserRolesAtLocation(userId, locationId);
+        verify(securitySystemActionAuthorizer).verifyCanArm(systemId);
         verify(securitySystemRepository, never()).save(any());
     }
     

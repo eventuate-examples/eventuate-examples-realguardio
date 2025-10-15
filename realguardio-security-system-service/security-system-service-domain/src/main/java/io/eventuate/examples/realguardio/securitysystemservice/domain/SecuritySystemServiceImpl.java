@@ -18,11 +18,13 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     private final SecuritySystemRepository securitySystemRepository;
     private final CustomerServiceClient customerServiceClient;
     private final UserNameSupplier userNameSupplier;
-    
-    public SecuritySystemServiceImpl(SecuritySystemRepository securitySystemRepository,
+    private final SecuritySystemActionAuthorizer securitySystemActionAuthorizer;
+
+  public SecuritySystemServiceImpl(SecuritySystemRepository securitySystemRepository,
                                     CustomerServiceClient customerServiceClient,
-                                    UserNameSupplier userNameSupplier) {
-        if (securitySystemRepository == null) {
+                                    UserNameSupplier userNameSupplier, SecuritySystemActionAuthorizer securitySystemActionAuthorizer) {
+    this.securitySystemActionAuthorizer = securitySystemActionAuthorizer;
+    if (securitySystemRepository == null) {
             throw new IllegalArgumentException("securitySystemRepository cannot be null");
         }
         if (customerServiceClient == null) {
@@ -98,7 +100,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         
         // Check location-based authorization for customer employees
         if (userNameSupplier.isCustomerEmployee()) {
-            validateLocationPermission(securitySystem.getLocationId(), "SECURITY_SYSTEM_ARMER");
+            securitySystemActionAuthorizer.verifyCanArm(id);
         }
         
         securitySystem.arm();
@@ -116,24 +118,11 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         
         // Check location-based authorization for customer employees
         if (userNameSupplier.isCustomerEmployee()) {
-            validateLocationPermission(securitySystem.getLocationId(), "SECURITY_SYSTEM_DISARMER");
+            securitySystemActionAuthorizer.verifyCanDisarm(id);
         }
         
         securitySystem.disarm();
         return securitySystemRepository.save(securitySystem);
     }
-    
-    private void validateLocationPermission(Long locationId, String requiredRole) {
-        String userId = userNameSupplier.getCurrentUserName();
 
-        Set<String> roles = customerServiceClient.getUserRolesAtLocation(userId, locationId);
-
-        if (!roles.contains(requiredRole)) {
-            logger.warn("User {} lacks {} permission for location {}", userId, requiredRole, locationId);
-            throw new ForbiddenException(
-                String.format("User lacks %s permission for location %d",
-                    requiredRole, locationId)
-            );
-        }
-    }
 }
