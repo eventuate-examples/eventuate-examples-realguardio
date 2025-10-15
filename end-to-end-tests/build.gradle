@@ -18,7 +18,6 @@ java {
 repositories {
     mavenCentral()
     maven { url 'https://snapshots.repositories.eventuate.io/repository' }
-    mavenLocal()
 }
 
 sourceSets {
@@ -123,7 +122,7 @@ task assembleServices {
     group = 'build setup'
 }
 
-['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service'].each { serviceDir ->
+['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service', 'realguardio-oso-integration-service'].each { serviceDir ->
     def taskName = "assemble${serviceDir.replaceAll(/(^\w|-\w)/) { it[0].toUpperCase() }.replaceAll('-', '') }"
     task "$taskName"(type: GradleBuild) {
         dir = "../$serviceDir"
@@ -132,20 +131,6 @@ task assembleServices {
     assembleServices.dependsOn taskName
     endToEndTest.dependsOn taskName
 
-}
-
-task assembleAndPublishOsoIntegrationService(type: GradleBuild) {
-    description = 'Assembles and publishes OSO integration service to Maven Local'
-    group = 'build setup'
-    dir = '../realguardio-oso-integration-service'
-    tasks = ['assemble', 'publishToMavenLocal']
-}
-
-assembleServices.dependsOn assembleAndPublishOsoIntegrationService
-endToEndTest.dependsOn assembleAndPublishOsoIntegrationService
-
-tasks.named('compileEndToEndTestJava') {
-    dependsOn assembleAndPublishOsoIntegrationService
 }
 
 task dockerComposeUp(type: Exec) {

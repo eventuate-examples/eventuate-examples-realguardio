@@ -1,1 +1,10 @@
 rootProject.name = 'end-to-end-tests'
+
+includeBuild("../realguardio-oso-integration-service") {
+    dependencySubstitution {
+        substitute(module("io.realguardio.osointegration:oso-service"))
+                .using(project(":oso-service"))
+        substitute(module("io.realguardio.osointegration:oso-service-test-container"))
+                .using(project(":oso-service-test-container"))
+    }
+}

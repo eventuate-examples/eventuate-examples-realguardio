@@ -9,7 +9,6 @@ allprojects {
 	
 	repositories {
 		mavenCentral()
-		mavenLocal()
 		eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
 	}
 }

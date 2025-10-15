@@ -1,13 +1,3 @@
-task publishOsoIntegrationService(type: GradleBuild) {
-    description = 'Publishes OSO integration service to Maven Local'
-    group = 'build setup'
-    dir = '../../realguardio-oso-integration-service'
-    tasks = ['publishToMavenLocal']
-}
-
-tasks.withType(JavaCompile).configureEach {
-    dependsOn publishOsoIntegrationService
-}
 
 dependencies {
     implementation project(':location-roles-replica')
