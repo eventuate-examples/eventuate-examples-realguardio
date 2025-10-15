@@ -143,10 +143,11 @@ description = "Build all realguardio services with Gradle"
 run = """
 for dir in realguardio-*/; do
   if [ -f "$dir/build.gradle" ]; then
-    echo "Building $dir..."
+    echo "==== Building $dir..."
     (cd "$dir" && ./gradlew build $GRADLE_BUILD_OPTIONS) || exit 1
   fi
 done
+echo ==== Running end to end tests
 (cd end-to-end-tests; ./gradlew build $GRADLE_BUILD_OPTIONS) || exit 1
 """
 

@@ -123,7 +123,7 @@ task assembleServices {
     group = 'build setup'
 }
 
-['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service', 'realguardio-oso-integration-service'].each { serviceDir ->
+['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service'].each { serviceDir ->
     def taskName = "assemble${serviceDir.replaceAll(/(^\w|-\w)/) { it[0].toUpperCase() }.replaceAll('-', '') }"
     task "$taskName"(type: GradleBuild) {
         dir = "../$serviceDir"
@@ -134,15 +134,18 @@ task assembleServices {
 
 }
 
-task publishOsoIntegrationServiceToMavenLocal(type: GradleBuild) {
-    description = 'Publishes OSO integration service to Maven Local'
+task assembleAndPublishOsoIntegrationService(type: GradleBuild) {
+    description = 'Assembles and publishes OSO integration service to Maven Local'
     group = 'build setup'
     dir = '../realguardio-oso-integration-service'
-    tasks = ['publishToMavenLocal']
+    tasks = ['assemble', 'publishToMavenLocal']
 }
 
+assembleServices.dependsOn assembleAndPublishOsoIntegrationService
+endToEndTest.dependsOn assembleAndPublishOsoIntegrationService
+
 tasks.named('compileEndToEndTestJava') {
-    dependsOn publishOsoIntegrationServiceToMavenLocal
+    dependsOn assembleAndPublishOsoIntegrationService
 }
 
 task dockerComposeUp(type: Exec) {
