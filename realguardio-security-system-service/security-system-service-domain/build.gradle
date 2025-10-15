@@ -1,3 +1,14 @@
+task publishOsoIntegrationService(type: GradleBuild) {
+    description = 'Publishes OSO integration service to Maven Local'
+    group = 'build setup'
+    dir = '../../realguardio-oso-integration-service'
+    tasks = ['publishToMavenLocal']
+}
+
+tasks.withType(JavaCompile).configureEach {
+    dependsOn publishOsoIntegrationService
+}
+
 dependencies {
     implementation project(':location-roles-replica')
 
@@ -10,7 +21,7 @@ dependencies {
     implementation 'org.springframework:spring-tx'
     implementation 'io.eventuate.tram.core:eventuate-tram-spring-events'
     implementation 'io.eventuate.tram.core:eventuate-tram-spring-commands'
-    
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mockito:mockito-junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
