@@ -60,6 +60,7 @@ dependencies {
 
     endToEndTestImplementation "io.eventuate.examples.spring-authorization-server:authorization-server-test-containers:0.1.0.BUILD-SNAPSHOT"
     endToEndTestImplementation 'org.springframework.boot:spring-boot-starter-webflux:3.4.1'
+    endToEndTestImplementation 'io.realguardio.osointegration:oso-service-test-container:0.1.0-SNAPSHOT'
 
     // Logging
     endToEndTestImplementation 'org.slf4j:slf4j-api:2.0.9'
@@ -122,7 +123,7 @@ task assembleServices {
     group = 'build setup'
 }
 
-['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service'].each { serviceDir ->
+['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service', 'realguardio-oso-integration-service'].each { serviceDir ->
     def taskName = "assemble${serviceDir.replaceAll(/(^\w|-\w)/) { it[0].toUpperCase() }.replaceAll('-', '') }"
     task "$taskName"(type: GradleBuild) {
         dir = "../$serviceDir"

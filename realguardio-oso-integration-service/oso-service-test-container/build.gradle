@@ -1,3 +1,4 @@
+apply plugin: 'maven-publish'
 
 task copyPolicyFiles(type: Copy) {
     from '../policies'
@@ -10,4 +11,13 @@ classes.dependsOn copyPolicyFiles
 dependencies {
     implementation "org.testcontainers:testcontainers"
     implementation "org.springframework:spring-test"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = 'oso-service-test-container'
+        }
+    }
 }

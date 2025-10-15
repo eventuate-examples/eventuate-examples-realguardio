@@ -14,7 +14,7 @@ buildscript {
 }
 
 allprojects {
-    group = "io.realguardio.orchestration"
+    group = "io.realguardio.osointegration"
 }
 
 subprojects {

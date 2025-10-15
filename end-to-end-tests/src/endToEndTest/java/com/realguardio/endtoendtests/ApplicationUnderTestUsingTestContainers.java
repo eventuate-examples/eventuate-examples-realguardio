@@ -7,6 +7,7 @@ import io.eventuate.examples.springauthorizationserver.testcontainers.Authorizat
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.testcontainers.service.ServiceContainer;
+import io.realguardio.osointegration.testcontainer.OsoTestContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -42,6 +43,12 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
       .withNetwork(eventuateKafkaCluster.network)
       .withNetworkAliases("iam-service")
       .withReuse(true);
+
+  public static OsoTestContainer osoService = new OsoTestContainer()
+      .withNetwork(eventuateKafkaCluster.network)
+      .withNetworkAliases("oso-service")
+      .withReuse(true)
+      .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC oso-service:"));
 
   public static GenericContainer<?> customerService =
       ServiceContainer.makeFromDockerfileInFileSystem("../realguardio-customer-service/Dockerfile-local")
@@ -85,6 +92,17 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
           .withReuse(true)
           .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC security-service:"));
 
+  public static GenericContainer<?> osoIntegrationService =
+      ServiceContainer.makeFromDockerfileInFileSystem("../realguardio-oso-integration-service/Dockerfile-local")
+          .withNetwork(eventuateKafkaCluster.network)
+          .withNetworkAliases("oso-integration-service")
+          .withKafka(kafka)
+          .withEnv("OSO_URL", "http://oso-service:8080")
+          .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
+          .withEnv("SPRING_PROFILES_ACTIVE", "docker")
+          .withReuse(true)
+          .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC oso-integration-service:"));
+
   private static final EventuateCdcContainer cdc = new EventuateCdcContainer()
       .withKafka(kafka)
       .withKafkaLeadership()
@@ -93,7 +111,7 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
       .withTramPipeline(orchestrationDatabase)
       .withReuse(false)
       .withExposedPorts(8080)
-      .dependsOn(customerService, securitySystemService, orchestrationService)
+      .dependsOn(customerService, securitySystemService, orchestrationService, osoIntegrationService)
       .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC cdc:"));
 
 
@@ -103,9 +121,11 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
     Startables.deepStart(
         kafka,
         iamService,
+        osoService,
         customerService,
         orchestrationService,
         securitySystemService,
+        osoIntegrationService,
         cdc
     ).join();
 
