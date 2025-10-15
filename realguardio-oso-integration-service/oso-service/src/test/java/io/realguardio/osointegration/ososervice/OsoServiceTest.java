@@ -42,13 +42,17 @@ public class OsoServiceTest {
   private RealGuardOsoAuthorizer realGuardOsoAuthorizer;
 
   @Test
-  public void shouldAuthorizeBobForCustomerAcme() {
+  public void shouldAuthorizeAliceForCustomerAcme() {
     realGuardOsoFactManager.createRoleInCustomer("alice", "acme", "SECURITY_SYSTEM_DISARMER");
     realGuardOsoFactManager.createLocationForCustomer("loc1", "acme");
     realGuardOsoFactManager.assignSecuritySystemToLocation("ss1", "loc1");
 
     assertIsAuthorized("alice", "disarm", "ss1");
     assertIsNotAuthorized("alice", "disarm", "ss2");
+    assertIsNotAuthorized("alice", "arm", "ss1");
+
+    realGuardOsoFactManager.createRoleInCustomer("alice", "acme", "SECURITY_SYSTEM_ARMER");
+    assertIsNotAuthorized("alice", "arm", "ss1");
   }
 
 
@@ -68,6 +72,10 @@ public class OsoServiceTest {
     realGuardOsoFactManager.assignSecuritySystemToLocation("ss3", "loc3");
 
     assertIsAuthorized("mary", "disarm", "ss3");
+    assertIsNotAuthorized("mary", "arm", "ss3");
+
+    realGuardOsoFactManager.createRoleAtLocation("mary", "loc3", "SECURITY_SYSTEM_ARMER");
+    assertIsAuthorized("mary", "arm", "ss3");
   }
 
   @Test
@@ -79,6 +87,10 @@ public class OsoServiceTest {
     assertIsAuthorized("charlie", "disarm", "ss1");
     assertIsNotAuthorized("charlie", "disarm", "ss2");
     assertIsNotAuthorized("charlie", "disarm", "ss3");
+
+    assertIsNotAuthorized("charlie", "arm", "ss1");
+    realGuardOsoFactManager.createTeamRoleAtLocation("ops-t1", "loc1", "SECURITY_SYSTEM_ARMER");
+    assertIsAuthorized("charlie", "arm", "ss1");
   }
 
 

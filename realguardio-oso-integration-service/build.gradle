@@ -70,6 +70,20 @@ subprojects {
 
 }
 
+task validateOsoPolicy(type: Exec) {
+	description = 'Validates the OSO policy file'
+	group = 'verification'
+
+	workingDir projectDir
+	commandLine 'oso-cloud', 'validate', 'policies/main.polar'
+}
+
+subprojects {
+	tasks.withType(Test).configureEach {
+		dependsOn rootProject.tasks.named('validateOsoPolicy')
+	}
+}
+
 task compileAll {
 	description = 'Compiles all main and test classes including integration and end-to-end tests'
 	group = 'build'
