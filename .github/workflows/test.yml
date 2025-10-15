@@ -33,6 +33,10 @@ jobs:
       with:
         cache-read-only: false
 
+    - name: Install OSO CLI
+      run: |
+        curl -L https://cloud.osohq.com/install.sh | bash
+
     - name: Build IAM service container
       run: mise iam-service-compose-build
 
