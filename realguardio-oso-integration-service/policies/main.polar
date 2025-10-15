@@ -1,10 +1,10 @@
 actor CustomerEmployee {}
 
 resource Customer {
-  roles = ["DISARM"];               # role at the organization
+  roles = ["SECURITY_SYSTEM_DISARMER"];               # role at the organization
   permissions = ["disarm"];
 
-  "disarm" if "DISARM";             # org DISARM role grants disarm
+  "disarm" if "SECURITY_SYSTEM_DISARMER";             # org SECURITY_SYSTEM_DISARMER role grants disarm
 }
 
 resource Team {
@@ -16,26 +16,26 @@ resource Team {
 }
 
 # ── Bridge: team membership + team role-at-location → user role-at-location ──
-has_role(u: CustomerEmployee, "DISARM", loc: Location) if
+has_role(u: CustomerEmployee, "SECURITY_SYSTEM_DISARMER", loc: Location) if
   team matches Team and
   has_relation(team, "members", u) and
-  has_role(team, "DISARM", loc);
+  has_role(team, "SECURITY_SYSTEM_DISARMER", loc);
 
 resource Location {
   relations = { customer: Customer };
-  roles = ["DISARM"];               # role at the location
+  roles = ["SECURITY_SYSTEM_DISARMER"];               # role at the location
 
-  # Inherit the DISARM role from the owning Customer (org)
-  "DISARM" if "DISARM" on "customer";
+  # Inherit the SECURITY_SYSTEM_DISARMER role from the owning Customer (org)
+  "SECURITY_SYSTEM_DISARMER" if "SECURITY_SYSTEM_DISARMER" on "customer";
 }
 
 resource SecuritySystem {
   relations = { location: Location };
   permissions = ["disarm"];
 
-  # (a) DISARM role at the system’s Location → can disarm
-  "disarm" if "DISARM" on "location";
+  # (a) SECURITY_SYSTEM_DISARMER role at the system’s Location → can disarm
+  "disarm" if "SECURITY_SYSTEM_DISARMER" on "location";
 
-  # (b) DISARM role at the Customer that owns that Location → can disarm
+  # (b) SECURITY_SYSTEM_DISARMER role at the Customer that owns that Location → can disarm
   # (via the Location role inheritance above)
 }

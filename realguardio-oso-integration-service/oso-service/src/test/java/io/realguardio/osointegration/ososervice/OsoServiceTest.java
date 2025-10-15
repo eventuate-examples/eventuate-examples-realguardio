@@ -43,7 +43,7 @@ public class OsoServiceTest {
 
   @Test
   public void shouldAuthorizeBobForCustomerAcme() {
-    realGuardOsoFactManager.createRoleInCustomer("alice", "acme", "DISARM");
+    realGuardOsoFactManager.createRoleInCustomer("alice", "acme", "SECURITY_SYSTEM_DISARMER");
     realGuardOsoFactManager.createLocationForCustomer("loc1", "acme");
     realGuardOsoFactManager.assignSecuritySystemToLocation("ss1", "loc1");
 
@@ -54,7 +54,7 @@ public class OsoServiceTest {
 
   @Test
   public void shouldAuthorizeBobForCustomerFoo() {
-    realGuardOsoFactManager.createRoleInCustomer("bob", "foo", "DISARM");
+    realGuardOsoFactManager.createRoleInCustomer("bob", "foo", "SECURITY_SYSTEM_DISARMER");
     realGuardOsoFactManager.createLocationForCustomer("loc2", "foo");
     realGuardOsoFactManager.assignSecuritySystemToLocation("ss2", "loc2");
 
@@ -64,7 +64,7 @@ public class OsoServiceTest {
 
   @Test
   public void shouldAuthorizeMaryForLocation() {
-    realGuardOsoFactManager.createRoleAtLocation("mary", "loc3", "DISARM");
+    realGuardOsoFactManager.createRoleAtLocation("mary", "loc3", "SECURITY_SYSTEM_DISARMER");
     realGuardOsoFactManager.assignSecuritySystemToLocation("ss3", "loc3");
 
     assertIsAuthorized("mary", "disarm", "ss3");
@@ -73,7 +73,7 @@ public class OsoServiceTest {
   @Test
   public void shouldAuthorizeCharlieViaTeamMembership() {
     realGuardOsoFactManager.addToTeam("charlie", "ops-t1");
-    realGuardOsoFactManager.createTeamRoleAtLocation("ops-t1", "loc1", "DISARM");
+    realGuardOsoFactManager.createTeamRoleAtLocation("ops-t1", "loc1", "SECURITY_SYSTEM_DISARMER");
     realGuardOsoFactManager.assignSecuritySystemToLocation("ss1", "loc1");
 
     assertIsAuthorized("charlie", "disarm", "ss1");
