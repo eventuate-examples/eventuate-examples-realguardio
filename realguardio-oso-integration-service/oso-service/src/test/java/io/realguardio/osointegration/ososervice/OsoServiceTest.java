@@ -52,7 +52,7 @@ public class OsoServiceTest {
     assertIsNotAuthorized("alice", "arm", "ss1");
 
     realGuardOsoFactManager.createRoleInCustomer("alice", "acme", "SECURITY_SYSTEM_ARMER");
-    assertIsNotAuthorized("alice", "arm", "ss1");
+    assertIsAuthorized("alice", "arm", "ss1");
   }
 
 

@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import java.net.URI;
 
 @Configuration
-public class OsoCloudConfig {
+public class OsoServiceConfiguration {
 
   @Bean
   public Oso oso(@Value("${oso.url}") String osoUrl,
@@ -16,4 +16,18 @@ public class OsoCloudConfig {
     return new Oso(osoAuth, URI.create(osoUrl));
   }
 
+  @Bean
+  OsoService osoService(Oso oso) {
+    return new OsoService(oso);
+  }
+
+  @Bean
+  RealGuardOsoFactManager realGuardOsoFactManager(OsoService osoService) {
+    return new RealGuardOsoFactManager(osoService);
+  }
+
+  @Bean
+  RealGuardOsoAuthorizer realGuardOsoAuthorizer(OsoService osoService) {
+    return new RealGuardOsoAuthorizer(osoService);
+  }
 }

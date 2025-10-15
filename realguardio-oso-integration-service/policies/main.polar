@@ -1,11 +1,12 @@
 actor CustomerEmployee {}
 
 resource Customer {
-  roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER"];               # role at the organization
-  permissions = ["arm", "disarm"];
+  roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "COMPANY_ROLE_ADMIN"];               # role at the organization
+  permissions = ["arm", "disarm", "admin"];
 
   "arm" if "SECURITY_SYSTEM_ARMER";             # org SECURITY_SYSTEM_ARMER role grants arm
   "disarm" if "SECURITY_SYSTEM_DISARMER";             # org SECURITY_SYSTEM_DISARMER role grants disarm
+  "admin" if "COMPANY_ROLE_ADMIN";             # org SECURITY_SYSTEM_DISARMER role grants disarm
 }
 
 resource Team {
@@ -29,7 +30,7 @@ resource Location {
   roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER"];                # role at the location
 
   # Inherit the SECURITY_SYSTEM_ARMER/SECURITY_SYSTEM_DISARMER role from the owning Customer (org)
-  #"SECURITY_SYSTEM_ARMER" if "SECURITY_SYSTEM_ARMER" on "customer";
+  "SECURITY_SYSTEM_ARMER" if "SECURITY_SYSTEM_ARMER" on "customer";
   "SECURITY_SYSTEM_DISARMER" if "SECURITY_SYSTEM_DISARMER" on "customer";
 }
 

@@ -30,4 +30,7 @@ public interface ApplicationUnderTest {
   String iamServiceHostAndPort();
 
   default void useLocationRolesReplica() {};
+
+  default void useOsoService() {};
+
 }

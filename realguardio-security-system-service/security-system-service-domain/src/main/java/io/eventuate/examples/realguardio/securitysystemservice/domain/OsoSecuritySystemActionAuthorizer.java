@@ -3,11 +3,7 @@ package io.eventuate.examples.realguardio.securitysystemservice.domain;
 import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
-@Component
-@Profile("UseOsoService")
 public class OsoSecuritySystemActionAuthorizer implements SecuritySystemActionAuthorizer {
 
   private static final Logger logger = LoggerFactory.getLogger(OsoSecuritySystemActionAuthorizer.class);

@@ -1,8 +1,5 @@
 package io.realguardio.osointegration.ososervice;
 
-import org.springframework.stereotype.Service;
-
-@Service
 public class RealGuardOsoAuthorizer {
 
   private final OsoService osoService;

@@ -228,7 +228,15 @@ public class CustomerService {
         // Add security system to location
         location.addSecuritySystem(securitySystemId);
         locationRepository.save(location);
-        
+
+        domainEventPublisher.publish(
+            "Customer",
+            customerId.toString(),
+            Collections.singletonList(
+                new SecuritySystemAssignedToLocation(location.getId(), securitySystemId)
+            )
+        );
+
         return location.getId();
     }
 

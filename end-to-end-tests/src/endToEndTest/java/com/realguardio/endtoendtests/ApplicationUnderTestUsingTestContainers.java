@@ -88,8 +88,10 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
           .withEnv("SPRING_PROFILES_ACTIVE", "docker")
           .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
           .withEnv("CUSTOMER_SERVICE_URL", "http://customer-service:8080")
+          .withEnv("OSO_URL", "http://oso-service:8080")
+          .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
 
-          .withReuse(true)
+          .withReuse(false)
           .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC security-service:"));
 
   public static GenericContainer<?> osoIntegrationService =
@@ -100,7 +102,7 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
           .withEnv("OSO_URL", "http://oso-service:8080")
           .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
           .withEnv("SPRING_PROFILES_ACTIVE", "docker")
-          .withReuse(true)
+          .withReuse(false)
           .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC oso-integration-service:"));
 
   private static final EventuateCdcContainer cdc = new EventuateCdcContainer()
@@ -134,6 +136,11 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
   @Override
   public void useLocationRolesReplica() {
     securitySystemService.withEnv("SPRING_PROFILES_ACTIVE", "UseRolesReplica");
+  }
+
+  @Override
+  public void useOsoService() {
+    securitySystemService.withEnv("SPRING_PROFILES_ACTIVE", "UseOsoService");
   }
 
   @Override

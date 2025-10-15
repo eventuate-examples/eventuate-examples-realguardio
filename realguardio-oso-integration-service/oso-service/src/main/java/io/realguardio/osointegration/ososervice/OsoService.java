@@ -4,11 +4,9 @@ import com.osohq.oso_cloud.ApiException;
 import com.osohq.oso_cloud.Fact;
 import com.osohq.oso_cloud.Oso;
 import com.osohq.oso_cloud.Value;
-import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-@Service
 public class OsoService {
 
   private final Oso oso;
