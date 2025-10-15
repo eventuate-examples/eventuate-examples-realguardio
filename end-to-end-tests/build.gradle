@@ -124,9 +124,9 @@ task assembleServices {
 
 ['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service', 'realguardio-oso-integration-service'].each { serviceDir ->
     def taskName = "assemble${serviceDir.replaceAll(/(^\w|-\w)/) { it[0].toUpperCase() }.replaceAll('-', '') }"
-    task "$taskName"(type: GradleBuild) {
-        dir = "../$serviceDir"
-        tasks = ['assemble']
+    task "$taskName"(type: Exec) {
+        workingDir = "../$serviceDir"
+        commandLine "./gradlew", "assemble"
     }
     assembleServices.dependsOn taskName
     endToEndTest.dependsOn taskName
