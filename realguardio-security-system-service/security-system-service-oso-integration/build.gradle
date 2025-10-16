@@ -1,0 +1,7 @@
+dependencies {
+    implementation (project(":security-system-service-domain"))
+    implementation 'org.springframework.boot:spring-boot-starter'
+
+    implementation 'io.realguardio.osointegration:oso-service:0.1.0-SNAPSHOT'
+
+}

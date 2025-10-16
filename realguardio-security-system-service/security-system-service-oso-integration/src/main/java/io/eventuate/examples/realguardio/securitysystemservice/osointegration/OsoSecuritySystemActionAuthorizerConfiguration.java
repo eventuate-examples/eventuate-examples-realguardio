@@ -1,5 +1,7 @@
-package io.eventuate.examples.realguardio.securitysystemservice.domain;
+package io.eventuate.examples.realguardio.securitysystemservice.osointegration;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemActionAuthorizer;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.UserNameSupplier;
 import io.realguardio.osointegration.ososervice.OsoServiceConfiguration;
 import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
 import org.springframework.context.annotation.Bean;

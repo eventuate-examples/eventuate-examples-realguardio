@@ -1,5 +1,8 @@
-package io.eventuate.examples.realguardio.securitysystemservice.domain;
+package io.eventuate.examples.realguardio.securitysystemservice.osointegration;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.ForbiddenException;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemActionAuthorizer;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.UserNameSupplier;
 import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
