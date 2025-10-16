@@ -3,13 +3,12 @@ FROM amazoncorretto:17.0.14-al2023 AS base
 WORKDIR /app
 
 RUN yum update -y && yum install -y findutils
-COPY ./gradlew .
-COPY ./gradle ./gradle
-RUN ./gradlew tasks || echo ignored
 
-COPY . .
-RUN ./gradlew clean assemble --no-daemon
+COPY realguardio-oso-integration-service realguardio-oso-integration-service
+COPY realguardio-security-system-service realguardio-security-system-service
+RUN ls
+RUN cd realguardio-security-system-service && ./gradlew clean assemble --no-daemon
 FROM eventuateio/eventuate-examples-docker-images-spring-example-base-image:$baseImageVersion
 ARG serviceImageVersion
-COPY --from=base /app/security-system-service-main/build/libs/security-system-service-main-$serviceImageVersion.jar service.jar
+COPY --from=base /app/realguardio-security-system-service/security-system-service-main/build/libs/security-system-service-main-$serviceImageVersion.jar service.jar
 HEALTHCHECK --interval=3s --retries=20 CMD curl -f http://localhost:8080/actuator/health || exit 1

@@ -78,8 +78,8 @@ services:
       - jaeger
   realguardio-security-system-service:
     build:
-      context: ./realguardio-security-system-service
-      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      context: ./
+      dockerfile: realguardio-security-system-service/Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
       args:
         baseImageVersion: 0.1.0.RELEASE
         serviceImageVersion: 0.1.0-SNAPSHOT

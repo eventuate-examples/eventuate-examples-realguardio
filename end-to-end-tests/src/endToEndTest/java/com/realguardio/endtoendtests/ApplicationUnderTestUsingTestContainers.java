@@ -6,13 +6,17 @@ import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
+import io.eventuate.testcontainers.service.BuildArgsResolver;
 import io.eventuate.testcontainers.service.ServiceContainer;
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.lifecycle.Startables;
+
+import java.nio.file.Paths;
 
 public class ApplicationUnderTestUsingTestContainers implements ApplicationUnderTest {
 
@@ -78,7 +82,11 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
           .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC orchestration-service:"));
 
   public static final GenericContainer<?> securitySystemService =
-      ServiceContainer.makeFromDockerfileInFileSystem("../realguardio-security-system-service/Dockerfile-local")
+      new ServiceContainer(new ImageFromDockerfile()
+          .withFileFromPath(".", Paths.get("..").toAbsolutePath())  // Context: parent directory
+          .withDockerfilePath("realguardio-security-system-service/Dockerfile-local")  // Dockerfile path
+          .withBuildArgs(BuildArgsResolver.buildArgs()))
+
           .withNetwork(eventuateKafkaCluster.network)
           .withNetworkAliases("security-system-service")
           .withDatabase(securityDatabase)

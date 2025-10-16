@@ -8,6 +8,7 @@ import io.eventuate.examples.realguardio.securitysystemservice.locationroles.Loc
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
+import io.eventuate.testcontainers.service.BuildArgsResolver;
 import io.eventuate.testcontainers.service.ServiceContainer;
 import io.eventuate.tram.commands.producer.CommandProducer;
 import io.eventuate.tram.events.publisher.DomainEventPublisher;
@@ -33,8 +34,10 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.lifecycle.Startables;
 
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -92,7 +95,10 @@ public class SecuritySystemServiceComponentTest {
 
 	public static GenericContainer<?> service =
 
-		ServiceContainer.makeFromDockerfileInFileSystem("../Dockerfile-local")
+			new ServiceContainer(new ImageFromDockerfile()
+					.withFileFromPath(".", Paths.get("../..").toAbsolutePath())  // Context: parent directory
+					.withDockerfilePath("realguardio-security-system-service/Dockerfile-local")  // Dockerfile path
+					.withBuildArgs(BuildArgsResolver.buildArgs()))
 			.withNetwork(eventuateKafkaCluster.network)
 			.withDatabase(database)
 			.withKafka(kafka)
