@@ -1,4 +1,4 @@
-package io.eventuate.examples.realguardio.securitysystemservice.domain;
+package io.eventuate.examples.realguardio.customerservice.domain;
 
 import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRole;
 import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaService;

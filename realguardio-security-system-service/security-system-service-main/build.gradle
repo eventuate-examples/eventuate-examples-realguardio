@@ -15,6 +15,7 @@ dependencies {
     implementation project(':security-system-api-messaging')
     implementation project(':location-roles-replica')
     implementation project(':security-system-service-oso-integration')
+    implementation project(':location-roles-replica')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
