@@ -1,0 +1,10 @@
+dependencies {
+    implementation project(":security-system-service-domain")
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone:2.35.0'
+
+}

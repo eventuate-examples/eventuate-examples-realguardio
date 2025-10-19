@@ -1,5 +1,8 @@
-package io.eventuate.examples.realguardio.securitysystemservice.domain;
+package io.eventuate.examples.realguardio.securitysystemservice.customerserviceproxy;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.CustomerServiceClient;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.JwtProvider;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

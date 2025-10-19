@@ -7,6 +7,7 @@ include 'security-system-service-restapi'
 include 'security-system-api-messaging'
 include 'security-system-service-main'
 include 'location-roles-replica'
+include 'security-system-service-customer-service-proxy'
 
 includeBuild("../realguardio-oso-integration-service") {
     dependencySubstitution {

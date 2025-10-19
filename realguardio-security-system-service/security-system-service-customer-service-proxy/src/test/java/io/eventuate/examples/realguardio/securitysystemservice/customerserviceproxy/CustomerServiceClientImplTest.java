@@ -1,12 +1,15 @@
-package io.eventuate.examples.realguardio.securitysystemservice.domain;
+package io.eventuate.examples.realguardio.securitysystemservice.customerserviceproxy;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.JwtProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -30,15 +33,14 @@ class CustomerServiceClientImplTest {
     private JwtProvider jwtProvider;
 
     private CustomerServiceClientImpl customerServiceClient;
-    private RestTemplate restTemplate;
 
     @BeforeEach
     void setUp() {
-        wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
+        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
         wireMockServer.start();
         WireMock.configureFor("localhost", wireMockServer.port());
-        
-        restTemplate = new RestTemplate();
+
+        RestTemplate restTemplate = new RestTemplate();
         String customerServiceUrl = "http://localhost:" + wireMockServer.port();
         customerServiceClient = new CustomerServiceClientImpl(restTemplate, customerServiceUrl, jwtProvider);
     }
@@ -55,11 +57,11 @@ class CustomerServiceClientImplTest {
         Long locationId = 456L;
         String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
         
-        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
-        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken))
-            .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken))
+            .willReturn(WireMock.aResponse()
                 .withStatus(200)
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"roles\":[\"SECURITY_SYSTEM_ARMER\",\"SECURITY_SYSTEM_DISARMER\"]}")));
@@ -70,8 +72,8 @@ class CustomerServiceClientImplTest {
         // Then
         assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER");
         
-        verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken)));
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken)));
     }
 
     @Test
@@ -81,11 +83,11 @@ class CustomerServiceClientImplTest {
         Long locationId = 999L;
         String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
         
-        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
-        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken))
-            .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken))
+            .willReturn(WireMock.aResponse()
                 .withStatus(404)
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"error\":\"Not Found\"}")));
@@ -95,8 +97,8 @@ class CustomerServiceClientImplTest {
             .isInstanceOf(HttpClientErrorException.class)
             .hasMessageContaining("404");
         
-        verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken)));
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken)));
     }
 
     @Test
@@ -106,11 +108,11 @@ class CustomerServiceClientImplTest {
         Long locationId = 456L;
         String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
         
-        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
-        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken))
-            .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken))
+            .willReturn(WireMock.aResponse()
                 .withStatus(503)
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"error\":\"Service Unavailable\"}")));
@@ -120,8 +122,8 @@ class CustomerServiceClientImplTest {
             .isInstanceOf(HttpServerErrorException.class)
             .hasMessageContaining("503");
         
-        verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken)));
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken)));
     }
 
     @Test
@@ -131,11 +133,11 @@ class CustomerServiceClientImplTest {
         Long locationId = 456L;
         String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
         
-        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
-        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken))
-            .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken))
+            .willReturn(WireMock.aResponse()
                 .withStatus(400)
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"error\":\"Bad Request\"}")));
@@ -145,8 +147,8 @@ class CustomerServiceClientImplTest {
             .isInstanceOf(HttpClientErrorException.class)
             .hasMessageContaining("400");
         
-        verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken)));
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken)));
     }
 
     @Test
@@ -156,7 +158,7 @@ class CustomerServiceClientImplTest {
         Long locationId = 456L;
         String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
         
-        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
         // Configure RestTemplate with a short timeout for this test
         RestTemplate restTemplateWithTimeout = new RestTemplate();
@@ -168,9 +170,9 @@ class CustomerServiceClientImplTest {
         CustomerServiceClientImpl clientWithTimeout = new CustomerServiceClientImpl(
             restTemplateWithTimeout, customerServiceUrl, jwtProvider);
         
-        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken))
-            .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken))
+            .willReturn(WireMock.aResponse()
                 .withFixedDelay(1000)));  // 1 second delay
 
         // When/Then
@@ -184,7 +186,7 @@ class CustomerServiceClientImplTest {
         String userId = "123";
         Long locationId = 456L;
         
-        when(jwtProvider.getCurrentJwtToken()).thenThrow(new IllegalStateException("No authentication found in security context"));
+        Mockito.when(jwtProvider.getCurrentJwtToken()).thenThrow(new IllegalStateException("No authentication found in security context"));
 
         // When/Then
         assertThatThrownBy(() -> customerServiceClient.getUserRolesAtLocation(userId, locationId))
@@ -199,10 +201,10 @@ class CustomerServiceClientImplTest {
         Long locationId = 456L;
         String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
         
-        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
-        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
-            .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .willReturn(WireMock.aResponse()
                 .withStatus(200)
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"roles\":[\"SECURITY_SYSTEM_VIEWER\"]}")));
@@ -211,8 +213,8 @@ class CustomerServiceClientImplTest {
         customerServiceClient.getUserRolesAtLocation(userId, locationId);
 
         // Then
-        verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken)));
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken)));
     }
 
     @Test
@@ -222,11 +224,11 @@ class CustomerServiceClientImplTest {
         Long locationId = 456L;
         String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
         
-        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
-        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken))
-            .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken))
+            .willReturn(WireMock.aResponse()
                 .withStatus(500)
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"error\":\"Internal Server Error\"}")));
@@ -236,8 +238,8 @@ class CustomerServiceClientImplTest {
             .isInstanceOf(HttpServerErrorException.class)
             .hasMessageContaining("500");
         
-        verify(getRequestedFor(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken)));
+        WireMock.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken)));
     }
 
     @Test
@@ -247,11 +249,11 @@ class CustomerServiceClientImplTest {
         Long locationId = 456L;
         String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
         
-        when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
+        Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
-        stubFor(get(urlEqualTo("/locations/" + locationId + "/roles"))
-            .withHeader("Authorization", equalTo(jwtToken))
-            .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
+            .withHeader("Authorization", WireMock.equalTo(jwtToken))
+            .willReturn(WireMock.aResponse()
                 .withStatus(200)));  // No body
 
         // When/Then
