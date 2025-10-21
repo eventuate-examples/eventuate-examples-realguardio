@@ -7,6 +7,8 @@ import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
+
 public class OsoSecuritySystemActionAuthorizer implements SecuritySystemActionAuthorizer {
 
   private static final Logger logger = LoggerFactory.getLogger(OsoSecuritySystemActionAuthorizer.class);
@@ -32,7 +34,7 @@ public class OsoSecuritySystemActionAuthorizer implements SecuritySystemActionAu
   private void verifyCanDo(long securitySystemId, String permission) {
 
     String userId = userNameSupplier.getCurrentUserName();
-    if (!realGuardOsoAuthorizer.isAuthorized(userId, permission, String.valueOf(securitySystemId))) {
+    if (!isAuthorized(userId, permission, String.valueOf(securitySystemId))) {
       logger.warn("User {} lacks {} permission for securitySystemId {}", userId, permission, securitySystemId);
       throw new ForbiddenException(
           String.format("User %s is not authorized to %s security system %d",
@@ -41,5 +43,13 @@ public class OsoSecuritySystemActionAuthorizer implements SecuritySystemActionAu
     }
 
   }
+
+    private boolean isAuthorized(String user, String action, String securitySystem) {
+        try {
+            return realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

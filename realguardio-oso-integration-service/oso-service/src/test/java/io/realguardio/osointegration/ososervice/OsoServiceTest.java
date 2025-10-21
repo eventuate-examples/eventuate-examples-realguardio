@@ -12,6 +12,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.concurrent.ExecutionException;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest()
@@ -95,11 +97,23 @@ public class OsoServiceTest {
 
 
   private void assertIsAuthorized(String user, String action, String securitySystem) {
-    assertThat(realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem)).isTrue();
+      Boolean result;
+      try {
+          result = realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem).get();
+      } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+      }
+      assertThat(result).isTrue();
   }
 
   private void assertIsNotAuthorized(String user, String action, String securitySystem) {
-    assertThat(realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem)).isFalse();
+      Boolean result;
+      try {
+          result = realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem).get();
+      } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+      }
+      assertThat(result).isFalse();
   }
 
 }

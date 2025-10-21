@@ -28,6 +28,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.lifecycle.Startables;
 
+import java.util.concurrent.ExecutionException;
+
 import static io.eventuate.util.test.async.Eventually.eventually;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -118,11 +120,11 @@ public class OsoIntegrationServiceComponentTest {
 		logger.info("Verifying alice can disarm ss1 but not ss2");
 
 		eventually(() -> {
-			boolean authorized = realGuardOsoAuthorizer.isAuthorized(aliceId.toString(), "disarm", ss1Id.toString());
+			boolean authorized = isAuthorized(aliceId.toString(), "disarm", ss1Id.toString());
 			assertThat(authorized).isTrue();
 		});
 
-		boolean unauthorizedAccess = realGuardOsoAuthorizer.isAuthorized(aliceId.toString(), "disarm", ss2Id.toString());
+		boolean unauthorizedAccess = isAuthorized(aliceId.toString(), "disarm", ss2Id.toString());
 		assertThat(unauthorizedAccess).isFalse();
 	}
 
@@ -148,11 +150,11 @@ public class OsoIntegrationServiceComponentTest {
 		logger.info("Verifying bob can disarm ss2 but not ss1");
 
 		eventually(() -> {
-			boolean authorized = realGuardOsoAuthorizer.isAuthorized(bobId.toString(), "disarm", ss2Id.toString());
+			boolean authorized = isAuthorized(bobId.toString(), "disarm", ss2Id.toString());
 			assertThat(authorized).isTrue();
 		});
 
-		boolean unauthorizedAccess = realGuardOsoAuthorizer.isAuthorized(bobId.toString(), "disarm", ss1Id.toString());
+		boolean unauthorizedAccess = isAuthorized(bobId.toString(), "disarm", ss1Id.toString());
 		assertThat(unauthorizedAccess).isFalse();
 	}
 
@@ -177,8 +179,17 @@ public class OsoIntegrationServiceComponentTest {
 		logger.info("Verifying mary can disarm security system at her location");
 
 		eventually(() -> {
-			boolean authorized = realGuardOsoAuthorizer.isAuthorized(maryUserName, "disarm", securitySystemId.toString());
+			boolean authorized = isAuthorized(maryUserName, "disarm", securitySystemId.toString());
 			assertThat(authorized).isTrue();
 		});
 	}
+
+    private boolean isAuthorized(String user, String action, String securitySystem) {
+        try {
+            return realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

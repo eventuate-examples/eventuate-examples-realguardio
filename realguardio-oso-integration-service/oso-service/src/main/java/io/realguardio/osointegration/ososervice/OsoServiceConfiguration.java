@@ -4,10 +4,12 @@ import com.osohq.oso_cloud.Oso;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import java.net.URI;
 
 @Configuration
+@Import(RealGuardOsoAuthorizerConfiguration.class)
 public class OsoServiceConfiguration {
 
   @Bean
@@ -26,8 +28,4 @@ public class OsoServiceConfiguration {
     return new RealGuardOsoFactManager(osoService);
   }
 
-  @Bean
-  RealGuardOsoAuthorizer realGuardOsoAuthorizer(OsoService osoService) {
-    return new RealGuardOsoAuthorizer(osoService);
-  }
 }
