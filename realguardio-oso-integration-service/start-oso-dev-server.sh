@@ -1,4 +1,4 @@
 #! /bin/bash -e
 
-docker run -d --rm -p :8080 -v ./policies:/policies \
+docker run -d --rm -p :8080 -v "$PWD/policies:/policies" \
     public.ecr.aws/osohq/dev-server:latest --watch-for-changes /policies/main.polar
