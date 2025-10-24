@@ -45,3 +45,26 @@ resource SecuritySystem {
   # (b) SECURITY_SYSTEM_ARMER/SECURITY_SYSTEM_DISARMER role at the Customer that owns that Location → can disarm
   # (via the Location role inheritance above)
 }
+
+test "Authz Check" {
+  setup {
+    has_role(CustomerEmployee{"alice"}, "SECURITY_SYSTEM_DISARMER", Customer{"acme"});
+    has_relation(Location{"loc1"}, "customer", Customer{"acme"});
+    has_relation(SecuritySystem{"ss1"}, "location", Location{"loc1"});
+    has_role(CustomerEmployee{"bob"}, "SECURITY_SYSTEM_DISARMER", Customer{"foo"});
+    has_relation(Location{"loc2"}, "customer", Customer{"foo"});
+    has_relation(SecuritySystem{"ss2"}, "location", Location{"loc2"});
+    has_role(CustomerEmployee{"mary"}, "SECURITY_SYSTEM_DISARMER", Location{"loc3"});
+    has_relation(SecuritySystem{"ss3"}, "location", Location{"loc3"});
+    has_relation(Team{"ops-t1"}, "members", CustomerEmployee{"charlie"});
+    has_role(Team{"ops-t1"}, "SECURITY_SYSTEM_DISARMER", Location{"loc1"});
+  }
+  assert has_permission(CustomerEmployee{"alice"}, "disarm", SecuritySystem{"ss1"});
+  assert_not has_permission(CustomerEmployee{"alice"}, "disarm", SecuritySystem{"ss2"});
+  assert has_permission(CustomerEmployee{"bob"}, "disarm", SecuritySystem{"ss2"});
+  assert_not has_permission(CustomerEmployee{"bob"}, "disarm", SecuritySystem{"ss1"});
+  assert has_permission(CustomerEmployee{"mary"}, "disarm", SecuritySystem{"ss3"});
+  assert has_permission(CustomerEmployee{"charlie"}, "disarm", SecuritySystem{"ss1"});
+  assert_not has_permission(CustomerEmployee{"charlie"}, "disarm", SecuritySystem{"ss2"});
+  assert_not has_permission(CustomerEmployee{"charlie"}, "disarm", SecuritySystem{"ss3"});
+}

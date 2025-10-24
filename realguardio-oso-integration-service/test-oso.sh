@@ -13,6 +13,8 @@ echo "OSO server is ready!"
 
 curl "$OSO_URL"
 
+oso-cloud test policies/main.polar
+
 ./create-facts.sh
 
 ./run-queries.sh
