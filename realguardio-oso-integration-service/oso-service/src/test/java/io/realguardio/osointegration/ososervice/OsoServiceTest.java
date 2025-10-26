@@ -2,6 +2,8 @@ package io.realguardio.osointegration.ososervice;
 
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,6 +11,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -20,6 +23,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @Testcontainers
 public class OsoServiceTest {
 
+  protected static Logger logger = LoggerFactory.getLogger(OsoServiceTest.class);
+
   @Configuration
   @EnableAutoConfiguration
   @ComponentScan
@@ -27,7 +32,7 @@ public class OsoServiceTest {
   }
 
   @Container
-  static OsoTestContainer osoDevServer = new OsoTestContainer();
+  static OsoTestContainer osoDevServer = new OsoTestContainer().withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC oso-server:"));
 
   @DynamicPropertySource
   static void setOsoProperties(DynamicPropertyRegistry registry) {

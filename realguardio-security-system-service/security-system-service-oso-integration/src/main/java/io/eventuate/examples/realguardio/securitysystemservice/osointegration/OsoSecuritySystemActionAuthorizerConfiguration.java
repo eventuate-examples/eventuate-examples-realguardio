@@ -2,6 +2,7 @@ package io.eventuate.examples.realguardio.securitysystemservice.osointegration;
 
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemActionAuthorizer;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.UserNameSupplier;
+import io.realguardio.osointegration.ososervice.LocalAuthorizationConfigFileSupplier;
 import io.realguardio.osointegration.ososervice.OsoServiceConfiguration;
 import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
 import org.springframework.context.annotation.Bean;
@@ -18,5 +19,10 @@ public class OsoSecuritySystemActionAuthorizerConfiguration {
   public SecuritySystemActionAuthorizer securitySystemActionAuthorizer(UserNameSupplier userNameSupplier,
                                                                        RealGuardOsoAuthorizer realGuardOsoAuthorizer) {
     return new OsoSecuritySystemActionAuthorizer(userNameSupplier, realGuardOsoAuthorizer);
+  }
+
+  @Bean
+  public LocalAuthorizationConfigFileSupplier localAuthorizationConfigFileSupplier() {
+      return new ClasspathLocalAuthorizationConfigFileSupplier();
   }
 }

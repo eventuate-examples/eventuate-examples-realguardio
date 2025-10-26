@@ -9,7 +9,7 @@ task copyPolicyFiles(type: Copy) {
 classes.dependsOn copyPolicyFiles
 
 dependencies {
-    implementation "org.testcontainers:testcontainers"
+    api "org.testcontainers:testcontainers"
     implementation "org.springframework:spring-test"
 }
 

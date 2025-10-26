@@ -1,0 +1,31 @@
+facts:
+  # CustomerEmployee has role on Customer
+  "has_role(CustomerEmployee:_, String:_, Customer:_)":
+    query: 'SELECT customer_employee_id, role_name, customer_id FROM customer_employee_customer_roles'
+
+  # CustomerEmployee has role on Location
+  "has_role(CustomerEmployee:_, String:_, Location:_)":
+    query: 'SELECT user_name, role_name, location_id FROM customer_employee_location_role'
+
+  # Team has role on Location
+  "has_role(Team:_, String:_, Location:_)":
+    query: 'SELECT team_id, role_name, location_id FROM team_location_roles'
+
+  # Location belongs to Customer (customer relation)
+  "has_relation(Location:_, String:customer, Customer:_)":
+    query: 'SELECT id, customer_id FROM locations'
+
+  # SecuritySystem belongs to Location (location relation)
+  "has_relation(SecuritySystem:_, String:location, Location:_)":
+    query: 'SELECT id, location_id FROM security_system'
+
+  # Team has members (CustomerEmployee members relation)
+  "has_relation(Team:_, String:members, CustomerEmployee:_)":
+    query: 'SELECT team_id, customer_employee_id FROM team_members'
+
+sql_types:
+  Customer: string
+  CustomerEmployee: string
+  Location: integer
+  SecuritySystem: integer
+  Team: string

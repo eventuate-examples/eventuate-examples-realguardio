@@ -13,12 +13,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SecuritySystemServiceTest {
@@ -37,9 +32,12 @@ class SecuritySystemServiceTest {
 
     private SecuritySystemService securitySystemService;
 
+    @Mock
+    private SecuritySystemFinder securitySystemFinder;
+
     @BeforeEach
     void setUp() {
-        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient, userNameSupplier, securitySystemActionAuthorizer);
+        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient, userNameSupplier, securitySystemActionAuthorizer, securitySystemFinder);
     }
 
     @Test
@@ -58,7 +56,7 @@ class SecuritySystemServiceTest {
         SecuritySystemProjection system2 = new SecuritySystemProjectionImpl(2L, "Office Back Door", SecuritySystemState.DISARMED, Set.of());
 
         List<SecuritySystemProjection> expectedSystems = List.of(system1, system2);
-        when(securitySystemRepository.findAllAccessible(userId)).thenReturn(expectedSystems);
+        when(securitySystemFinder.findAllAccessible(userId)).thenReturn(expectedSystems);
         
         // When
         List<SecuritySystemWithActions> actualSystems = securitySystemService.findAll();
@@ -86,7 +84,7 @@ class SecuritySystemServiceTest {
         when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
         when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
 
-        when(securitySystemRepository.findAllAccessible(userId)).thenReturn(List.of());
+        when(securitySystemFinder.findAllAccessible(userId)).thenReturn(List.of());
         
         // When
         List<SecuritySystemWithActions> actualSystems = securitySystemService.findAll();

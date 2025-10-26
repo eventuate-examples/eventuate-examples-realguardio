@@ -18,17 +18,20 @@ public class RealGuardOsoAuthorizer {
     this.osoService = osoService;
   }
 
-    @CircuitBreaker(name = "osoAuthorizer")
-    @TimeLimiter(name = "osoAuthorizer")
-    @Retry(name = "osoAuthorizer", fallbackMethod = "isAuthorizedFallback")
+  @CircuitBreaker(name = "osoAuthorizer")
+  @TimeLimiter(name = "osoAuthorizer")
+  @Retry(name = "osoAuthorizer", fallbackMethod = "isAuthorizedFallback")
   public CompletableFuture<Boolean> isAuthorized(String user, String action, String securitySystem) {
-        CompletableFuture<Boolean> x = CompletableFuture.supplyAsync(() -> osoService.authorize("CustomerEmployee", user, action, "SecuritySystem", securitySystem));
-        return x;
+        return CompletableFuture.supplyAsync(() -> osoService.authorize("CustomerEmployee", user, action, "SecuritySystem", securitySystem));
   }
 
-    private CompletableFuture<Boolean> isAuthorizedFallback(String user, String action, String securitySystem, Exception exception) {
+  private CompletableFuture<Boolean> isAuthorizedFallback(String user, String action, String securitySystem, Exception exception) {
     logger.error("isAuthorizedFallback: Authorization service unavailable for user {} attempting action {} on security system {}. Denying access.",
         user, action, securitySystem, exception);
     return CompletableFuture.completedFuture(false);
+  }
+
+  public String listLocal(String userId, String action, String column) {
+      return osoService.listLocal("CustomerEmployee", userId, action, "SecuritySystem", column);
   }
 }

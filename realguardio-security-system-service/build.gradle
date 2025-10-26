@@ -36,6 +36,8 @@ subprojects {
 	
 	dependencies {
 		testImplementation 'org.assertj:assertj-core'
+
+        testImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"
 		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	}
 	

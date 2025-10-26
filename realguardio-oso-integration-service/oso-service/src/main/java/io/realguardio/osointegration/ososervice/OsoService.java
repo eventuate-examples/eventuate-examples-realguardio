@@ -52,4 +52,12 @@ public class OsoService {
       throw new RuntimeException(e);
     }
   }
+
+    public String listLocal(String actorType, String actorId, String action, String resourceType, String column) {
+        try {
+            return oso.listLocal(new Value(actorType, actorId), action, resourceType, column);
+        } catch (IOException | ApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

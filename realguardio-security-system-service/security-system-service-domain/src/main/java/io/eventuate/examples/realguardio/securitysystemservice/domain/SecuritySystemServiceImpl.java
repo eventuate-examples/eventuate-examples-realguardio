@@ -19,12 +19,13 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     private final CustomerServiceClient customerServiceClient;
     private final UserNameSupplier userNameSupplier;
     private final SecuritySystemActionAuthorizer securitySystemActionAuthorizer;
+    private final SecuritySystemFinder securitySystemFinder;
 
-  public SecuritySystemServiceImpl(SecuritySystemRepository securitySystemRepository,
+    public SecuritySystemServiceImpl(SecuritySystemRepository securitySystemRepository,
                                     CustomerServiceClient customerServiceClient,
-                                    UserNameSupplier userNameSupplier, SecuritySystemActionAuthorizer securitySystemActionAuthorizer) {
+                                    UserNameSupplier userNameSupplier, SecuritySystemActionAuthorizer securitySystemActionAuthorizer, SecuritySystemFinder securitySystemFinder) {
     this.securitySystemActionAuthorizer = securitySystemActionAuthorizer;
-    if (securitySystemRepository == null) {
+        if (securitySystemRepository == null) {
             throw new IllegalArgumentException("securitySystemRepository cannot be null");
         }
         if (customerServiceClient == null) {
@@ -36,12 +37,13 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         this.securitySystemRepository = securitySystemRepository;
         this.customerServiceClient = customerServiceClient;
         this.userNameSupplier = userNameSupplier;
+        this.securitySystemFinder = securitySystemFinder;
     }
     
     @Override
     public List<SecuritySystemWithActions> findAll() {
         if (userNameSupplier.isCustomerEmployee())
-            return securitySystemRepository.findAllAccessible(userNameSupplier.getCurrentUserName())
+            return securitySystemFinder.findAllAccessible(userNameSupplier.getCurrentUserName())
                 .stream()
                 .map(SecuritySystemProjection::toSecuritySystemWithActions)
                 .toList();
@@ -53,7 +55,6 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
 
     private SecuritySystemWithActions toSecuritySystemWithActions(SecuritySystem securitySystem) {
         return new SecuritySystemWithActions(
-
             securitySystem.getLocationName(), securitySystem.getState(),
             Set.of(SecuritySystemAction.ARM, SecuritySystemAction.DISARM)
         );

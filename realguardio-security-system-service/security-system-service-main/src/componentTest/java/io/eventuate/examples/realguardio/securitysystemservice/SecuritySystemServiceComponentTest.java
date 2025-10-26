@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
@@ -46,6 +47,7 @@ import static io.eventuate.util.test.async.Eventually.eventually;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = SecuritySystemServiceComponentTest.TestConfiguration.class)
+@ActiveProfiles("UseOsoService")
 public class SecuritySystemServiceComponentTest {
 
 	protected static Logger logger = LoggerFactory.getLogger(SecuritySystemServiceComponentTest.class);

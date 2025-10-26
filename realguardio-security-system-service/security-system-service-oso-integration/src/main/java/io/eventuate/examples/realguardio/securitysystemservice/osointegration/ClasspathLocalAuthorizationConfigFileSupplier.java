@@ -1,0 +1,62 @@
+package io.eventuate.examples.realguardio.securitysystemservice.osointegration;
+
+import io.realguardio.osointegration.ososervice.LocalAuthorizationConfigFileSupplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.ResourceUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.*;
+import java.util.Map;
+
+
+public class ClasspathLocalAuthorizationConfigFileSupplier implements LocalAuthorizationConfigFileSupplier {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClasspathLocalAuthorizationConfigFileSupplier.class);
+    private FileSystem fs;
+
+    @Override
+    public Path get() {
+        var resourceName = "/local_authorization_config.yaml";
+
+        URL url = ResourceUtils.class.getResource(resourceName);
+        if (url == null) {
+            throw new IllegalArgumentException("Resource not found: " + resourceName);
+        }
+
+        try {
+            URI uri = url.toURI();
+            logger.info("Loading local authorization config file from {}", uri);
+            switch (uri.getScheme()) {
+                case "file" -> {
+                    return Paths.get(uri);
+                }
+                case "jar" -> {
+                    fs = FileSystems.newFileSystem(uri, Map.of());
+                    String entryPath = uri.getSchemeSpecificPart()
+                            .split("!", 2)[1]; // e.g. /com/example/config.json
+                    return fs.getPath(entryPath);
+                }
+                default -> {
+                    try (InputStream in = url.openStream()) {
+                        Path tmp = Files.createTempFile("resource-", getFileName(resourceName));
+                        Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
+                        tmp.toFile().deleteOnExit();
+                        return tmp;
+                    }
+                }
+            }
+        } catch (URISyntaxException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String getFileName(String resourceName) {
+        int idx = resourceName.lastIndexOf('/');
+        return (idx >= 0 ? resourceName.substring(idx + 1) : resourceName);
+    }
+}
