@@ -18,7 +18,7 @@ public class SecuritySystemRepositoryWithOsoImpl implements SecuritySystemReposi
 
     @Override
     public List<SecuritySystemProjection> findAllAccessible(String userName) {
-        String filterSql = realGuardOsoAuthorizer.listLocal(userName, "arm", "ss.id");
+        String filterSql = realGuardOsoAuthorizer.listLocal(userName, "view", "ss.id");
 
         String query = """
                 SELECT

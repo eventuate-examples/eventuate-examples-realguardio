@@ -1,12 +1,10 @@
 actor CustomerEmployee {}
 
 resource Customer {
-  roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "COMPANY_ROLE_ADMIN"];               # role at the organization
-  permissions = ["arm", "disarm", "admin"];
+  roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "COMPANY_ROLE_ADMIN", "SECURITY_SYSTEM_VIEWER"];               # role at the organization
+  permissions = ["admin"];
 
-  "arm" if "SECURITY_SYSTEM_ARMER";             # org SECURITY_SYSTEM_ARMER role grants arm
-  "disarm" if "SECURITY_SYSTEM_DISARMER";             # org SECURITY_SYSTEM_DISARMER role grants disarm
-  "admin" if "COMPANY_ROLE_ADMIN";             # org SECURITY_SYSTEM_DISARMER role grants disarm
+  "admin" if "COMPANY_ROLE_ADMIN";
 }
 
 resource Team {
@@ -27,22 +25,29 @@ has_role(u: CustomerEmployee, role: String, loc: Location) if
 
 resource Location {
   relations = { customer: Customer };
-  roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER"];                # role at the location
+  roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "SECURITY_SYSTEM_VIEWER"];                # role at the location
 
-  # Inherit the SECURITY_SYSTEM_ARMER/SECURITY_SYSTEM_DISARMER role from the owning Customer (org)
+  # Inherit SECURITY_SYSTEM_XXX roles from the owning Customer (org)
+
   "SECURITY_SYSTEM_ARMER" if "SECURITY_SYSTEM_ARMER" on "customer";
   "SECURITY_SYSTEM_DISARMER" if "SECURITY_SYSTEM_DISARMER" on "customer";
+  "SECURITY_SYSTEM_VIEWER" if "SECURITY_SYSTEM_VIEWER" on "customer";
 }
 
 resource SecuritySystem {
   relations = { location: Location };
-  permissions = ["arm", "disarm"];
+  permissions = ["arm", "disarm", "view"];
 
-  # (a) SECURITY_SYSTEM_ARMER/SECURITY_SYSTEM_DISARMER role at the system’s Location → can arm/disarm
+  # (a) SECURITY_SYSTEM_XXX role at the system’s Location → can arm/disarm
+
   "arm" if "SECURITY_SYSTEM_ARMER" on "location";
   "disarm" if "SECURITY_SYSTEM_DISARMER" on "location";
 
-  # (b) SECURITY_SYSTEM_ARMER/SECURITY_SYSTEM_DISARMER role at the Customer that owns that Location → can disarm
+  "view" if "SECURITY_SYSTEM_ARMER" on "location";
+  "view" if "SECURITY_SYSTEM_DISARMER" on "location";
+  "view" if "SECURITY_SYSTEM_VIEWER" on "location";
+
+  # (b) SSECURITY_SYSTEM_XXX role at the Customer that owns that Location
   # (via the Location role inheritance above)
 }
 
@@ -67,4 +72,11 @@ test "Authz Check" {
   assert has_permission(CustomerEmployee{"charlie"}, "disarm", SecuritySystem{"ss1"});
   assert_not has_permission(CustomerEmployee{"charlie"}, "disarm", SecuritySystem{"ss2"});
   assert_not has_permission(CustomerEmployee{"charlie"}, "disarm", SecuritySystem{"ss3"});
+
+  assert has_permission(CustomerEmployee{"alice"}, "view", SecuritySystem{"ss1"});
+  assert_not has_permission(CustomerEmployee{"alice"}, "view", SecuritySystem{"ss2"});
+
+  assert has_permission(CustomerEmployee{"bob"}, "view", SecuritySystem{"ss2"});
+  assert has_permission(CustomerEmployee{"mary"}, "view", SecuritySystem{"ss3"});
+
 }
