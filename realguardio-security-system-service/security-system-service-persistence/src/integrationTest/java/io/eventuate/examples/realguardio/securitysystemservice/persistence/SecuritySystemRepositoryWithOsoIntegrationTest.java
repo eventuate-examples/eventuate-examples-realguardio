@@ -16,6 +16,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Arrays;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -40,7 +42,8 @@ public class SecuritySystemRepositoryWithOsoIntegrationTest extends AbstractSecu
     @Test
     void shouldFindWithOso() {
 
-        String customerEmployeeEmail = "customerEmployee%s@realguard.io".formatted(System.currentTimeMillis());
+//        String customerEmployeeEmail = "customerEmployee%s@realguard.io".formatted(System.currentTimeMillis());
+        String customerEmployeeEmail = "'X' or 'Y'";
 
         long locationId = System.currentTimeMillis();
 
@@ -59,6 +62,7 @@ public class SecuritySystemRepositoryWithOsoIntegrationTest extends AbstractSecu
         assertThat(results).isNotEmpty();
 
         System.out.println(results);
+        assertThat(Arrays.asList(results.get(0).getRoleNames())).containsExactly("SECURITY_SYSTEM_ARMER");
     }
 
 }
