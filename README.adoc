@@ -11,8 +11,8 @@ It's the sample application for a series of articles about authentication and au
 
 1. https://microservices.io/post/architecture/2025/04/25/microservices-authn-authz-part-1-introduction.html[Overview of authentication and authorization in a microservice architecture]
 2. https://microservices.io/post/architecture/2025/05/28/microservices-authn-authz-part-2-authentication.html[Implementing authentication]
-3. Implementing simple authorization
-4. Developing complex authorization
+3. https://microservices.io/post/architecture/2025/07/22/microservices-authn-authz-part-3-jwt-authorization.html[Implementing JWT-based authorization]
+4. https://microservices.io/post/architecture/2025/09/16/microservices-authn-authz-part-4-authorization-using-fetch-and-replicate.html[Implementing authorization using fetch and replicate]
 5. Implementing complex authorization using Oso Cloud - part 1
 6. Implementing complex authorization using Oso Cloud - part 2
 
@@ -24,10 +24,20 @@ The key elements of the RealGuardIO architecture are as follows:
 
 * React-based UI - runs in the browser and implements the RealGuardIO UI.
 * `BFF`  - the NextJS/Typescript-based Backend for front-end, which plays the role of an OAuth 2.0 client. It manages the user's session, forwards requests from the React UI to the backend services and implements security using the `next-auth` library.
-* `IAM service` - handles authentication including the login page and issues access tokens and ID tokens to BFF.
-* `Security System Service` - manages `SecuritySystems`
+* `IAM Service` - handles authentication including the login page and issues access tokens and ID tokens to BFF.
+* `Security System Service` - manages `SecuritySystems` domain entities.
+* `Customer Service` - manages `Customers` domain entities.
+* `Orchestration Service` - orchestrates the creation of security systems across Customer Service and Security System Service using the Saga pattern to ensure distributed transaction consistency.
+* `Oso Integration Service` - integrates Oso Cloud authorization policies with the microservices by consuming domain events from Kafka and updating authorization facts in Oso Cloud.
 
-In addition, there's https://www.jaegertracing.io/[`jaeger`] for distributed tracing.
+In addition, there are several supporting services:
+
+* https://www.jaegertracing.io/[`Jaeger`] - distributed tracing for monitoring service interactions.
+* `Kafka` - distributed message broker for inter-service communication and event-driven architecture.
+* `CDC` - Eventuate Change Data Capture service that captures changes from service databases and publishes events to Kafka.
+* `PostgreSQL` - separate databases for Customer Service, Security System Service, and Orchestration Service.
+
+The application uses the https://www.osohq.com/docs[Oso Cloud authorization service] as the centralized authorization service.
 
 == Code tours
 
