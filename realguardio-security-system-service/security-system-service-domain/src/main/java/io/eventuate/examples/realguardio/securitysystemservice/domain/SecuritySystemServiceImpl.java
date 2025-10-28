@@ -62,7 +62,13 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
 
     @Override
     public Optional<SecuritySystem> findById(Long id) {
-        return securitySystemRepository.findById(id);
+        Optional<SecuritySystem> securitySystem = securitySystemRepository.findById(id);
+
+        // Check location-based authorization for customer employees
+        if (userNameSupplier.isCustomerEmployee() && securitySystem.map(ss -> ss.getLocationId() != null).orElse(false)) {
+            securitySystemActionAuthorizer.verifyCanView(id);
+        }
+        return securitySystem;
     }
     
     @Override

@@ -31,7 +31,12 @@ public class OsoSecuritySystemActionAuthorizer implements SecuritySystemActionAu
     verifyCanDo(securitySystemId, "disarm");
   }
 
-  private void verifyCanDo(long securitySystemId, String permission) {
+  @Override
+  public void verifyCanView(long securitySystemId) {
+     verifyCanDo(securitySystemId, "view");
+  }
+
+    private void verifyCanDo(long securitySystemId, String permission) {
 
     String userId = userNameSupplier.getCurrentUserName();
     if (!isAuthorized(userId, permission, String.valueOf(securitySystemId))) {

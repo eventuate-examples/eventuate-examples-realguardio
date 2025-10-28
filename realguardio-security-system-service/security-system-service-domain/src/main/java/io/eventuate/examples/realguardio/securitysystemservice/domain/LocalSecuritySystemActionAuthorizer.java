@@ -33,7 +33,12 @@ public class LocalSecuritySystemActionAuthorizer implements SecuritySystemAction
     validateLocationPermission(securitySystemId, "SECURITY_SYSTEM_DISARMER");
   }
 
-  private void validateLocationPermission(Long securitySystemID, String requiredRole) {
+    @Override
+    public void verifyCanView(long securitySystemId) {
+        validateLocationPermission(securitySystemId, "SECURITY_SYSTEM_VIEWER");
+    }
+
+    private void validateLocationPermission(Long securitySystemID, String requiredRole) {
     SecuritySystem securitySystem = securitySystemRepository.findById(securitySystemID)
         .orElseThrow(() -> new NotFoundException("Security system not found: " + securitySystemID));
 
