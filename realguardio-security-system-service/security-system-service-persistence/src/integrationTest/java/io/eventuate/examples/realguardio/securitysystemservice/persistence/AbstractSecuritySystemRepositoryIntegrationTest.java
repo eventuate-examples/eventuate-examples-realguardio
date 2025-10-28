@@ -17,6 +17,7 @@ import org.testcontainers.junit.jupiter.Container;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 abstract class AbstractSecuritySystemRepositoryIntegrationTest {
 
@@ -72,8 +73,8 @@ abstract class AbstractSecuritySystemRepositoryIntegrationTest {
 
         long locationId = System.currentTimeMillis();
 
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_ARMER");
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_DISARMER");
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
 
         // Set.of(SecuritySystemAction.DISARM)
 

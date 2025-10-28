@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @SpringBootTest(classes = LocalAuthorizationIntegrationTest.Config.class)
 @ActiveProfiles("UseOsoService")
@@ -50,7 +51,7 @@ public class LocalAuthorizationIntegrationTest {
 
     @Test
     public void testLocalAuthorization() {
-        var sql = realGuardOsoAuthorizer.listLocal("alice", "arm", "ss_id");
+        var sql = realGuardOsoAuthorizer.listLocal("alice", RolesAndPermissions.ARM, "ss_id");
         assertThat(sql).isNotNull();
         System.out.println(sql);
     }

@@ -32,6 +32,7 @@ import org.testcontainers.lifecycle.Startables;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class SecuritySystemServiceIntegrationTest {
@@ -118,8 +119,8 @@ class SecuritySystemServiceIntegrationTest {
 
         dbInitializer.initializeForLocation(locationId);
 
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_ARMER");
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_DISARMER");
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
         locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_ACKNOWLEDGER");
 
         String token = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, customerEmployeeEmail, "password");

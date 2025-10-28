@@ -66,7 +66,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
 
         // Check location-based authorization for customer employees
         if (userNameSupplier.isCustomerEmployee() && securitySystem.map(ss -> ss.getLocationId() != null).orElse(false)) {
-            securitySystemActionAuthorizer.verifyCanView(id);
+            securitySystemActionAuthorizer.verifyCanDo(id, RolesAndPermissions.VIEW);
         }
         return securitySystem;
     }
@@ -107,7 +107,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         
         // Check location-based authorization for customer employees
         if (userNameSupplier.isCustomerEmployee()) {
-            securitySystemActionAuthorizer.verifyCanArm(id);
+            securitySystemActionAuthorizer.verifyCanDo(id, RolesAndPermissions.ARM);
         }
         
         securitySystem.arm();
@@ -125,7 +125,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         
         // Check location-based authorization for customer employees
         if (userNameSupplier.isCustomerEmployee()) {
-            securitySystemActionAuthorizer.verifyCanDisarm(id);
+            securitySystemActionAuthorizer.verifyCanDo(id, RolesAndPermissions.DISARM);
         }
         
         securitySystem.disarm();

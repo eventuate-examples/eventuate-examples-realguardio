@@ -15,6 +15,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @ExtendWith(MockitoExtension.class)
 class CustomerServiceClientReplicaImplTest {
@@ -36,8 +37,8 @@ class CustomerServiceClientReplicaImplTest {
         Long locationId = 456L;
         
         List<LocationRole> locationRoles = Arrays.asList(
-            new LocationRole(1L, userId, locationId, "SECURITY_SYSTEM_ARMER"),
-            new LocationRole(2L, userId, locationId, "SECURITY_SYSTEM_DISARMER")
+            new LocationRole(1L, userId, locationId, RolesAndPermissions.SECURITY_SYSTEM_ARMER),
+            new LocationRole(2L, userId, locationId, RolesAndPermissions.SECURITY_SYSTEM_DISARMER)
         );
         
         when(locationRolesReplicaService.findLocationRoles(userId, locationId))
@@ -47,7 +48,7 @@ class CustomerServiceClientReplicaImplTest {
         Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId);
 
         // Then
-        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER");
+        assertThat(result).containsExactlyInAnyOrder(RolesAndPermissions.SECURITY_SYSTEM_ARMER, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
     }
 
     @Test
@@ -73,8 +74,8 @@ class CustomerServiceClientReplicaImplTest {
         Long locationId = 456L;
         
         List<LocationRole> locationRoles = Arrays.asList(
-            new LocationRole(1L, userId, locationId, "SECURITY_SYSTEM_VIEWER"),
-            new LocationRole(2L, userId, locationId, "SECURITY_SYSTEM_VIEWER"),
+            new LocationRole(1L, userId, locationId, RolesAndPermissions.SECURITY_SYSTEM_VIEWER),
+            new LocationRole(2L, userId, locationId, RolesAndPermissions.SECURITY_SYSTEM_VIEWER),
             new LocationRole(3L, userId, locationId, "CAN_EDIT")
         );
         
@@ -85,6 +86,6 @@ class CustomerServiceClientReplicaImplTest {
         Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId);
 
         // Then
-        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_VIEWER", "CAN_EDIT");
+        assertThat(result).containsExactlyInAnyOrder(RolesAndPermissions.SECURITY_SYSTEM_VIEWER, "CAN_EDIT");
     }
 }

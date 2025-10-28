@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @SpringBootTest
 @Sql(scripts = "/schema.sql")
@@ -44,7 +45,7 @@ public class LocationRolesReplicaServiceTest {
         // Given
         String userName = "john.doe@example.com";
         Long locationId = 123L;
-        String roleName = "SECURITY_SYSTEM_ARMER";
+        String roleName = RolesAndPermissions.SECURITY_SYSTEM_ARMER;
         
         CustomerEmployeeAssignedLocationRole event = 
             new CustomerEmployeeAssignedLocationRole(userName, locationId, roleName);
@@ -69,7 +70,7 @@ public class LocationRolesReplicaServiceTest {
         // Given - insert test data directly
         String userName = "jane.smith@example.com";
         Long locationId = 456L;
-        String roleName = "SECURITY_SYSTEM_VIEWER";
+        String roleName = RolesAndPermissions.SECURITY_SYSTEM_VIEWER;
         
         jdbcTemplate.update(
             "INSERT INTO customer_employee_location_role (user_name, location_id, role_name) VALUES (?, ?, ?)",

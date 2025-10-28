@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 public class SecuritySystemRepositoryWithOsoImpl implements SecuritySystemRepositoryWithOso {
 
@@ -18,7 +19,7 @@ public class SecuritySystemRepositoryWithOsoImpl implements SecuritySystemReposi
 
     @Override
     public List<SecuritySystemProjection> findAllAccessible(String userName) {
-        String filterSql = realGuardOsoAuthorizer.listLocal(userName, "view", "ss.id");
+        String filterSql = realGuardOsoAuthorizer.listLocal(userName, RolesAndPermissions.VIEW, "ss.id");
 
         String query = """
                 SELECT

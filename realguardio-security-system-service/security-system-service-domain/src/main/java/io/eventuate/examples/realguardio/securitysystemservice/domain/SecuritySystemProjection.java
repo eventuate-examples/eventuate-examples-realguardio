@@ -33,8 +33,8 @@ public interface SecuritySystemProjection {
 
   default Set<SecuritySystemAction> actionForRole(String role) {
     return switch (role) {
-      case "SECURITY_SYSTEM_DISARMER" -> Set.of(SecuritySystemAction.DISARM);
-      case "SECURITY_SYSTEM_ARMER" -> Set.of(SecuritySystemAction.ARM);
+      case RolesAndPermissions.SECURITY_SYSTEM_DISARMER -> Set.of(SecuritySystemAction.DISARM);
+      case RolesAndPermissions.SECURITY_SYSTEM_ARMER -> Set.of(SecuritySystemAction.ARM);
       case "SECURITY_SYSTEM_ACKNOWLEDGER" -> Set.of(SecuritySystemAction.ACKNOWLEDGE);
       default -> Set.of();
     };

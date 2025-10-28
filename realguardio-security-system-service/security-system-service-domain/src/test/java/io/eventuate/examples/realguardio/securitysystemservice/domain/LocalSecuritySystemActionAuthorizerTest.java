@@ -49,9 +49,9 @@ class LocalSecuritySystemActionAuthorizerTest {
   void employeeWithDisarmRoleIsAllowed() throws Exception {
 
     when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-        .thenReturn(Set.of("SECURITY_SYSTEM_DISARMER", "VIEW_ALERTS"));
+        .thenReturn(Set.of(RolesAndPermissions.SECURITY_SYSTEM_DISARMER, "VIEW_ALERTS"));
 
-    localSecuritySystemActionAuthorizer.verifyCanDisarm(systemId);
+    localSecuritySystemActionAuthorizer.verifyCanDo(systemId, RolesAndPermissions.DISARM);
   }
 
   @Test
@@ -60,7 +60,7 @@ class LocalSecuritySystemActionAuthorizerTest {
     when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
         .thenReturn(Set.of("VIEW_ALERTS"));
 
-    assertThatThrownBy(() -> localSecuritySystemActionAuthorizer.verifyCanDisarm(systemId))
+    assertThatThrownBy(() -> localSecuritySystemActionAuthorizer.verifyCanDo(systemId, RolesAndPermissions.DISARM))
         .isInstanceOf(ForbiddenException.class);
   }
 
@@ -68,9 +68,9 @@ class LocalSecuritySystemActionAuthorizerTest {
   void employeeWithArmRoleIsAllowed() throws Exception {
 
     when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
-        .thenReturn(Set.of("SECURITY_SYSTEM_ARMER", "VIEW_ALERTS"));
+        .thenReturn(Set.of(RolesAndPermissions.SECURITY_SYSTEM_ARMER, "VIEW_ALERTS"));
 
-    localSecuritySystemActionAuthorizer.verifyCanArm(systemId);
+    localSecuritySystemActionAuthorizer.verifyCanDo(systemId, RolesAndPermissions.ARM);
   }
 
   @Test
@@ -79,7 +79,7 @@ class LocalSecuritySystemActionAuthorizerTest {
     when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
         .thenReturn(Set.of("VIEW_ALERTS"));
 
-    assertThatThrownBy(() -> localSecuritySystemActionAuthorizer.verifyCanArm(systemId))
+    assertThatThrownBy(() -> localSecuritySystemActionAuthorizer.verifyCanDo(systemId, RolesAndPermissions.ARM))
         .isInstanceOf(ForbiddenException.class);
   }
 

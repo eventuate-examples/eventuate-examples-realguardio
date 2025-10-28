@@ -23,6 +23,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @ExtendWith(MockitoExtension.class)
 class CustomerServiceClientImplTest {
@@ -70,7 +71,7 @@ class CustomerServiceClientImplTest {
         Set<String> result = customerServiceClient.getUserRolesAtLocation(userId, locationId);
 
         // Then
-        assertThat(result).containsExactlyInAnyOrder("SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER");
+        assertThat(result).containsExactlyInAnyOrder(RolesAndPermissions.SECURITY_SYSTEM_ARMER, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
         
         WireMock.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/locations/" + locationId + "/roles"))
             .withHeader("Authorization", WireMock.equalTo(jwtToken)));

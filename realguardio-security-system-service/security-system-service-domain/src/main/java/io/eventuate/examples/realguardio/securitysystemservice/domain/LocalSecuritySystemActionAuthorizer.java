@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.Set;
 
 @Component
@@ -23,22 +24,14 @@ public class LocalSecuritySystemActionAuthorizer implements SecuritySystemAction
     this.userNameSupplier = userNameSupplier;
   }
 
-  @Override
-  public void verifyCanArm(long securitySystemId) {
-    validateLocationPermission(securitySystemId, "SECURITY_SYSTEM_ARMER");
-  }
 
   @Override
-  public void verifyCanDisarm(long securitySystemId) {
-    validateLocationPermission(securitySystemId, "SECURITY_SYSTEM_DISARMER");
+  public void verifyCanDo(long securitySystemId, String permission) {
+        validateLocationPermission(securitySystemId, RolesAndPermissions.rolesForPermission(permission));
   }
 
-    @Override
-    public void verifyCanView(long securitySystemId) {
-        validateLocationPermission(securitySystemId, "SECURITY_SYSTEM_VIEWER");
-    }
 
-    private void validateLocationPermission(Long securitySystemID, String requiredRole) {
+ private void validateLocationPermission(Long securitySystemID, Set<String> requiredRoles) {
     SecuritySystem securitySystem = securitySystemRepository.findById(securitySystemID)
         .orElseThrow(() -> new NotFoundException("Security system not found: " + securitySystemID));
 
@@ -48,11 +41,11 @@ public class LocalSecuritySystemActionAuthorizer implements SecuritySystemAction
 
     Set<String> roles = customerServiceClient.getUserRolesAtLocation(userId, locationId);
 
-    if (!roles.contains(requiredRole)) {
-      logger.warn("User {} lacks {} permission for location {}", userId, requiredRole, locationId);
+    if (Collections.disjoint(roles, requiredRoles)) {
+      logger.warn("User {} lacks {} permission for location {}", userId, requiredRoles, locationId);
       throw new ForbiddenException(
           String.format("User lacks %s permission for location %d",
-              requiredRole, locationId)
+              requiredRoles, locationId)
       );
     }
   }

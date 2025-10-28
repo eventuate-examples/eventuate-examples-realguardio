@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @DataJpaTest
 @Testcontainers
@@ -47,7 +48,7 @@ public class SecuritySystemRepositoryWithOsoIntegrationTest extends AbstractSecu
 
         long locationId = System.currentTimeMillis();
 
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_ARMER");
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
 
         SecuritySystem system1 = new SecuritySystem("Oakland office",
                 SecuritySystemState.ARMED);
@@ -62,7 +63,7 @@ public class SecuritySystemRepositoryWithOsoIntegrationTest extends AbstractSecu
         assertThat(results).isNotEmpty();
 
         System.out.println(results);
-        assertThat(Arrays.asList(results.get(0).getRoleNames())).containsExactly("SECURITY_SYSTEM_ARMER");
+        assertThat(Arrays.asList(results.get(0).getRoleNames())).containsExactly(RolesAndPermissions.SECURITY_SYSTEM_ARMER);
     }
 
 }

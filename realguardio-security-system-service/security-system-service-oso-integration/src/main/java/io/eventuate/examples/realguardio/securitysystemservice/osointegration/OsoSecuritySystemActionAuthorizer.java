@@ -21,22 +21,9 @@ public class OsoSecuritySystemActionAuthorizer implements SecuritySystemActionAu
     this.realGuardOsoAuthorizer = realGuardOsoAuthorizer;
   }
 
-  @Override
-  public void verifyCanArm(long securitySystemId) {
-    verifyCanDo(securitySystemId, "arm");
-  }
 
   @Override
-  public void verifyCanDisarm(long securitySystemId) {
-    verifyCanDo(securitySystemId, "disarm");
-  }
-
-  @Override
-  public void verifyCanView(long securitySystemId) {
-     verifyCanDo(securitySystemId, "view");
-  }
-
-    private void verifyCanDo(long securitySystemId, String permission) {
+  public void verifyCanDo(long securitySystemId, String permission) {
 
     String userId = userNameSupplier.getCurrentUserName();
     if (!isAuthorized(userId, permission, String.valueOf(securitySystemId))) {

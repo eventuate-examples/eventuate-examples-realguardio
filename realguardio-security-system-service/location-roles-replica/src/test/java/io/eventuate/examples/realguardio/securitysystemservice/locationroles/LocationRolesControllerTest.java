@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @WebMvcTest(LocationRolesController.class)
 public class LocationRolesControllerTest {
@@ -42,7 +43,7 @@ public class LocationRolesControllerTest {
         // Given
         String userName = "john.doe@example.com";
         Long locationId = 123L;
-        LocationRole role = new LocationRole(1L, userName, locationId, "SECURITY_SYSTEM_ARMER");
+        LocationRole role = new LocationRole(1L, userName, locationId, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
         
         when(locationRolesReplicaService.findLocationRoles(userName, locationId))
             .thenReturn(List.of(role));
@@ -55,7 +56,7 @@ public class LocationRolesControllerTest {
             .andExpect(jsonPath("$[0].id").value(1))
             .andExpect(jsonPath("$[0].userName").value(userName))
             .andExpect(jsonPath("$[0].locationId").value(locationId))
-            .andExpect(jsonPath("$[0].roleName").value("SECURITY_SYSTEM_ARMER"));
+            .andExpect(jsonPath("$[0].roleName").value(RolesAndPermissions.SECURITY_SYSTEM_ARMER));
     }
 
     @Test

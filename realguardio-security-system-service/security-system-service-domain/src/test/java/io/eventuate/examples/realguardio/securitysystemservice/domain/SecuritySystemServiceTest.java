@@ -162,7 +162,7 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
         // Admin should not trigger authorization check
-        verify(securitySystemActionAuthorizer, never()).verifyCanDisarm(anyLong());
+        verify(securitySystemActionAuthorizer, never()).verifyCanDo(anyLong(), eq(RolesAndPermissions.DISARM));
     }
     
     @Test
@@ -189,7 +189,7 @@ class SecuritySystemServiceTest {
         assertThat(result.getState()).isEqualTo(SecuritySystemState.DISARMED);
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
-        verify(securitySystemActionAuthorizer).verifyCanDisarm(systemId);
+        verify(securitySystemActionAuthorizer).verifyCanDo(systemId, RolesAndPermissions.DISARM);
     }
     
     @Test
@@ -207,7 +207,7 @@ class SecuritySystemServiceTest {
 
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         doThrow(new ForbiddenException("User lacks SECURITY_SYSTEM_DISARMER permission for location 456"))
-            .when(securitySystemActionAuthorizer).verifyCanDisarm(systemId);
+            .when(securitySystemActionAuthorizer).verifyCanDo(systemId, RolesAndPermissions.DISARM);
 
         // When & Then
         assertThatThrownBy(() -> securitySystemService.disarm(systemId))
@@ -215,7 +215,7 @@ class SecuritySystemServiceTest {
             .hasMessageContaining("User lacks SECURITY_SYSTEM_DISARMER permission for location 456");
 
         verify(securitySystemRepository).findById(systemId);
-        verify(securitySystemActionAuthorizer).verifyCanDisarm(systemId);
+        verify(securitySystemActionAuthorizer).verifyCanDo(systemId, RolesAndPermissions.DISARM);
         verify(securitySystemRepository, never()).save(any());
     }
     
@@ -244,7 +244,7 @@ class SecuritySystemServiceTest {
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
         // Admin should not trigger authorization check
-        verify(securitySystemActionAuthorizer, never()).verifyCanArm(anyLong());
+        verify(securitySystemActionAuthorizer, never()).verifyCanDo(anyLong(), eq(RolesAndPermissions.ARM));
     }
     
     @Test
@@ -271,7 +271,7 @@ class SecuritySystemServiceTest {
         assertThat(result.getState()).isEqualTo(SecuritySystemState.ARMED);
         verify(securitySystemRepository).findById(systemId);
         verify(securitySystemRepository).save(securitySystem);
-        verify(securitySystemActionAuthorizer).verifyCanArm(systemId);
+        verify(securitySystemActionAuthorizer).verifyCanDo(systemId, RolesAndPermissions.ARM);
     }
     
     @Test
@@ -289,7 +289,7 @@ class SecuritySystemServiceTest {
 
         when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
         doThrow(new ForbiddenException("User lacks SECURITY_SYSTEM_ARMER permission for location 456"))
-            .when(securitySystemActionAuthorizer).verifyCanArm(systemId);
+            .when(securitySystemActionAuthorizer).verifyCanDo(systemId, RolesAndPermissions.ARM);
 
         // When & Then
         assertThatThrownBy(() -> securitySystemService.arm(systemId))
@@ -297,7 +297,7 @@ class SecuritySystemServiceTest {
             .hasMessageContaining("User lacks SECURITY_SYSTEM_ARMER permission for location 456");
 
         verify(securitySystemRepository).findById(systemId);
-        verify(securitySystemActionAuthorizer).verifyCanArm(systemId);
+        verify(securitySystemActionAuthorizer).verifyCanDo(systemId, RolesAndPermissions.ARM);
         verify(securitySystemRepository, never()).save(any());
     }
     
