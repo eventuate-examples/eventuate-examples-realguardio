@@ -136,7 +136,7 @@ run = "java -version"
 
 [tasks.bff-npm-install]
 dir = "./realguardio-bff"
-run = "npm install"
+run = "npm install --legacy-peer-deps"
 
 [tasks.build]
 description = "Build all realguardio services with Gradle"
