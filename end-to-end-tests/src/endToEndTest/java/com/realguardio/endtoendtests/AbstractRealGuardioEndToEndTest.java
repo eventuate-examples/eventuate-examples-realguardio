@@ -31,7 +31,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
     protected static ApplicationUnderTest aut = ApplicationUnderTest.make();
 
 
-    private String authToken;
+    private String authTokenForRealGuardIoAdmin;
     
 
     protected static void configureRestAssured() {
@@ -45,7 +45,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
     
     @BeforeEach
     void setup() {
-        authToken = JwtTokenHelper.getJwtTokenForUser(aut.getIamPort(), aut.iamServiceHostAndPort(), "user1", "password");
+        authTokenForRealGuardIoAdmin = JwtTokenHelper.getJwtTokenForUser(aut.getIamPort(), aut.iamServiceHostAndPort(), "user1", "password");
     }
     
     @Test 
@@ -70,7 +70,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
 
         Long securitySystemId = createSecuritySystem(customerId);
 
-        Long locationId = verifySecuritySystemHasLocationID(securitySystemId, adminAuthToken);
+        Long locationId = verifySecuritySystemHasLocationID(securitySystemId, authTokenForRealGuardIoAdmin);
 
         assignPermissionsToLocation(adminEmployeeId, locationId, adminAuthToken, customerId);
 
@@ -109,7 +109,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
 
         CreateSecuritySystemResponse createResponse = RestAssured.given()
             .baseUri("http://localhost:" + aut.getOrchestrationServicePort())
-            .header("Authorization", "Bearer " + authToken)  // Using REALGUARDIO_ADMIN token for saga creation
+            .header("Authorization", "Bearer " + authTokenForRealGuardIoAdmin)  // Using REALGUARDIO_ADMIN token for saga creation
             .contentType(ContentType.JSON)
             .body(sagaRequestJson)
             .log().all()
@@ -205,7 +205,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
             .log().all()
             .statusCode(200);
 
-        logger.info("Arm/disarm rights assigned successfully");
+        logger.info("Arm/disarm rights assigned successfully: userId {} location {}", adminEmployeeId, locationId);
     }
 
     private static void armSecuritySystem(Long securitySystemId, String adminAuthToken) {
@@ -263,7 +263,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
 
         CreateCustomerResponse customerResponse = RestAssured.given()
             .baseUri("http://localhost:" + aut.getCustomerServicePort())
-            .header("Authorization", "Bearer " + authToken)
+            .header("Authorization", "Bearer " + authTokenForRealGuardIoAdmin)
             .contentType(ContentType.JSON)
             .body(customerRequest)
             .when()

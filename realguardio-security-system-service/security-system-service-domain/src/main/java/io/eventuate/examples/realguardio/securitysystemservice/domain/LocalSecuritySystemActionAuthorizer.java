@@ -39,13 +39,13 @@ public class LocalSecuritySystemActionAuthorizer implements SecuritySystemAction
 
     String userId = userNameSupplier.getCurrentUserName();
 
-    Set<String> roles = customerServiceClient.getUserRolesAtLocation(userId, locationId);
+    Set<String> rolesAtLocation = customerServiceClient.getUserRolesAtLocation(userId, locationId);
 
-    if (Collections.disjoint(roles, requiredRoles)) {
-      logger.warn("User {} lacks {} permission for location {}", userId, requiredRoles, locationId);
+    if (Collections.disjoint(rolesAtLocation, requiredRoles)) {
+      logger.warn("User {} lacks {} permission for location {}. Only has {}", userId, requiredRoles, locationId, rolesAtLocation);
       throw new ForbiddenException(
-          String.format("User lacks %s permission for location %d",
-              requiredRoles, locationId)
+          String.format("User %s lacks %s permission for location %d. Only has %s",
+                  userId, requiredRoles, locationId, rolesAtLocation)
       );
     }
   }
