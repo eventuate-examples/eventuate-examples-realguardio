@@ -159,6 +159,12 @@ task dockerComposeBuild(type: Exec) {
     // Optional: Set the working directory if docker-compose.yml is not in the project root
     // workingDir '../'
 }
-if (project.hasProperty('endToEndTestMode') && endToEndTestMode == 'DockerCompose')
+if (project.hasProperty('endToEndTestMode') && endToEndTestMode == 'DockerCompose') {
     endToEndTest.dependsOn dockerComposeUp
+    endToEndTest {
+        filter {
+            includeTestsMatching 'com.realguardio.endtoendtests.RealGuardioEndToEndTest'
+        }
+    }
+}
 
