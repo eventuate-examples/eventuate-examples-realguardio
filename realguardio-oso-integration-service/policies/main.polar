@@ -69,6 +69,7 @@ test "Authz Check" {
   assert has_permission(CustomerEmployee{"bob"}, "disarm", SecuritySystem{"ss2"});
   assert_not has_permission(CustomerEmployee{"bob"}, "disarm", SecuritySystem{"ss1"});
   assert has_permission(CustomerEmployee{"mary"}, "disarm", SecuritySystem{"ss3"});
+
   assert has_permission(CustomerEmployee{"charlie"}, "disarm", SecuritySystem{"ss1"});
   assert_not has_permission(CustomerEmployee{"charlie"}, "disarm", SecuritySystem{"ss2"});
   assert_not has_permission(CustomerEmployee{"charlie"}, "disarm", SecuritySystem{"ss3"});

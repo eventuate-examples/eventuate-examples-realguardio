@@ -1,7 +1,7 @@
 package io.eventuate.examples.realguardio.securitysystemservice.persistence;
 
 import io.eventuate.examples.realguardio.securitysystemservice.domain.*;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -17,7 +17,6 @@ import org.testcontainers.junit.jupiter.Container;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 abstract class AbstractSecuritySystemRepositoryIntegrationTest {
 

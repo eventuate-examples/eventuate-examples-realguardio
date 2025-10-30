@@ -1,15 +1,14 @@
-package io.eventuate.examples.realguardio.securitysystemservice.locationroles;
+package io.eventuate.examples.realguardio.securitysystemservice.locationroles.messaging;
 
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import io.eventuate.tram.events.subscriber.DomainEventEnvelope;
 import io.eventuate.tram.events.subscriber.DomainEventHandlers;
 import io.eventuate.tram.events.subscriber.DomainEventHandlersBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-@Component
 public class CustomerEmployeeLocationEventConsumer {
     
     private static final Logger logger = LoggerFactory.getLogger(CustomerEmployeeLocationEventConsumer.class);

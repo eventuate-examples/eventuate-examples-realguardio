@@ -1,3 +1,5 @@
+apply plugin: IntegrationTestsPlugin
+
 dependencies {
 
     implementation project(':security-system-service-domain')
@@ -5,7 +7,6 @@ dependencies {
     implementation 'io.eventuate.tram.core:eventuate-tram-spring-events-subscriber-starter'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -14,4 +15,19 @@ dependencies {
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
     testRuntimeOnly 'com.h2database:h2'
+
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'io.eventuate.common:eventuate-common-testcontainers'
+    integrationTestImplementation 'io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers'
+    integrationTestImplementation 'io.eventuate.messaging.kafka:eventuate-messaging-kafka-producer'
+    integrationTestImplementation 'io.eventuate.util:eventuate-util-test'
+    integrationTestImplementation 'org.assertj:assertj-core'
+    integrationTestImplementation 'org.awaitility:awaitility'
+    integrationTestImplementation 'org.testcontainers:postgresql'
+    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-consumer-kafka"
+
+    integrationTestRuntimeOnly 'org.postgresql:postgresql'
+    integrationTestRuntimeOnly 'io.eventuate.tram.core:eventuate-tram-spring-flyway'
+    integrationTestRuntimeOnly 'org.flywaydb:flyway-database-postgresql:11.8.2'
+
 }

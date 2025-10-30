@@ -1,5 +1,7 @@
-package io.eventuate.examples.realguardio.securitysystemservice.locationroles;
+package io.eventuate.examples.realguardio.securitysystemservice.locationroles.restapi;
 
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRole;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

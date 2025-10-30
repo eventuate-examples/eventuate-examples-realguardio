@@ -1,20 +1,18 @@
-package io.eventuate.examples.realguardio.securitysystemservice.locationroles;
+package io.eventuate.examples.realguardio.securitysystemservice.locationroles.common;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Service
 @Transactional
 public class LocationRolesReplicaService {
     
     private final JdbcTemplate jdbcTemplate;
     
-    private final RowMapper<LocationRole> locationRoleRowMapper = (rs, rowNum) -> 
+    private final RowMapper<LocationRole> locationRoleRowMapper = (rs, rowNum) ->
         new LocationRole(
             rs.getLong("id"),
             rs.getString("user_name"),

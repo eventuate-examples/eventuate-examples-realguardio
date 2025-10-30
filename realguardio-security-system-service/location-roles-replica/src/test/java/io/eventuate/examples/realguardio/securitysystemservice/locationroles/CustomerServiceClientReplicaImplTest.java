@@ -1,7 +1,8 @@
-package io.eventuate.examples.realguardio.customerservice.domain;
+package io.eventuate.examples.realguardio.securitysystemservice.locationroles;
 
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRole;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRole;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +16,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @ExtendWith(MockitoExtension.class)
 class CustomerServiceClientReplicaImplTest {

@@ -1,8 +1,8 @@
-package io.eventuate.examples.realguardio.customerservice.domain;
+package io.eventuate.examples.realguardio.securitysystemservice.locationroles;
 
 import io.eventuate.examples.realguardio.securitysystemservice.domain.CustomerServiceClient;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRole;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRole;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;

@@ -1,9 +1,10 @@
 package io.eventuate.examples.realguardio.securitysystemservice.persistence;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemRepositoryWithOso;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import io.eventuate.examples.realguardio.securitysystemservice.osointegration.OsoSecuritySystemActionAuthorizerConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @DataJpaTest
 @Testcontainers

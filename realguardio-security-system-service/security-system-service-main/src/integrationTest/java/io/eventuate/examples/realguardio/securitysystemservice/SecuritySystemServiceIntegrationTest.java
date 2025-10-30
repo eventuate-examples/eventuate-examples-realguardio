@@ -3,11 +3,8 @@ package io.eventuate.examples.realguardio.securitysystemservice;
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.securitysystemservice.db.DBInitializer;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAction;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemWithActions;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystems;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.*;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
@@ -18,12 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.http.*;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -32,7 +24,6 @@ import org.testcontainers.lifecycle.Startables;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class SecuritySystemServiceIntegrationTest {
@@ -46,10 +37,6 @@ class SecuritySystemServiceIntegrationTest {
             return new UserServiceImpl();
         }
 
-        @Bean
-        LocationRolesReplicaService locationRolesReplicaService(JdbcTemplate jdbcTemplate) {
-            return new LocationRolesReplicaService(jdbcTemplate);
-        }
     }
 
     @Autowired

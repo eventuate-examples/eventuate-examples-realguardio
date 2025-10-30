@@ -1,14 +1,19 @@
-package io.eventuate.examples.realguardio.securitysystemservice.locationroles;
+package io.eventuate.examples.realguardio.securitysystemservice.locationroles.restapi;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRole;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -17,12 +22,13 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
-@WebMvcTest(LocationRolesController.class)
+@WebMvcTest
+@ContextConfiguration(classes = LocationRolesControllerTest.TestConfig.class)
 public class LocationRolesControllerTest {
 
-    @SpringBootApplication
+    @Configuration
+    @ComponentScan(basePackageClasses = LocationRolesController.class)
     static class TestConfig {
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -35,7 +41,7 @@ public class LocationRolesControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private LocationRolesReplicaService locationRolesReplicaService;
 
     @Test
