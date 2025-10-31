@@ -230,9 +230,9 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Migrate CustomerService to use type-safe CustomerEventPublisher"
 
-### [ ] Step 8: Update Event Subscribers for New Aggregate Type
+### [x] Step 8: Update Event Subscribers and Tests for New Aggregate Type
 
-**Background**: Using `CustomerEventPublisher` changes the aggregate type (channel) from "Customer" to the fully qualified class name `io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer`. All event subscribers need to be updated.
+**Background**: Using `CustomerEventPublisher` changes the aggregate type (channel) from "Customer" to the fully qualified class name `io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer`. All event subscribers and their tests need to be updated.
 
 **Location**: `realguardio-security-system-service/location-roles-replica` and `realguardio-oso-integration-service/oso-event-subscribers`
 
@@ -252,21 +252,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
    - Update all 4 `@EventuateDomainEventHandler` annotations (for handleLocationCreatedForCustomer, handleSecuritySystemAssignedToLocation, handleCustomerEmployeeAssignedCustomerRole, handleCustomerEmployeeAssignedLocationRole)
    - Change channel from "Customer" to "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer"
 
-**Verification**:
-```bash
-./gradlew :location-roles-replica:check
-./gradlew :oso-event-subscribers:check
-./gradlew check
-```
-
-**Commit**: "Update event subscribers to use fully qualified Customer aggregate type"
-
-### [ ] Step 9: Update Event Subscriber Tests
-
-**Location**: Test files in `location-roles-replica` and `oso-event-subscribers`
-
-**Changes**:
-1. Update `CustomerEmployeeLocationEventConsumerTest.java` in location-roles-replica:
+3. Update `CustomerEmployeeLocationEventConsumerTest.java` in location-roles-replica:
    - Change all `domainEventPublisher.publish()` calls from:
      ```java
      domainEventPublisher.publish("Customer", "1", Collections.singletonList(event));
@@ -277,16 +263,16 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
          "1", Collections.singletonList(event));
      ```
 
-2. Update `CustomerEventConsumerTest.java` in oso-event-subscribers:
+4. Update `CustomerEventConsumerTest.java` in oso-event-subscribers:
    - Update all 4 test methods' publish calls to use fully qualified class name
 
 **Verification**:
 ```bash
-./gradlew :location-roles-replica:test
-./gradlew :oso-event-subscribers:test
+./gradlew :location-roles-replica:check
+./gradlew :oso-event-subscribers:check
 ```
 
-**Commit**: "Update event subscriber tests for new aggregate type"
+**Commit**: "Update event subscribers and tests to use fully qualified Customer aggregate type"
 
 ### [x] Step 10: Update Component Tests
 
