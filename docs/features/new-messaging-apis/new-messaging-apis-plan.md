@@ -301,7 +301,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 ## Phase 4: Saga Enhancements (Optional but Valuable)
 
-### [ ] Step 11: Create Reply Interfaces for Commands
+### [x] Step 11: Create Reply Interfaces for Commands
 
 **Location**: Various API modules
 
@@ -337,7 +337,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Add reply interfaces for command results"
 
-### [ ] Step 12: Annotate Success Reply Classes
+### [x] Step 12: Annotate Success Reply Classes
 
 **Location**: Various API modules
 
@@ -373,7 +373,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Annotate success reply classes with @SuccessReply"
 
-### [ ] Step 13: Annotate Failure Reply Classes
+### [x] Step 13: Annotate Failure Reply Classes
 
 **Location**: Various API modules
 
@@ -401,7 +401,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Annotate failure reply classes with @FailureReply"
 
-### [ ] Step 14: Add @SagaParticipantOperation to CustomerServiceProxy
+### [x] Step 14: Add @SagaParticipantOperation to CustomerServiceProxy
 
 **Location**: `realguardio-orchestration-service/orchestration-sagas`
 
@@ -427,7 +427,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Add @SagaParticipantOperation to CustomerServiceProxy"
 
-### [ ] Step 15: Add @SagaParticipantOperation to SecuritySystemServiceProxy
+### [x] Step 15: Add @SagaParticipantOperation to SecuritySystemServiceProxy
 
 **Location**: `realguardio-orchestration-service/orchestration-sagas`
 
