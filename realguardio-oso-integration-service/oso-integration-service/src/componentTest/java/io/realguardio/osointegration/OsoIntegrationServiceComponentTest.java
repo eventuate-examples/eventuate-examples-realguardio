@@ -108,13 +108,13 @@ public class OsoIntegrationServiceComponentTest {
 
 		logger.info("Setting up customer {} with location {} and security systems", customerId, locationId);
 
-		domainEventPublisher.publish("Customer", customerId,
+		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new CustomerEmployeeAssignedCustomerRole(aliceId, "SECURITY_SYSTEM_DISARMER"));
 
-		domainEventPublisher.publish("Customer", customerId,
+		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new LocationCreatedForCustomer(locationId));
 
-		domainEventPublisher.publish("Customer", customerId,
+		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new SecuritySystemAssignedToLocation(locationId, ss1Id));
 
 		logger.info("Verifying alice can disarm ss1 but not ss2");
@@ -138,13 +138,13 @@ public class OsoIntegrationServiceComponentTest {
 
 		logger.info("Setting up customer {} with location {} and security system {}", customerId, locationId, ss2Id);
 
-		domainEventPublisher.publish("Customer", customerId,
+		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new CustomerEmployeeAssignedCustomerRole(bobId, "SECURITY_SYSTEM_DISARMER"));
 
-		domainEventPublisher.publish("Customer", customerId,
+		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new LocationCreatedForCustomer(locationId));
 
-		domainEventPublisher.publish("Customer", customerId,
+		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new SecuritySystemAssignedToLocation(locationId, ss2Id));
 
 		logger.info("Verifying bob can disarm ss2 but not ss1");
@@ -167,13 +167,13 @@ public class OsoIntegrationServiceComponentTest {
 
 		logger.info("Setting up location {} with role for mary and security system {}", locationId, securitySystemId);
 
-		domainEventPublisher.publish("Customer", customerId,
+		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new LocationCreatedForCustomer(locationId));
 
-		domainEventPublisher.publish("Customer", customerId,
+		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new CustomerEmployeeAssignedLocationRole(maryUserName, locationId, "SECURITY_SYSTEM_DISARMER"));
 
-		domainEventPublisher.publish("Customer", customerId,
+		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new SecuritySystemAssignedToLocation(locationId, securitySystemId));
 
 		logger.info("Verifying mary can disarm security system at her location");

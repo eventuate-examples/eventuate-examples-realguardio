@@ -84,7 +84,7 @@ public class LocationRolesReplicaIntegrationTest {
                 new CustomerEmployeeAssignedLocationRole(userName, locationId, roleName);
 
         // When - publish the event
-        eventPublisher.publish("Customer", "1", event);
+        eventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", "1", event);
 
         // Then - verify the database is updated using LocationRolesReplicaService
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {

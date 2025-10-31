@@ -19,7 +19,7 @@ public class CustomerEmployeeLocationEventConsumer {
         this.replicaService = replicaService;
     }
 
-    @EventuateDomainEventHandler(subscriberId = "locationRolesReplicaDispatcher", channel = "Customer")
+    @EventuateDomainEventHandler(subscriberId = "locationRolesReplicaDispatcher", channel = "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer")
     public void handleCustomerEmployeeAssignedLocationRole(DomainEventEnvelope<CustomerEmployeeAssignedLocationRole> envelope) {
         CustomerEmployeeAssignedLocationRole event = envelope.getEvent();
         logger.info("Handling CustomerEmployeeAssignedLocationRole event: userName={}, locationId={}, roleName={}",

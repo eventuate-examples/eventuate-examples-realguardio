@@ -242,7 +242,7 @@ public class SecuritySystemServiceComponentTest {
 		// Publish the domain event
 		logger.info("Publishing CustomerEmployeeAssignedLocationRole event");
 		CustomerEmployeeAssignedLocationRole event = new CustomerEmployeeAssignedLocationRole(userName, locationId, roleName);
-		directToKafkaDomainEventPublisher.publish("Customer", customerId, event);
+		directToKafkaDomainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId, event);
 		
 		// Wait for event to be published to outbox and then processed by the service container
 		logger.info("Waiting for event to be consumed and processed by the service");

@@ -24,7 +24,7 @@ public class CustomerEventConsumer {
         this.osoFactManager = osoFactManager;
     }
 
-    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "Customer")
+    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer")
     public void handleCustomerEmployeeAssignedCustomerRole(DomainEventEnvelope<CustomerEmployeeAssignedCustomerRole> envelope) {
         CustomerEmployeeAssignedCustomerRole event = envelope.getEvent();
         String customerId = envelope.getAggregateId();
@@ -39,7 +39,7 @@ public class CustomerEventConsumer {
         );
     }
 
-    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "Customer")
+    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer")
     public void handleLocationCreatedForCustomer(DomainEventEnvelope<LocationCreatedForCustomer> envelope) {
         LocationCreatedForCustomer event = envelope.getEvent();
         String customerId = envelope.getAggregateId();
@@ -53,7 +53,7 @@ public class CustomerEventConsumer {
         );
     }
 
-    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "Customer")
+    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer")
     public void handleSecuritySystemAssignedToLocation(DomainEventEnvelope<SecuritySystemAssignedToLocation> envelope) {
         SecuritySystemAssignedToLocation event = envelope.getEvent();
 
@@ -66,7 +66,7 @@ public class CustomerEventConsumer {
         );
     }
 
-    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "Customer")
+    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer")
     public void handleCustomerEmployeeAssignedLocationRole(DomainEventEnvelope<CustomerEmployeeAssignedLocationRole> envelope) {
         CustomerEmployeeAssignedLocationRole event = envelope.getEvent();
 

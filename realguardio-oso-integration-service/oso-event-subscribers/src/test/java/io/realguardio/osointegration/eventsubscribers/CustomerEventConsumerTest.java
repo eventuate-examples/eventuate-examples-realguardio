@@ -46,7 +46,7 @@ public class CustomerEventConsumerTest {
         CustomerEmployeeAssignedCustomerRole event =
             new CustomerEmployeeAssignedCustomerRole(customerEmployeeId, roleName);
 
-        domainEventPublisher.publish("Customer", customerId, Collections.singletonList(event));
+        domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId, Collections.singletonList(event));
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(osoFactManager).createRoleInCustomer(
@@ -65,7 +65,7 @@ public class CustomerEventConsumerTest {
         LocationCreatedForCustomer event =
             new LocationCreatedForCustomer(locationId);
 
-        domainEventPublisher.publish("Customer", customerId, Collections.singletonList(event));
+        domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId, Collections.singletonList(event));
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(osoFactManager).createLocationForCustomer(
@@ -84,7 +84,7 @@ public class CustomerEventConsumerTest {
         SecuritySystemAssignedToLocation event =
             new SecuritySystemAssignedToLocation(locationId, securitySystemId);
 
-        domainEventPublisher.publish("Customer", customerId, Collections.singletonList(event));
+        domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId, Collections.singletonList(event));
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(osoFactManager).assignSecuritySystemToLocation(
@@ -104,7 +104,7 @@ public class CustomerEventConsumerTest {
         CustomerEmployeeAssignedLocationRole event =
             new CustomerEmployeeAssignedLocationRole(userName, locationId, roleName);
 
-        domainEventPublisher.publish("Customer", customerId, Collections.singletonList(event));
+        domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId, Collections.singletonList(event));
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(osoFactManager).createRoleAtLocation(
