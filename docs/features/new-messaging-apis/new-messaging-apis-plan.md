@@ -125,7 +125,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 ## Phase 3: Event Publishing (Type-Safe Publishing)
 
-### [ ] Step 5: Create CustomerEvent Interface and Update Event Classes
+### [x] Step 5: Create CustomerEvent Interface and Update Event Classes
 
 **Location**: `realguardio-customer-service/customer-service-domain`
 

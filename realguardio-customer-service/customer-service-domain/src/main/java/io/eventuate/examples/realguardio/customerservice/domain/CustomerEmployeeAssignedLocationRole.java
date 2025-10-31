@@ -6,5 +6,5 @@ public record CustomerEmployeeAssignedLocationRole(
     String userName,
     Long locationId,
     String roleName
-) implements DomainEvent {
+) implements DomainEvent, CustomerEvent {
 }
