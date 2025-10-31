@@ -2,6 +2,8 @@ package io.eventuate.examples.realguardio.customerservice.customermanagement;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeLocationRoleRepository;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeRepository;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEventPublisher;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEventPublisherImpl;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerRepository;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationRepository;
@@ -23,6 +25,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan
 @Import(OrganizationManagementConfiguration.class)
 public class CustomerManagementConfiguration {
+
+  @Bean
+  public CustomerEventPublisher customerEventPublisher(DomainEventPublisher domainEventPublisher) {
+    return new CustomerEventPublisherImpl(domainEventPublisher);
+  }
 
   @Bean
   public CustomerService customerService(CustomerRepository customerRepository,

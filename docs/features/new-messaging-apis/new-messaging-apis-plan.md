@@ -153,7 +153,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Add CustomerEvent interface and update event classes"
 
-### [ ] Step 6: Create CustomerEventPublisher Interface and Implementation
+### [x] Step 6: Create CustomerEventPublisher Interface and Implementation
 
 **Location**: `realguardio-customer-service/customer-service-domain`
 

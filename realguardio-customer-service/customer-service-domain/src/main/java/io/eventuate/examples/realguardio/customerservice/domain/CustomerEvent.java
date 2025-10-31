@@ -1,5 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.domain;
 
-public interface CustomerEvent {
+import io.eventuate.tram.events.common.DomainEvent;
+
+public interface CustomerEvent extends DomainEvent {
     // Marker interface for all customer events
 }
