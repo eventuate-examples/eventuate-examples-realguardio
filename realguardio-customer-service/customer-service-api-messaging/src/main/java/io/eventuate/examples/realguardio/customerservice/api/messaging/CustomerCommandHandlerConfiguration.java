@@ -1,8 +1,6 @@
 package io.eventuate.examples.realguardio.customerservice.api.messaging;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
-import io.eventuate.tram.commands.consumer.CommandDispatcher;
-import io.eventuate.tram.sagas.participant.SagaCommandDispatcherFactory;
 import io.eventuate.tram.sagas.spring.participant.SagaParticipantConfiguration;
 import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -18,12 +16,5 @@ public class CustomerCommandHandlerConfiguration {
     @Bean
     public CustomerCommandHandler customerCommandHandler(CustomerService customerService) {
         return new CustomerCommandHandler(customerService);
-    }
-
-    @Bean
-    public CommandDispatcher customerCommandDispatcher(CustomerCommandHandler customerCommandHandler,
-                                                        SagaCommandDispatcherFactory sagaCommandDispatcherFactory) {
-        return sagaCommandDispatcherFactory.make("customerCommandDispatcher",
-                customerCommandHandler.commandHandlers());
     }
 }

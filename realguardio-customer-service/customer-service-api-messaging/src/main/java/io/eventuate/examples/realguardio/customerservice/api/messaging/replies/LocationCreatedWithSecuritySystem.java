@@ -1,4 +1,7 @@
 package io.eventuate.examples.realguardio.customerservice.api.messaging.replies;
 
-public record LocationCreatedWithSecuritySystem(Long locationId) {
+import io.eventuate.tram.commands.consumer.annotations.SuccessReply;
+
+@SuccessReply
+public record LocationCreatedWithSecuritySystem(Long locationId) implements CreateLocationResult {
 }

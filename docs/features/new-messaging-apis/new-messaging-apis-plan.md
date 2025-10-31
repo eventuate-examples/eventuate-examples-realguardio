@@ -66,7 +66,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 ## Phase 2: Command Handlers (Command Processing)
 
-### [ ] Step 3: Migrate CustomerCommandHandler (Simplest - 1 Handler)
+### [x] Step 3: Migrate CustomerCommandHandler (Simplest - 1 Handler) + Steps 8-10 (Reply Annotations)
 
 **Location**: `realguardio-customer-service/customer-service-api-messaging`
 
