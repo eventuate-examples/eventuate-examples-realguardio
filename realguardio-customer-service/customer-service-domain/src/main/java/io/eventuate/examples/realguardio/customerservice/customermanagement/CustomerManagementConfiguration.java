@@ -41,7 +41,7 @@ public class CustomerManagementConfiguration {
                                          OrganizationService organizationService,
                                          MemberService memberService,
                                          UserNameSupplier userNameSupplier,
-                                         DomainEventPublisher domainEventPublisher) {
+                                         CustomerEventPublisher customerEventPublisher) {
     return new CustomerService(
         customerRepository,
         customerEmployeeRepository,
@@ -52,6 +52,6 @@ public class CustomerManagementConfiguration {
         organizationService,
         memberService,
         userNameSupplier,
-        domainEventPublisher);
+        customerEventPublisher);
   }
 }

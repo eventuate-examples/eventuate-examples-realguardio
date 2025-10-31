@@ -205,7 +205,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Add CustomerEventPublisher with type-safe interface"
 
-### [ ] Step 7: Update CustomerService to Use CustomerEventPublisher
+### [x] Step 7: Update CustomerService to Use CustomerEventPublisher
 
 **Location**: `realguardio-customer-service/customer-service-domain`
 
@@ -230,9 +230,92 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Migrate CustomerService to use type-safe CustomerEventPublisher"
 
+### [ ] Step 8: Update Event Subscribers for New Aggregate Type
+
+**Background**: Using `CustomerEventPublisher` changes the aggregate type (channel) from "Customer" to the fully qualified class name `io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer`. All event subscribers need to be updated.
+
+**Location**: `realguardio-security-system-service/location-roles-replica` and `realguardio-oso-integration-service/oso-event-subscribers`
+
+**Changes**:
+1. Update `CustomerEmployeeLocationEventConsumer.java` in location-roles-replica:
+   - Change `@EventuateDomainEventHandler` annotation channel from:
+     ```java
+     @EventuateDomainEventHandler(subscriberId = "locationRolesReplicaDispatcher", channel = "Customer")
+     ```
+   - To:
+     ```java
+     @EventuateDomainEventHandler(subscriberId = "locationRolesReplicaDispatcher",
+         channel = "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer")
+     ```
+
+2. Update `CustomerEventConsumer.java` in oso-event-subscribers:
+   - Update all 4 `@EventuateDomainEventHandler` annotations (for handleLocationCreatedForCustomer, handleSecuritySystemAssignedToLocation, handleCustomerEmployeeAssignedCustomerRole, handleCustomerEmployeeAssignedLocationRole)
+   - Change channel from "Customer" to "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer"
+
+**Verification**:
+```bash
+./gradlew :location-roles-replica:check
+./gradlew :oso-event-subscribers:check
+./gradlew check
+```
+
+**Commit**: "Update event subscribers to use fully qualified Customer aggregate type"
+
+### [ ] Step 9: Update Event Subscriber Tests
+
+**Location**: Test files in `location-roles-replica` and `oso-event-subscribers`
+
+**Changes**:
+1. Update `CustomerEmployeeLocationEventConsumerTest.java` in location-roles-replica:
+   - Change all `domainEventPublisher.publish()` calls from:
+     ```java
+     domainEventPublisher.publish("Customer", "1", Collections.singletonList(event));
+     ```
+   - To:
+     ```java
+     domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer",
+         "1", Collections.singletonList(event));
+     ```
+
+2. Update `CustomerEventConsumerTest.java` in oso-event-subscribers:
+   - Update all 4 test methods' publish calls to use fully qualified class name
+
+**Verification**:
+```bash
+./gradlew :location-roles-replica:test
+./gradlew :oso-event-subscribers:test
+```
+
+**Commit**: "Update event subscriber tests for new aggregate type"
+
+### [x] Step 10: Update Component Tests
+
+**Location**: `realguardio-customer-service/customer-service-main/src/componentTest`
+
+**Changes**:
+1. Update `ComponentTestSupport.java`:
+   - In `assertDomainEventInOutbox()` method, change the `destination` parameter from "Customer" to the fully qualified class name when called
+
+2. Update `CustomerServiceInProcessComponentTest.java`:
+   - Change the call at line ~106:
+     ```java
+     componentTestSupport.assertDomainEventInOutbox(
+         "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer",
+         String.valueOf(customerSummary.customerId()),
+         "io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole"
+     );
+     ```
+
+**Verification**:
+```bash
+./gradlew :customer-service-main:componentTest
+```
+
+**Commit**: "Update component tests for new aggregate type"
+
 ## Phase 4: Saga Enhancements (Optional but Valuable)
 
-### [ ] Step 8: Create Reply Interfaces for Commands
+### [ ] Step 11: Create Reply Interfaces for Commands
 
 **Location**: Various API modules
 
@@ -268,7 +351,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Add reply interfaces for command results"
 
-### [ ] Step 9: Annotate Success Reply Classes
+### [ ] Step 12: Annotate Success Reply Classes
 
 **Location**: Various API modules
 
@@ -304,7 +387,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Annotate success reply classes with @SuccessReply"
 
-### [ ] Step 10: Annotate Failure Reply Classes
+### [ ] Step 13: Annotate Failure Reply Classes
 
 **Location**: Various API modules
 
@@ -332,7 +415,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Annotate failure reply classes with @FailureReply"
 
-### [ ] Step 11: Add @SagaParticipantOperation to CustomerServiceProxy
+### [ ] Step 14: Add @SagaParticipantOperation to CustomerServiceProxy
 
 **Location**: `realguardio-orchestration-service/orchestration-sagas`
 
@@ -358,7 +441,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Add @SagaParticipantOperation to CustomerServiceProxy"
 
-### [ ] Step 12: Add @SagaParticipantOperation to SecuritySystemServiceProxy
+### [ ] Step 15: Add @SagaParticipantOperation to SecuritySystemServiceProxy
 
 **Location**: `realguardio-orchestration-service/orchestration-sagas`
 

@@ -93,7 +93,7 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 		long securitySystemId = System.currentTimeMillis();
 		var locationId = createLocationForSecuritySystem(customerSummary.customerId(), securitySystemId);
 
-    assertThat(getRolesForLocation(realGuardIOAdminAccessToken, locationId).getRoles()).isEmpty();
+        assertThat(getRolesForLocation(realGuardIOAdminAccessToken, locationId).getRoles()).isEmpty();
 
 		String companyAdminAccessToken = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, adminUser.email(), "password");
 
@@ -104,7 +104,7 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 		assertThat(getRolesForLocation(companyAdminAccessToken, locationId).getRoles()).contains("DISARM");
 
 		componentTestSupport.assertDomainEventInOutbox(
-			"Customer",
+			"io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer",
 			String.valueOf(customerSummary.customerId()),
 			"io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole"
 		);

@@ -10,12 +10,10 @@ import io.eventuate.examples.realguardio.customerservice.organizationmanagement.
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.MemberService;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.OrganizationService;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
-import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +34,7 @@ public class CustomerService {
     private final OrganizationService organizationService;
     private final MemberService memberService;
     private final UserNameSupplier userNameSupplier;
-    private final DomainEventPublisher domainEventPublisher;
+    private final CustomerEventPublisher customerEventPublisher;
 
     @Autowired
     public CustomerService(CustomerRepository customerRepository,
@@ -48,7 +46,7 @@ public class CustomerService {
                           OrganizationService organizationService,
                           MemberService memberService,
                           UserNameSupplier userNameSupplier,
-                          DomainEventPublisher domainEventPublisher) {
+                          CustomerEventPublisher customerEventPublisher) {
         this.customerRepository = customerRepository;
         this.customerEmployeeRepository = customerEmployeeRepository;
         this.locationRepository = locationRepository;
@@ -58,7 +56,7 @@ public class CustomerService {
         this.organizationService = organizationService;
         this.memberService = memberService;
         this.userNameSupplier = userNameSupplier;
-        this.domainEventPublisher = domainEventPublisher;
+        this.customerEventPublisher = customerEventPublisher;
     }
 
     /**
@@ -145,13 +143,8 @@ public class CustomerService {
             throw new IllegalArgumentException("Customer employee does not belong to the specified customer");
         }
 
-        domainEventPublisher.publish(
-            "Customer",
-            customerId.toString(),
-            Collections.singletonList(
-                new CustomerEmployeeAssignedCustomerRole(customerEmployeeId, roleName)
-            )
-        );
+        customerEventPublisher.publish(customer,
+            new CustomerEmployeeAssignedCustomerRole(customerEmployeeId, roleName));
 
         return organizationService.assignRole(customer.getOrganizationId(), customerEmployee.getMemberId(), roleName);
     }
@@ -173,13 +166,8 @@ public class CustomerService {
 
         Location savedLocation = locationRepository.save(location);
 
-        domainEventPublisher.publish(
-            "Customer",
-            customerId.toString(),
-            Collections.singletonList(
-                new LocationCreatedForCustomer(savedLocation.getId())
-            )
-        );
+        customerEventPublisher.publish(customer,
+            new LocationCreatedForCustomer(savedLocation.getId()));
 
         return savedLocation;
     }
@@ -190,13 +178,10 @@ public class CustomerService {
         Location location = locationRepository.findRequiredById(locationId);
         location.addSecuritySystem(securitySystemId);
 
-        domainEventPublisher.publish(
-            "Customer",
-            location.getCustomerId().toString(),
-            Collections.singletonList(
-                new SecuritySystemAssignedToLocation(locationId, securitySystemId)
-            )
-        );
+        Customer customer = customerRepository.findRequiredById(location.getCustomerId());
+
+        customerEventPublisher.publish(customer,
+            new SecuritySystemAssignedToLocation(locationId, securitySystemId));
 
     }
     
@@ -229,13 +214,8 @@ public class CustomerService {
         location.addSecuritySystem(securitySystemId);
         locationRepository.save(location);
 
-        domainEventPublisher.publish(
-            "Customer",
-            customerId.toString(),
-            Collections.singletonList(
-                new SecuritySystemAssignedToLocation(location.getId(), securitySystemId)
-            )
-        );
+        customerEventPublisher.publish(customer,
+            new SecuritySystemAssignedToLocation(location.getId(), securitySystemId));
 
         return location.getId();
     }
@@ -290,16 +270,11 @@ public class CustomerService {
         // Get the member's email address to use as userName
         Member member = memberService.findMemberById(customerEmployee.getMemberId());
         String userName = member.getEmailAddress().email();
-        
+
         // Publish the event
-        domainEventPublisher.publish(
-            "Customer",
-            customerId.toString(),
-            Collections.singletonList(
-                new CustomerEmployeeAssignedLocationRole(userName, locationId, roleName)
-            )
-        );
-        
+        customerEventPublisher.publish(customer,
+            new CustomerEmployeeAssignedLocationRole(userName, locationId, roleName));
+
         return savedRole;
     }
 

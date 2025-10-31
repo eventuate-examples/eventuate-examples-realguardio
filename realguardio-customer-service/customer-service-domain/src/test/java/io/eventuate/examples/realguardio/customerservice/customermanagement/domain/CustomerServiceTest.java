@@ -9,7 +9,6 @@ import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployee
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.exception.NotAuthorizedException;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
 import io.eventuate.examples.realguardio.customerservice.security.UserService;
-import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -21,8 +20,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import java.util.List;
 
 import static io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerServiceTestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,7 +61,7 @@ class CustomerServiceTest {
   private UserService userService;
 
   @MockitoBean
-  private DomainEventPublisher domainEventPublisher;
+  private CustomerEventPublisher customerEventPublisher;
 
   @Autowired
   private LoggedInUser loggedInUser;
@@ -276,7 +273,7 @@ class CustomerServiceTest {
     loggedInUser.withUser(customer);
 
     // Clear any previous interactions
-    Mockito.clearInvocations(domainEventPublisher);
+    Mockito.clearInvocations(customerEventPublisher);
 
     // When
     customer.assignLocationRole(marySmith, location, SECURITY_SYSTEM_ARMER_ROLE);
@@ -291,10 +288,9 @@ class CustomerServiceTest {
             SECURITY_SYSTEM_ARMER_ROLE
         );
 
-    verify(domainEventPublisher).publish(
-        eq("Customer"),
-        any(String.class),
-        eq(List.of(expectedEvent))
+    verify(customerEventPublisher).publish(
+        any(Customer.class),
+        eq(expectedEvent)
     );
   }
 
