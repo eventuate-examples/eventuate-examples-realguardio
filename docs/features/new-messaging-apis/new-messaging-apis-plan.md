@@ -37,7 +37,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Migrate CustomerEmployeeLocationEventConsumer to annotation-based API"
 
-### [ ] Step 2: Migrate CustomerEventConsumer (4 Handlers)
+### [x] Step 2: Migrate CustomerEventConsumer (4 Handlers)
 
 **Location**: `realguardio-oso-integration-service/oso-event-subscribers`
 

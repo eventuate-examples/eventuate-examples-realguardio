@@ -5,8 +5,7 @@ import io.eventuate.examples.realguardio.customerservice.customermanagement.doma
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.SecuritySystemAssignedToLocation;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
 import io.eventuate.tram.events.subscriber.DomainEventEnvelope;
-import io.eventuate.tram.events.subscriber.DomainEventHandlers;
-import io.eventuate.tram.events.subscriber.DomainEventHandlersBuilder;
+import io.eventuate.tram.events.subscriber.annotations.EventuateDomainEventHandler;
 import io.realguardio.osointegration.ososervice.RealGuardOsoFactManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,17 +24,8 @@ public class CustomerEventConsumer {
         this.osoFactManager = osoFactManager;
     }
 
-    public DomainEventHandlers domainEventHandlers() {
-        return DomainEventHandlersBuilder
-            .forAggregateType("Customer")
-            .onEvent(CustomerEmployeeAssignedCustomerRole.class, this::handleCustomerEmployeeAssignedCustomerRole)
-            .onEvent(LocationCreatedForCustomer.class, this::handleLocationCreatedForCustomer)
-            .onEvent(SecuritySystemAssignedToLocation.class, this::handleSecuritySystemAssignedToLocation)
-            .onEvent(CustomerEmployeeAssignedLocationRole.class, this::handleCustomerEmployeeAssignedLocationRole)
-            .build();
-    }
-
-    private void handleCustomerEmployeeAssignedCustomerRole(DomainEventEnvelope<CustomerEmployeeAssignedCustomerRole> envelope) {
+    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "Customer")
+    public void handleCustomerEmployeeAssignedCustomerRole(DomainEventEnvelope<CustomerEmployeeAssignedCustomerRole> envelope) {
         CustomerEmployeeAssignedCustomerRole event = envelope.getEvent();
         String customerId = envelope.getAggregateId();
 
@@ -49,7 +39,8 @@ public class CustomerEventConsumer {
         );
     }
 
-    private void handleLocationCreatedForCustomer(DomainEventEnvelope<LocationCreatedForCustomer> envelope) {
+    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "Customer")
+    public void handleLocationCreatedForCustomer(DomainEventEnvelope<LocationCreatedForCustomer> envelope) {
         LocationCreatedForCustomer event = envelope.getEvent();
         String customerId = envelope.getAggregateId();
 
@@ -62,7 +53,8 @@ public class CustomerEventConsumer {
         );
     }
 
-    private void handleSecuritySystemAssignedToLocation(DomainEventEnvelope<SecuritySystemAssignedToLocation> envelope) {
+    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "Customer")
+    public void handleSecuritySystemAssignedToLocation(DomainEventEnvelope<SecuritySystemAssignedToLocation> envelope) {
         SecuritySystemAssignedToLocation event = envelope.getEvent();
 
         logger.info("Handling SecuritySystemAssignedToLocation event: securitySystemId={}, locationId={}",
@@ -74,7 +66,8 @@ public class CustomerEventConsumer {
         );
     }
 
-    private void handleCustomerEmployeeAssignedLocationRole(DomainEventEnvelope<CustomerEmployeeAssignedLocationRole> envelope) {
+    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "Customer")
+    public void handleCustomerEmployeeAssignedLocationRole(DomainEventEnvelope<CustomerEmployeeAssignedLocationRole> envelope) {
         CustomerEmployeeAssignedLocationRole event = envelope.getEvent();
 
         logger.info("Handling CustomerEmployeeAssignedLocationRole event: userName={}, locationId={}, roleName={}",
