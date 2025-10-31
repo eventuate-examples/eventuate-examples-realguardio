@@ -93,7 +93,7 @@ This plan outlines the incremental migration to the new Eventuate messaging APIs
 
 **Commit**: "Migrate CustomerCommandHandler to annotation-based API"
 
-### [ ] Step 4: Migrate SecuritySystemCommandHandler (2 Handlers)
+### [x] Step 4: Migrate SecuritySystemCommandHandler (2 Handlers)
 
 **Location**: `realguardio-security-system-service/security-system-api-messaging`
 
