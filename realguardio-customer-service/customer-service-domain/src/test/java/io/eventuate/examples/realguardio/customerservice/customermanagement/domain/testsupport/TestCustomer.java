@@ -77,5 +77,13 @@ public record TestCustomer(TestContext testContext,
     return assertThat(testContext.customerService.getCustomerEmployeeLocationRoles(employee.employeeDetails().emailAddress().email(),
         location.getId()));
   }
-  
+
+  public io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Team createTeam(String name) {
+    return testContext.customerService.createTeam(customer().getId(), name);
+  }
+
+  public void addTeamMember(Long teamId, Long customerEmployeeId) {
+    testContext.customerService.addTeamMember(teamId, customerEmployeeId);
+  }
+
 }

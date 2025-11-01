@@ -294,5 +294,29 @@ class CustomerServiceTest {
     );
   }
 
+  @Test
+  public void shouldPublishTeamMemberAddedEventWhenAddingTeamMember() {
+    // Given
+    var customer = testCustomerFactory.createCustomer();
+    var team = customer.createTeam("Operations Team");
+    var employee = customer.createCustomerEmployee();
+
+    Mockito.clearInvocations(customerEventPublisher);
+
+    // When
+    customer.addTeamMember(team.getId(), employee.customerEmployee().getId());
+
+    // Then
+    TeamMemberAdded expectedEvent = new TeamMemberAdded(
+        team.getId(),
+        employee.customerEmployee().getId()
+    );
+
+    verify(customerEventPublisher).publish(
+        any(Customer.class),
+        eq(expectedEvent)
+    );
+  }
+
 
 }

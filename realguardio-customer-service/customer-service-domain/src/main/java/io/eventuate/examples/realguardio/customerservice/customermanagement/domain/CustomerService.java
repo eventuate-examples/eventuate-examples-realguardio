@@ -316,7 +316,15 @@ public class CustomerService {
 
         // Save both entities
         customerEmployeeRepository.save(customerEmployee);
-        return teamRepository.save(team);
+        Team savedTeam = teamRepository.save(team);
+
+        // Publish event using type-safe publisher
+        Customer customer = customerRepository.findRequiredById(team.getCustomerId());
+        customerEventPublisher.publish(customer,
+            new TeamMemberAdded(teamId, customerEmployeeId)
+        );
+
+        return savedTeam;
     }
 
     /**
