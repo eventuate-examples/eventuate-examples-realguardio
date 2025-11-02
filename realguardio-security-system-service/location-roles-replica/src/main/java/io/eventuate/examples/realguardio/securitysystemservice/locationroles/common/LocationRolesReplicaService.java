@@ -51,6 +51,14 @@ public class LocationRolesReplicaService {
                    teamId, roleName, locationId);
     }
 
+    public void saveLocation(Long locationId, String customerId) {
+        String sql = "INSERT INTO locations (id, customer_id) " +
+                     "VALUES (?, ?) " +
+                     "ON CONFLICT (id) DO NOTHING";
+        jdbcTemplate.update(sql, locationId, customerId);
+        logger.info("Saved location: id={}, customerId={}", locationId, customerId);
+    }
+
     public List<LocationRole> findLocationRoles(String userName, Long locationId) {
         String sql = "SELECT id, user_name, location_id, role_name FROM customer_employee_location_role WHERE user_name = ? AND location_id = ?";
         return jdbcTemplate.query(sql, locationRoleRowMapper, userName, locationId);

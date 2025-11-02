@@ -1,5 +1,6 @@
 package io.eventuate.examples.realguardio.securitysystemservice.locationroles.common;
 
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationCreatedForCustomer;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamAssignedLocationRole;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamMemberAdded;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
@@ -107,6 +108,29 @@ public class CustomerEmployeeLocationEventConsumerTest {
                 teamId.toString(),
                 roleName,
                 locationId
+            );
+        });
+    }
+
+    @Test
+    public void shouldHandleLocationCreatedForCustomer() {
+        // Given
+        Long locationId = 999L;
+        String customerId = "customer-3";
+
+        LocationCreatedForCustomer event = new LocationCreatedForCustomer(locationId);
+
+        // When
+        domainEventPublisher.publish(
+            "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer",
+            customerId,
+            Collections.singletonList(event));
+
+        // Then
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(locationRolesReplicaService).saveLocation(
+                locationId,
+                customerId
             );
         });
     }
