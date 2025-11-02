@@ -1,5 +1,6 @@
 package io.eventuate.examples.realguardio.securitysystemservice.locationroles.messaging;
 
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamAssignedLocationRole;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamMemberAdded;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
 import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
@@ -45,6 +46,22 @@ public class CustomerEmployeeLocationEventConsumer {
         replicaService.saveTeamMember(
             event.teamId().toString(),
             event.customerEmployeeId().toString()
+        );
+    }
+
+    @EventuateDomainEventHandler(
+        subscriberId = "locationRolesReplicaDispatcher",
+        channel = "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer"
+    )
+    public void handleTeamAssignedLocationRole(DomainEventEnvelope<TeamAssignedLocationRole> envelope) {
+        TeamAssignedLocationRole event = envelope.getEvent();
+        logger.info("Handling TeamAssignedLocationRole: teamId={}, locationId={}, role={}",
+                   event.teamId(), event.locationId(), event.roleName());
+
+        replicaService.saveTeamLocationRole(
+            event.teamId().toString(),
+            event.roleName(),
+            event.locationId()
         );
     }
 }
