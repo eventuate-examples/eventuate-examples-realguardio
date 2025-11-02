@@ -399,7 +399,14 @@ public class CustomerService {
 
         TeamLocationRole role = new TeamLocationRole(team, locationId, roleName);
         team.addRole(role);
-        return teamLocationRoleRepository.save(role);
+        TeamLocationRole savedRole = teamLocationRoleRepository.save(role);
+
+        Customer customer = customerRepository.findRequiredById(team.getCustomerId());
+        customerEventPublisher.publish(customer,
+            new TeamAssignedLocationRole(teamId, locationId, roleName)
+        );
+
+        return savedRole;
     }
 
     public List<Customer> findAll() {

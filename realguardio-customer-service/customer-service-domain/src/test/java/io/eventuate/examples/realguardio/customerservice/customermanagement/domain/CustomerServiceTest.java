@@ -318,5 +318,30 @@ class CustomerServiceTest {
     );
   }
 
+  @Test
+  public void shouldPublishTeamAssignedLocationRoleEventWhenAssigningTeamRole() {
+    // Given
+    var customer = testCustomerFactory.createCustomer();
+    var team = customer.createTeam("Security Team");
+    var location = customer.createLocation();
+
+    Mockito.clearInvocations(customerEventPublisher);
+
+    // When
+    customerService.assignTeamRole(team.getId(), location.getId(), SECURITY_SYSTEM_DISARMER_ROLE);
+
+    // Then
+    TeamAssignedLocationRole expectedEvent = new TeamAssignedLocationRole(
+        team.getId(),
+        location.getId(),
+        SECURITY_SYSTEM_DISARMER_ROLE
+    );
+
+    verify(customerEventPublisher).publish(
+        any(Customer.class),
+        eq(expectedEvent)
+    );
+  }
+
 
 }
