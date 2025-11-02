@@ -138,18 +138,49 @@ run = "java -version"
 dir = "./realguardio-bff"
 run = "npm install --legacy-peer-deps"
 
+[tasks."customer-service:build"]
+description = "Build realguardio-customer-service"
+dir = "./realguardio-customer-service"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."clean-stubs-repo"]
+run = "rm -fr build/stubsRepo"
+
+[tasks."customer-service:publishContracts"]
+description = "Publish customer-service contracts"
+dir = "./realguardio-customer-service"
+run = "./gradlew publishStubsPublicationToStubsRepository"
+
+[tasks."security-system-service:build"]
+description = "Build realguardio-security-system-service"
+dir = "./realguardio-security-system-service"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."orchestration-service:build"]
+description = "Build realguardio-orchestration-service"
+dir = "./realguardio-orchestration-service"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."oso-integration-service:build"]
+description = "Build realguardio-oso-integration-service"
+dir = "./realguardio-oso-integration-service"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."end-to-end-tests:build"]
+description = "Build end-to-end-tests"
+dir = "./end-to-end-tests"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
 [tasks.build]
 description = "Build all realguardio services with Gradle"
-run = """
-for dir in realguardio-*/; do
-  if [ -f "$dir/build.gradle" ]; then
-    echo "==== Building $dir..."
-    (cd "$dir" && ./gradlew build $GRADLE_BUILD_OPTIONS) || exit 1
-  fi
-done
-echo ==== Running end to end tests
-(cd end-to-end-tests; ./gradlew build $GRADLE_BUILD_OPTIONS) || exit 1
-"""
+run = [
+    "mise run customer-service:build",
+    "mise run customer-service:publishContracts",
+    "mise run security-system-service:build",
+    "mise run orchestration-service:build",
+    "mise run oso-integration-service:build",
+    "mise run end-to-end-tests:build"
+]
 
 [tasks.reset-db]
 description = "Reset PostgreSQL database by recreating the container"

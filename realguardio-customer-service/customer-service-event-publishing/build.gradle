@@ -1,4 +1,6 @@
 apply plugin: 'org.springframework.cloud.contract'
+apply plugin: ConfigureContractRepoDirPlugin
+apply plugin: PublishStubsPlugin
 
 dependencies {
     implementation(platform("org.springframework.cloud:spring-cloud-contract-dependencies:$springCloudContractDependenciesVersion"))
@@ -24,3 +26,4 @@ test {
 contractTest {
     useJUnitPlatform()
 }
+
