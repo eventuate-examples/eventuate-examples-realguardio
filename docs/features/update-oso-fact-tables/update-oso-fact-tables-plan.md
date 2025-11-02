@@ -142,7 +142,7 @@ public class CustomerEmployeeLocationEventConsumer {
 
 #### Task 1.1.1: Write Unit Test FIRST (TDD - Won't Compile)
 
-- [ ] Create test method in `CustomerServiceTest.java`
+- [x] Create test method in `CustomerServiceTest.java`
   - Location: `realguardio-customer-service/customer-service-domain/src/test/java/io/eventuate/examples/realguardio/customerservice/customermanagement/domain/CustomerServiceTest.java`
   - Test name: `shouldPublishTeamMemberAddedEventWhenAddingTeamMember()`
   - Pattern: Mock `DomainEventPublisher`, call `addTeamMember()`, verify event published
@@ -174,13 +174,13 @@ public void shouldPublishTeamMemberAddedEventWhenAddingTeamMember() {
 }
 ```
 
-- [ ] Try to compile and verify it FAILS
+- [x] Try to compile and verify it FAILS
   - Command: `./gradlew :customer-service-domain:compileTestJava`
   - Expected: Compilation fails - "cannot find symbol: class TeamMemberAdded"
 
 #### Task 1.1.2: Create TeamMemberAdded Event Class (Make Test Compile)
 
-- [ ] Create `TeamMemberAdded.java` event record class
+- [x] Create `TeamMemberAdded.java` event record class
   - Location: `realguardio-customer-service/customer-service-domain/src/main/java/io/eventuate/examples/realguardio/customerservice/customermanagement/domain/TeamMemberAdded.java`
   - Event fields: `Long teamId`, `Long customerEmployeeId`
   - Implements `CustomerEvent` (marker interface)
@@ -197,19 +197,19 @@ public record TeamMemberAdded(
 }
 ```
 
-- [ ] Verify test now compiles
+- [x] Verify test now compiles
   - Command: `./gradlew :customer-service-domain:compileTestJava`
   - Expected: Compilation succeeds
 
 #### Task 1.1.3: Run Test and Verify it FAILS (TDD - Red)
 
-- [ ] Run the test and verify it FAILS
+- [x] Run the test and verify it FAILS
   - Command: `./gradlew :customer-service-domain:test --tests CustomerServiceTest.shouldPublishTeamMemberAddedEventWhenAddingTeamMember`
   - Expected: Test FAILS because event is not published (verification fails)
 
 #### Task 1.1.4: Modify CustomerService to Publish Event (TDD - Green)
 
-- [ ] Modify `CustomerService.addTeamMember()` to publish `TeamMemberAdded` event
+- [x] Modify `CustomerService.addTeamMember()` to publish `TeamMemberAdded` event
   - Location: `realguardio-customer-service/customer-service-domain/src/main/java/io/eventuate/examples/realguardio/customerservice/customermanagement/domain/CustomerService.java`
   - Add event publishing after business logic
   - Use type-safe `customerEventPublisher.publish(customer, event)`
@@ -230,23 +230,23 @@ public void addTeamMember(Long teamId, Long customerEmployeeId) {
 }
 ```
 
-- [ ] Run the test and verify it PASSES
+- [x] Run the test and verify it PASSES
   - Command: `./gradlew :customer-service-domain:test --tests CustomerServiceTest.shouldPublishTeamMemberAddedEventWhenAddingTeamMember`
   - Expected: Test passes
 
 #### Task 1.1.5: Run All Customer Service Tests
 
-- [ ] Run all tests in customer-service-domain
+- [x] Run all tests in customer-service-domain
   - Command: `./gradlew :customer-service-domain:test`
   - Expected: All tests pass
 
-- [ ] Run full Customer Service build
+- [x] Run full Customer Service build
   - Command: `cd realguardio-customer-service && ./gradlew check`
   - Expected: Build succeeds
 
 #### Task 1.1.6: Commit Event Publishing Changes
 
-- [ ] Commit the changes
+- [x] Commit the changes
   - Files: `TeamMemberAdded.java`, `CustomerService.java`, `CustomerServiceTest.java`
   - Message: "Add TeamMemberAdded event publishing to CustomerService.addTeamMember()"
 
@@ -256,7 +256,7 @@ public void addTeamMember(Long teamId, Long customerEmployeeId) {
 
 #### Task 1.2.1: Write Unit Test FIRST (TDD - Won't Compile)
 
-- [ ] Add test method to `CustomerEmployeeLocationEventConsumerTest.java`
+- [x] Add test method to `CustomerEmployeeLocationEventConsumerTest.java`
   - Location: `realguardio-security-system-service/location-roles-replica/src/test/java/io/eventuate/examples/realguardio/securitysystemservice/locationroles/common/CustomerEmployeeLocationEventConsumerTest.java`
   - Use `@MockitoBean` for `LocationRolesReplicaService`
   - Use `TramInMemoryConfiguration` for in-memory event bus
@@ -289,21 +289,21 @@ public void shouldHandleTeamMemberAdded() {
 }
 ```
 
-- [ ] Try to compile and verify it FAILS
+- [x] Try to compile and verify it FAILS
   - Command: `./gradlew :location-roles-replica:compileTestJava`
   - Expected: Compilation fails - missing classes
 
 #### Task 1.2.2: Copy Event Class to Security System Service (Make Test Compile - Part 1)
 
-- [ ] Copy `TeamMemberAdded.java` to Security System Service in shorter package
+- [x] Copy `TeamMemberAdded.java` to Security System Service in EXACT SAME package
   - From: `realguardio-customer-service/customer-service-domain/src/main/java/io/eventuate/examples/realguardio/customerservice/customermanagement/domain/TeamMemberAdded.java`
-  - To: `realguardio-security-system-service/location-roles-replica/src/main/java/io/eventuate/examples/realguardio/customerservice/domain/TeamMemberAdded.java`
-  - **Important**: Event copy uses shorter package `...customerservice.domain` (not `...customermanagement.domain`) for deserialization
-  - Event must implement `CustomerEvent` marker interface
+  - To: `realguardio-security-system-service/location-roles-replica/src/main/java/io/eventuate/examples/realguardio/customerservice/customermanagement/domain/TeamMemberAdded.java`
+  - **Important**: Event copy MUST use the EXACT SAME package `...customerservice.customermanagement.domain` as the publisher for proper deserialization
+  - Event must implement `DomainEvent` interface (not `CustomerEvent` - that's only in Customer Service)
 
 #### Task 1.2.3: Add Service Method to LocationRolesReplicaService (Make Test Compile - Part 2)
 
-- [ ] Add `saveTeamMember()` method to `LocationRolesReplicaService.java`
+- [x] Add `saveTeamMember()` method to `LocationRolesReplicaService.java`
   - Location: `realguardio-security-system-service/location-roles-replica/src/main/java/io/eventuate/examples/realguardio/securitysystemservice/locationroles/common/LocationRolesReplicaService.java`
   - Implement `saveTeamMember(String teamId, String customerEmployeeId)` method
   - Use existing `JdbcTemplate` to insert into `team_members` table
@@ -318,13 +318,13 @@ public void saveTeamMember(String teamId, String customerEmployeeId) {
 }
 ```
 
-- [ ] Verify test now compiles
+- [x] Verify test now compiles
   - Command: `./gradlew :location-roles-replica:compileTestJava`
   - Expected: Compilation succeeds (but test configuration still incomplete)
 
 #### Task 1.2.4: Add Event Handler to CustomerEmployeeLocationEventConsumer (Make Test Compile - Part 3)
 
-- [ ] Add `handleTeamMemberAdded()` method to `CustomerEmployeeLocationEventConsumer.java`
+- [x] Add `handleTeamMemberAdded()` method to `CustomerEmployeeLocationEventConsumer.java`
   - Location: `realguardio-security-system-service/location-roles-replica/src/main/java/io/eventuate/examples/realguardio/securitysystemservice/locationroles/messaging/CustomerEmployeeLocationEventConsumer.java`
   - Use annotation-based event handling with `@EventuateDomainEventHandler`
   - Use same `subscriberId = "locationRolesReplicaDispatcher"` as existing handler
@@ -346,13 +346,13 @@ public void handleTeamMemberAdded(DomainEventEnvelope<TeamMemberAdded> envelope)
 
 #### Task 1.2.5: Run Test and Verify it FAILS (TDD - Red)
 
-- [ ] Run the unit test and verify it FAILS
+- [x] Run the unit test and verify it FAILS
   - Command: `./gradlew :location-roles-replica:test --tests CustomerEmployeeLocationEventConsumerTest.shouldHandleTeamMemberAdded`
   - Expected: Test FAILS - service method never called (verification fails)
 
 #### Task 1.2.6: Implement Event Handler to Call Service (TDD - Green)
 
-- [ ] Update `handleTeamMemberAdded()` in `CustomerEmployeeLocationEventConsumer.java` to call service
+- [x] Update `handleTeamMemberAdded()` in `CustomerEmployeeLocationEventConsumer.java` to call service
 
 ```java
 private void handleTeamMemberAdded(DomainEventEnvelope<TeamMemberAdded> envelope) {
@@ -367,13 +367,13 @@ private void handleTeamMemberAdded(DomainEventEnvelope<TeamMemberAdded> envelope
 }
 ```
 
-- [ ] Run the unit test and verify it PASSES
+- [x] Run the unit test and verify it PASSES
   - Command: `./gradlew :location-roles-replica:test --tests CustomerEmployeeLocationEventConsumerTest.shouldHandleTeamMemberAdded`
   - Expected: Test passes
 
 #### Task 1.2.7: Write Integration Test for Database Updates (TDD)
 
-- [ ] Add test methods to `LocationRolesReplicaServiceTest.java`
+- [x] Add test methods to `LocationRolesReplicaServiceTest.java`
   - Location: `realguardio-security-system-service/location-roles-replica/src/test/java/io/eventuate/examples/realguardio/securitysystemservice/locationroles/common/LocationRolesReplicaServiceTest.java`
   - Use `@SpringBootTest` with real database
   - Flyway migrations run automatically
@@ -421,13 +421,13 @@ private void handleTeamMemberAdded(DomainEventEnvelope<TeamMemberAdded> envelope
 }
 ```
 
-- [ ] Run integration tests
+- [x] Run integration tests
   - Command: `./gradlew :location-roles-replica:test --tests LocationRolesReplicaServiceTest`
   - Expected: Tests pass
 
 #### Task 1.2.8: Write End-to-End Integration Test
 
-- [ ] Add test method to `CustomerEmployeeLocationEventConsumerTest.java`
+- [x] Add test method to `CustomerEmployeeLocationEventConsumerTest.java`
   - Test name: `shouldConsumeTeamMemberAddedEventAndUpdateDatabase()`
   - Publish event and verify database was updated
   - Flyway migrations run automatically
@@ -461,30 +461,30 @@ public void shouldConsumeTeamMemberAddedEventAndUpdateDatabase() {
 }
 ```
 
-- [ ] Run the test
+- [x] Run the test
   - Command: `./gradlew :location-roles-replica:test --tests CustomerEmployeeLocationEventConsumerTest.shouldConsumeTeamMemberAddedEventAndUpdateDatabase`
   - Expected: Test passes
 
 #### Task 1.2.9: Run All Security System Service Tests
 
-- [ ] Run all tests in location-roles-replica
+- [x] Run all tests in location-roles-replica
   - Command: `./gradlew :location-roles-replica:test`
   - Expected: All tests pass
 
-- [ ] Run full Security System Service build
+- [x] Run full Security System Service build
   - Command: `cd realguardio-security-system-service && ./gradlew check`
   - Expected: Build succeeds
 
 #### Task 1.2.10: Run End-to-End Tests
 
-- [ ] Run end-to-end tests to verify event flow works across services
-  - Command: `./gradlew -p end-to-end-tests check`
+- [x] Run end-to-end tests to verify event flow works across services
+  - Command: `cd end-to-end-tests && ./gradlew check`
   - Expected: All checks pass (includes unit tests, integration tests, and other validations)
   - **Important**: This verifies that Customer Service publishes events and Security System Service consumes them correctly
 
 #### Task 1.2.11: Commit Event Consumption Changes
 
-- [ ] Commit the changes
+- [x] Commit the changes
   - Files: `TeamMemberAdded.java` (copy), `CustomerEmployeeLocationEventConsumer.java` (enhanced), `LocationRolesReplicaService.java` (enhanced), test files
   - Message: "Add TeamMemberAdded event consumption to populate team_members table"
 
@@ -497,7 +497,7 @@ public void shouldConsumeTeamMemberAddedEventAndUpdateDatabase() {
 - Publishing uses type-safe `customerEventPublisher.publish(customer, event)`
 - Event handling uses `@EventuateDomainEventHandler` annotation
 - Tests use `@MockitoBean` and `TramInMemoryConfiguration`
-- Event copies to Security Service use shorter package `...customerservice.domain`
+- Event copies to Security Service MUST use EXACT SAME package `...customerservice.customermanagement.domain` as publisher
 
 ### Phase 2.1: Publish TeamAssignedLocationRole Event (Customer Service)
 
@@ -869,11 +869,11 @@ public void shouldHandleLocationCreatedForCustomer() {
 
 #### Task 3.1.2: Copy Event Class to Security System Service (Make Test Compile - Part 1)
 
-- [ ] Copy `LocationCreatedForCustomer.java` to Security System Service in shorter package
+- [ ] Copy `LocationCreatedForCustomer.java` to Security System Service in EXACT SAME package
   - From: `realguardio-customer-service/customer-service-domain/src/main/java/io/eventuate/examples/realguardio/customerservice/customermanagement/domain/LocationCreatedForCustomer.java`
-  - To: `realguardio-security-system-service/location-roles-replica/src/main/java/io/eventuate/examples/realguardio/customerservice/domain/LocationCreatedForCustomer.java`
-  - **Important**: Event copy uses shorter package `...customerservice.domain` for deserialization
-  - Event must implement `CustomerEvent` marker interface
+  - To: `realguardio-security-system-service/location-roles-replica/src/main/java/io/eventuate/examples/realguardio/customerservice/customermanagement/domain/LocationCreatedForCustomer.java`
+  - **Important**: Event copy MUST use the EXACT SAME package `...customerservice.customermanagement.domain` as the publisher for proper deserialization
+  - Event must implement `DomainEvent` interface (not `CustomerEvent` - that's only in Customer Service)
 
 - [ ] Verify test now compiles
   - Command: `./gradlew :location-roles-replica:compileTestJava`

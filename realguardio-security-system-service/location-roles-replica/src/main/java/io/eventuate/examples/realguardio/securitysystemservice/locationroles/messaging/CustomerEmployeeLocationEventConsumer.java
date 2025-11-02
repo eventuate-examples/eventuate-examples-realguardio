@@ -1,7 +1,7 @@
 package io.eventuate.examples.realguardio.securitysystemservice.locationroles.messaging;
 
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamMemberAdded;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
-import io.eventuate.examples.realguardio.customerservice.domain.TeamMemberAdded;
 import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import io.eventuate.tram.events.subscriber.DomainEventEnvelope;
 import io.eventuate.tram.events.subscriber.annotations.EventuateDomainEventHandler;
