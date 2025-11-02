@@ -1,5 +1,26 @@
+apply plugin: 'org.springframework.cloud.contract'
+
 dependencies {
+    implementation(platform("org.springframework.cloud:spring-cloud-contract-dependencies:$springCloudContractDependenciesVersion"))
+
     implementation project(':customer-service-domain')
     implementation 'io.eventuate.tram.core:eventuate-tram-spring-events-publisher-starter'
 
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+
+    contractTestImplementation "io.eventuate.tram.testingsupport.springcloudcontract:eventuate-tram-spring-testing-support-cloud-contract"
+}
+
+
+contracts {
+    testFramework = "JUNIT5"
+    baseClassForTests = "io.eventuate.examples.realguardio.customerservice.customermanagement.eventpublishing.BaseClass"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+contractTest {
+    useJUnitPlatform()
 }
