@@ -1,6 +1,7 @@
 package io.eventuate.examples.realguardio.securitysystemservice.locationroles.common;
 
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
+import io.eventuate.examples.realguardio.customerservice.domain.TeamMemberAdded;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 import io.eventuate.examples.realguardio.securitysystemservice.locationroles.messaging.LocationRolesReplicaMessagingConfiguration;
 import io.eventuate.tram.events.publisher.DomainEventPublisher;
@@ -46,8 +47,8 @@ public class CustomerEmployeeLocationEventConsumerTest {
         String userName = "john.doe@example.com";
         Long locationId = 123L;
         String roleName = RolesAndPermissions.SECURITY_SYSTEM_ARMER;
-        
-        CustomerEmployeeAssignedLocationRole event = 
+
+        CustomerEmployeeAssignedLocationRole event =
             new CustomerEmployeeAssignedLocationRole(userName, locationId, roleName);
 
         // When - publish the event
@@ -56,6 +57,30 @@ public class CustomerEmployeeLocationEventConsumerTest {
         // Then - verify the database is updated using LocationRolesReplicaService
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(locationRolesReplicaService).saveLocationRole(userName, locationId, roleName);
+        });
+    }
+
+    @Test
+    public void shouldHandleTeamMemberAdded() {
+        // Given
+        Long teamId = 123L;
+        Long employeeId = 456L;
+        String customerId = "customer-1";
+
+        TeamMemberAdded event = new TeamMemberAdded(teamId, employeeId);
+
+        // When - publish with fully qualified aggregate type
+        domainEventPublisher.publish(
+            "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer",
+            customerId,
+            Collections.singletonList(event));
+
+        // Then
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(locationRolesReplicaService).saveTeamMember(
+                teamId.toString(),
+                employeeId.toString()
+            );
         });
     }
 
