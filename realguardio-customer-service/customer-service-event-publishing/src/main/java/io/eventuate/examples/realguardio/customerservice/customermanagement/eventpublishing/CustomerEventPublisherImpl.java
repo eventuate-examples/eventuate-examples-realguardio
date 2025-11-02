@@ -1,5 +1,7 @@
-package io.eventuate.examples.realguardio.customerservice.customermanagement.domain;
+package io.eventuate.examples.realguardio.customerservice.customermanagement.eventpublishing;
 
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEventPublisher;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEvent;
 import io.eventuate.tram.events.publisher.AbstractDomainEventPublisherForAggregateImpl;
 import io.eventuate.tram.events.publisher.DomainEventPublisher;

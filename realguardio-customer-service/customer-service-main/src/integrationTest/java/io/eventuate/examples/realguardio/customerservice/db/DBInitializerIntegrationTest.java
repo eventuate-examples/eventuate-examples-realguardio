@@ -3,11 +3,8 @@ package io.eventuate.examples.realguardio.customerservice.db;
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.CustomerManagementConfiguration;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeRepository;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerRepository;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationRepository;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamLocationRoleRepository;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamRepository;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.*;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.eventpublishing.CustomerManagementEventPublishingConfiguration;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.MemberRepository;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.MemberRoleRepository;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.OrganizationRepository;
@@ -37,7 +34,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class DBInitializerIntegrationTest {
 
     @Configuration
-    @Import({CustomerManagementConfiguration.class})
+    @Import({CustomerManagementConfiguration.class, CustomerManagementEventPublishingConfiguration.class})
     @EnableAutoConfiguration
     public static class Config {
         @Bean
