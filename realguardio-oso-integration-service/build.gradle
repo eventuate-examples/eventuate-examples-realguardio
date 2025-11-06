@@ -75,12 +75,21 @@ task validateOsoPolicy(type: Exec) {
 	group = 'verification'
 
 	workingDir projectDir
-	commandLine 'oso-cloud', 'validate', 'policies/main.polar'
+    commandLine './validate-oso-policy.sh'
+}
+
+task testOsoPolicy(type: Exec) {
+	description = 'test the OSO policy file'
+	group = 'verification'
+
+	workingDir projectDir
+	commandLine './test-oso-policy.sh'
 }
 
 subprojects {
 	tasks.withType(Test).configureEach {
 		dependsOn rootProject.tasks.named('validateOsoPolicy')
+		dependsOn rootProject.tasks.named('testOsoPolicy')
 	}
 }
 
