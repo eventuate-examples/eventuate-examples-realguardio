@@ -76,6 +76,19 @@ services:
       OTEL_PROPAGATORS: tracecontext
     depends_on:
       - jaeger
+
+  oso-service:
+    image: public.ecr.aws/osohq/dev-server:latest
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./realguardio-oso-integration-service/policies/main.polar:/policies/main.polar
+    command: ["--watch-for-changes", "/policies/main.polar"]
+    # healthcheck:
+    #   test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 5
   realguardio-security-system-service:
     build:
       context: ./
@@ -86,7 +99,7 @@ services:
     ports:
       - "3001:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,UseOsoService
       EVENTUATE_DATABASE_SCHEMA: public
       SPRING_DATASOURCE_URL: jdbc:postgresql://security-system-service-db:5432/eventuate
       SPRING_DATASOURCE_USERNAME: postgresuser
@@ -98,11 +111,14 @@ services:
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CUSTOMER_SERVICE_URL: http://realguardio-customer-service:8080
+      OSO_URL: http://oso-service:8080
+      OSO_AUTH: e_0123456789_12345_osotesttoken01xiIn
     depends_on:
       - security-system-service-db
       - kafka
       - jaeger
       - realguardio-iam-service
+      - oso-service
   realguardio-bff:
     build:
       context: ./realguardio-bff
@@ -139,7 +155,7 @@ services:
     ports:
       - "3002:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,UseOsoService
       EVENTUATE_DATABASE_SCHEMA: public
       SPRING_DATASOURCE_URL: jdbc:postgresql://customer-service-db:5432/eventuate
       SPRING_DATASOURCE_USERNAME: postgresuser
@@ -150,11 +166,14 @@ services:
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OSO_URL: http://oso-service:8080
+      OSO_AUTH: e_0123456789_12345_osotesttoken01xiIn
     depends_on:
       - customer-service-db
       - kafka
       - jaeger
       - realguardio-iam-service
+      - oso-service
   realguardio-orchestration-service:
     build:
       context: ./realguardio-orchestration-service
@@ -181,6 +200,24 @@ services:
       - kafka
       - jaeger
       - realguardio-iam-service
+
+  realguardio-oso-integration-service:
+    build:
+      context: ./realguardio-oso-integration-service
+      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      args:
+        baseImageVersion: 0.1.0.RELEASE
+        serviceImageVersion: 0.1.0-SNAPSHOT
+    ports:
+      - "3004:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OSO_URL: http://oso-service:8080
+      OSO_AUTH: e_0123456789_12345_osotesttoken01xiIn
+    depends_on:
+      - kafka
+      - oso-service
 
   cdc:
     image: eventuateio/eventuate-cdc-service:0.19.0.BUILD-SNAPSHOT

@@ -25,10 +25,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 public abstract class AbstractRealGuardioEndToEndTest {
-    
+
     protected static final Logger logger = LoggerFactory.getLogger(AbstractRealGuardioEndToEndTest.class);
 
     protected static ApplicationUnderTest aut = ApplicationUnderTest.make();
+
+    private static final int MAX_ARM_RETRIES = 5;
+    private static final int ARM_RETRY_POLL_INTERVAL_SECONDS = 2;
 
 
     private String authTokenForRealGuardIoAdmin;
@@ -218,19 +221,38 @@ public abstract class AbstractRealGuardioEndToEndTest {
         }
         """;
 
-        RestAssured.given()
-            .baseUri("http://localhost:" + aut.getSecurityServicePort())
-            .header("Authorization", "Bearer " + adminAuthToken)
-            .contentType(ContentType.JSON)
-            .body(armRequestJson)
-            .log().all()
-            .when()
-            .put("/securitysystems/" + securitySystemId)
-            .then()
-            .log().all()
-            .statusCode(200);
+        int maxAttempts = MAX_ARM_RETRIES;
+        int totalTimeoutSeconds = maxAttempts * ARM_RETRY_POLL_INTERVAL_SECONDS + 10; // Extra buffer for processing
 
-        logger.info("Security system {} armed successfully", securitySystemId);
+        await().atMost(totalTimeoutSeconds, TimeUnit.SECONDS)
+            .pollInterval(ARM_RETRY_POLL_INTERVAL_SECONDS, TimeUnit.SECONDS)
+            .until(() -> {
+                var response = RestAssured.given()
+                    .baseUri("http://localhost:" + aut.getSecurityServicePort())
+                    .header("Authorization", "Bearer " + adminAuthToken)
+                    .contentType(ContentType.JSON)
+                    .body(armRequestJson)
+                    .log().all()
+                    .when()
+                    .put("/securitysystems/" + securitySystemId)
+                    .then()
+                    .log().all()
+                    .extract()
+                    .response();
+
+                int statusCode = response.getStatusCode();
+
+                if (statusCode == 200) {
+                    logger.info("Security system {} armed successfully", securitySystemId);
+                    return true;
+                } else if (statusCode == 403) {
+                    logger.warn("Received 403 Forbidden when attempting to arm security system {}. Retrying...", securitySystemId);
+                    TimeUnit.SECONDS.sleep(1);
+                    return false;
+                } else {
+                    throw new AssertionError("Unexpected status code " + statusCode + " when arming security system " + securitySystemId);
+                }
+            });
     }
 
     private static void verifySecuritySystemArmed(String adminAuthToken, Long securitySystemId) {
@@ -255,6 +277,8 @@ public abstract class AbstractRealGuardioEndToEndTest {
     private CustomerCreationResult createCustomerWithAdmin() {
         // Arrange - Create unique test data
         String uniqueEmail = "admin-" + UUID.randomUUID() + "@example.com";
+
+        logger.info("Creating customer with admin email {}", uniqueEmail);
 
         // Act - Create customer
         CreateCustomerRequest customerRequest = new CreateCustomerRequest(

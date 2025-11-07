@@ -1,5 +1,6 @@
 package io.eventuate.examples.realguardio.securitysystemservice.restapi;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.ForbiddenException;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAction;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
@@ -18,6 +19,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -134,11 +136,25 @@ class SecuritySystemControllerTest {
     @Test
     void shouldReturnNotFoundForNonExistentSecuritySystem() throws Exception {
         Long systemId = 999L;
-        
+
         when(securitySystemService.findById(systemId)).thenReturn(Optional.empty());
-        
+
         mockMvc.perform(get("/securitysystems/{id}", systemId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnForbiddenWhenForbiddenExceptionIsThrown() throws Exception {
+        Long systemId = 1L;
+
+        when(securitySystemService.arm(anyLong())).thenThrow(new ForbiddenException("Access denied"));
+
+        String requestBody = "{\"action\": \"ARM\"}";
+
+        mockMvc.perform(put("/securitysystems/{id}", systemId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isForbidden());
     }
 
 }

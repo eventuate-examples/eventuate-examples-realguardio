@@ -37,9 +37,7 @@ public class ClasspathLocalAuthorizationConfigFileSupplier implements LocalAutho
                 }
                 case "jar" -> {
                     fs = FileSystems.newFileSystem(uri, Map.of());
-                    String entryPath = uri.getSchemeSpecificPart()
-                            .split("!", 2)[1]; // e.g. /com/example/config.json
-                    return fs.getPath(entryPath);
+                    return Path.of(uri);
                 }
                 default -> {
                     try (InputStream in = url.openStream()) {

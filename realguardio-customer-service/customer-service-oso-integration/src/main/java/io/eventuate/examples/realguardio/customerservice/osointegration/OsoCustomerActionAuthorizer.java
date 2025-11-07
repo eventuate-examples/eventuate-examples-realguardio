@@ -1,4 +1,4 @@
-package io.eventuate.examples.realguardio.securitysystemservice.osointegration;
+package io.eventuate.examples.realguardio.customerservice.osointegration;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerActionAuthorizer;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
