@@ -1,8 +1,11 @@
 package io.eventuate.examples.realguardio.customerservice.customermanagement.domain;
 
 import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.CustomerManagementConfiguration;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.MockUser;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.persistence.CustomerManagementJpaPersistenceConfiguration;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.persistence.OrganizationManagementJpaPersistenceConfiguration;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.MemberService;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.OrganizationService;
 import io.eventuate.examples.realguardio.customerservice.security.SecurityConfiguration;
 import io.eventuate.examples.realguardio.customerservice.security.UserService;
 import org.junit.jupiter.api.Test;
@@ -28,7 +31,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class CustomerServiceSecurityTest {
 
     @Configuration
-    @Import({SecurityConfiguration.class, CustomerManagementConfiguration.class})
+    @Import({SecurityConfiguration.class, CustomerManagementJpaPersistenceConfiguration.class, OrganizationManagementJpaPersistenceConfiguration.class,
+            CustomerService.class, OrganizationService.class, MemberService.class})
     @EnableAutoConfiguration
     static public class Config {
     }
@@ -41,6 +45,9 @@ public class CustomerServiceSecurityTest {
 
     @MockitoBean
     private CustomerEventPublisher customerEventPublisher;
+
+    @MockitoBean
+    private CustomerActionAuthorizer customerActionAuthorizer;
 
     @Test
     void shouldDenyCreateCustomerWithoutAuthentication() {
@@ -70,7 +77,7 @@ public class CustomerServiceSecurityTest {
         Set<String> roles = customerService.getCustomerEmployeeRoles(
             result.customer().getId(),
             result.initialAdministrator().getId());
-        assertThat(roles).contains(CustomerService.COMPANY_ROLE_ADMIN);
+        assertThat(roles).contains(RolesAndPermissions.COMPANY_ROLE_ADMIN);
     }
 
     @Test

@@ -12,6 +12,7 @@ import io.eventuate.examples.realguardio.customerservice.organizationmanagement.
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
@@ -19,12 +20,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
+@Service
 @Transactional
 public class CustomerService {
 
-    public static final String COMPANY_ROLE_ADMIN = "COMPANY_ROLE_ADMIN";
-    
     private final CustomerRepository customerRepository;
     private final CustomerEmployeeRepository customerEmployeeRepository;
     private final LocationRepository locationRepository;
@@ -35,6 +34,7 @@ public class CustomerService {
     private final MemberService memberService;
     private final UserNameSupplier userNameSupplier;
     private final CustomerEventPublisher customerEventPublisher;
+    private final CustomerActionAuthorizer customerActionAuthorizer;
 
     @Autowired
     public CustomerService(CustomerRepository customerRepository,
@@ -46,7 +46,7 @@ public class CustomerService {
                           OrganizationService organizationService,
                           MemberService memberService,
                           UserNameSupplier userNameSupplier,
-                          CustomerEventPublisher customerEventPublisher) {
+                          CustomerEventPublisher customerEventPublisher, CustomerActionAuthorizer customerActionAuthorizer) {
         this.customerRepository = customerRepository;
         this.customerEmployeeRepository = customerEmployeeRepository;
         this.locationRepository = locationRepository;
@@ -57,6 +57,7 @@ public class CustomerService {
         this.memberService = memberService;
         this.userNameSupplier = userNameSupplier;
         this.customerEventPublisher = customerEventPublisher;
+        this.customerActionAuthorizer = customerActionAuthorizer;
     }
 
     /**
@@ -76,7 +77,7 @@ public class CustomerService {
         // Create initial admin without authorization check
         CustomerEmployee admin = createCustomerEmployeeInternal(customer.getId(), initialAdministrator);
         
-        assignRoleInternal(customer.getId(), admin.getId(), COMPANY_ROLE_ADMIN);
+        assignRoleInternal(customer.getId(), admin.getId(), RolesAndPermissions.COMPANY_ROLE_ADMIN);
         
         return new CustomerAndCustomerEmployee(customer, admin);
     }
@@ -98,7 +99,7 @@ public class CustomerService {
     public CustomerEmployee createCustomerEmployee(Long customerId, PersonDetails personDetails) {
         Customer customer = customerRepository.findRequiredById(customerId);
 
-        requireCustomerAdminRole(customerId);
+        customerActionAuthorizer.verifyCanDo(customerId, "createCustomerEmployee");
 
         return createCustomerEmployeeInternal(customerId, personDetails);
     }
@@ -108,11 +109,9 @@ public class CustomerService {
         Member currentMember = memberService.findMemberByEmail(new EmailAddress(currentUserEmail))
                 .orElseThrow(() -> new IllegalArgumentException("Current user member not found: %s".formatted(currentUserEmail)));
 
-        CustomerEmployee currentEmployee = customerEmployeeRepository.findByMemberIdAndCustomerId(currentMember.getId(), customerId)
-                .orElseThrow(() -> new NotAuthorizedException("Current user %s is not an employee of this customer".formatted(currentUserEmail)));
+        Set<String> currentUserRoles = customerEmployeeRepository.findRolesInCustomer(customerId, currentUserEmail);
 
-        Set<String> currentUserRoles = getCustomerEmployeeRoles(customerId, currentEmployee.getId());
-        if (!currentUserRoles.contains(COMPANY_ROLE_ADMIN)) {
+        if (!currentUserRoles.contains(RolesAndPermissions.COMPANY_ROLE_ADMIN)) {
             throw new NotAuthorizedException("Only company admins can create new employees");
         }
         return currentMember;

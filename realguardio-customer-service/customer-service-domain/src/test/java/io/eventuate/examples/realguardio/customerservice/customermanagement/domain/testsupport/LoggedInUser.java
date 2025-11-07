@@ -38,7 +38,7 @@ public class LoggedInUser {
   }
 
 
-  <T> T doWithUser(PersonDetails username, Supplier<T> supplier) {
+  public <T> T doWithUser(PersonDetails username, Supplier<T> supplier) {
     return doWithUser(username.emailAddress().email(), supplier);
   }
 

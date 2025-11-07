@@ -5,6 +5,7 @@ import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddre
 import io.eventuate.examples.realguardio.customerservice.restapi.RolesResponse;
 import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
+import io.eventuate.testcontainers.service.BuildArgsResolver;
 import io.eventuate.testcontainers.service.ServiceContainer;
 import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
 import io.restassured.RestAssured;
@@ -17,8 +18,10 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.lifecycle.Startables;
 
+import java.nio.file.Paths;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,7 +53,10 @@ public class CustomerServiceComponentTest extends AbstractCustomerServiceCompone
 
 	public static GenericContainer<?> service =
 
-		ServiceContainer.makeFromDockerfileInFileSystem("../Dockerfile-local")
+		new ServiceContainer(new ImageFromDockerfile()
+                .withFileFromPath(".", Paths.get("../..").toAbsolutePath())  // Context: parent directory
+                .withDockerfilePath("realguardio-customer-service/Dockerfile-local")  // Dockerfile path
+                .withBuildArgs(BuildArgsResolver.buildArgs()))
 			.withNetwork(eventuateKafkaCluster.network)
 			.withDatabase(database)
 			.withKafka(kafka)

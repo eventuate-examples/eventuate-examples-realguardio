@@ -1,5 +1,5 @@
 ARG baseImageVersion
 FROM eventuateio/eventuate-examples-docker-images-spring-example-base-image:$baseImageVersion
 ARG serviceImageVersion
-COPY customer-service-main/build/libs/customer-service-main-$serviceImageVersion.jar service.jar
+COPY realguardio-customer-service/customer-service-main/build/libs/customer-service-main-$serviceImageVersion.jar service.jar
 HEALTHCHECK --interval=3s --retries=20 CMD curl -f http://localhost:8080/actuator/health || exit 1

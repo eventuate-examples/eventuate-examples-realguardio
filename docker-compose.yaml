@@ -131,8 +131,8 @@ services:
       - realguardio-security-system-service
   realguardio-customer-service:
     build:
-      context: ./realguardio-customer-service
-      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      context: ./
+      dockerfile: realguardio-customer-service/Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
       args:
         baseImageVersion: 0.1.0.RELEASE
         serviceImageVersion: 0.1.0-SNAPSHOT

@@ -15,6 +15,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'io.eventuate.tram.core:eventuate-tram-spring-in-memory'
     testRuntimeOnly 'com.h2database:h2'
+    testImplementation project(":customer-service-persistence")
 
 
 }

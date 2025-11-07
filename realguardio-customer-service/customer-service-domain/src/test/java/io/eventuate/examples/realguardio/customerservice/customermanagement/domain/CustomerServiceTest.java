@@ -1,12 +1,15 @@
 package io.eventuate.examples.realguardio.customerservice.customermanagement.domain;
 
 import io.eventuate.examples.realguardio.customerservice.commondomain.PersonDetails;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.CustomerManagementConfiguration;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.LoggedInUser;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.TestContext;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.testsupport.TestCustomerFactory;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.persistence.CustomerManagementJpaPersistenceConfiguration;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.exception.NotAuthorizedException;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.persistence.OrganizationManagementJpaPersistenceConfiguration;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.MemberService;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.OrganizationService;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
 import io.eventuate.examples.realguardio.customerservice.security.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,17 +25,20 @@ import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerServiceTestData.*;
+import static io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier.uniquify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest(classes = CustomerServiceTest.Config.class)
 class CustomerServiceTest {
 
   @Configuration
-  @Import(CustomerManagementConfiguration.class)
+  @Import({CustomerManagementJpaPersistenceConfiguration.class, OrganizationManagementJpaPersistenceConfiguration.class,
+          CustomerService.class, OrganizationService.class, MemberService.class})
   @EnableAutoConfiguration
   public static class Config {
 
@@ -63,6 +69,9 @@ class CustomerServiceTest {
   @MockitoBean
   private CustomerEventPublisher customerEventPublisher;
 
+  @MockitoBean
+  private CustomerActionAuthorizer customerActionAuthorizer;
+
   @Autowired
   private LoggedInUser loggedInUser;
 
@@ -71,6 +80,9 @@ class CustomerServiceTest {
 
   @Autowired
   private CustomerService customerService;
+
+  @Autowired
+  private UserNameSupplier userNameSupplier;
 
   @BeforeEach
   public void setUp() {
@@ -101,7 +113,7 @@ class CustomerServiceTest {
     PersonDetails retrievedAdminDetails = createdCustomer.findEmployeeDetails(initialAdmin);
     assertThat(retrievedAdminDetails).isEqualTo(initialAdminDetails);
 
-    createdCustomer.assertThatCustomerEmployeeRoles(initialAdmin).containsExactly(CustomerService.COMPANY_ROLE_ADMIN);
+    createdCustomer.assertThatCustomerEmployeeRoles(initialAdmin).containsExactly(RolesAndPermissions.COMPANY_ROLE_ADMIN);
   }
 
 
@@ -170,22 +182,6 @@ class CustomerServiceTest {
         .isInstanceOf(DataRetrievalFailureException.class);
   }
 
-  @Test
-  void shouldDenyCreateCustomerEmployeeWhenCallerIsNotAdmin() {
-
-    // Given
-
-    var customer = testCustomerFactory.createCustomer();
-
-    var johnDoe = customer.createCustomerEmployee();
-
-    loggedInUser.withUser(johnDoe);
-
-    // When & Then
-
-    assertThatThrownBy(() -> customer.createCustomerEmployee(NEW_EMPLOYEE))
-        .isInstanceOf(NotAuthorizedException.class);
-  }
 
   @Test
   public void shouldRequireCompanyAdminToAssignRoles() {
@@ -246,10 +242,12 @@ class CustomerServiceTest {
 
     customer.assertEmployeeLocationRoles(marySmith, location).containsExactly(SECURITY_SYSTEM_ARMER_ROLE);
 
+    verify(customerActionAuthorizer).verifyCanDo(customer.customer().getId(), RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE);
+
   }
 
   @Test
-  public void shouldBeInSameCompanyToCreateEmployee() {
+  public void shouldFailWhenNotAuthorized() {
 
     // Given
 
@@ -258,10 +256,14 @@ class CustomerServiceTest {
 
     loggedInUser.withUser(customer1);
 
+    doThrow(new NotAuthorizedException("message")).when(customerActionAuthorizer).verifyCanDo(customer1.customer().getId(), RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE);
+
     // When & Then
 
-    assertThatThrownBy(customer2::createCustomerEmployee)
-        .isInstanceOf(NotAuthorizedException.class) ;
+    assertThatThrownBy(() -> {
+        loggedInUser.doWithUser(customer2.initialAdminDetails(),
+            () -> customerService.createCustomerEmployee(customer1.customer().getId(), uniquify(JOHN_DOE_DETAILS)));
+    }).isInstanceOf(NotAuthorizedException.class) ;
   }
 
   @Test

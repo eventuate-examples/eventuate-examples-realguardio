@@ -21,8 +21,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 public class OrganizationServiceTest {
 
   @Configuration
-  @Import(OrganizationManagementConfiguration.class)
   @EnableAutoConfiguration
+  @Import({OrganizationService.class, MemberService.class})
   public static class Config {
     // Configuration for the test context
   }

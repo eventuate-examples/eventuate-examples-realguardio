@@ -25,10 +25,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RepositoriesTest {
 
     @Configuration
-    @Import(OrganizationManagementConfiguration.class)
     @EnableAutoConfiguration
+    @Import({OrganizationService.class, MemberService.class})
     public static class Config {
-        // Configuration for the test context
     }
 
     @MockitoBean

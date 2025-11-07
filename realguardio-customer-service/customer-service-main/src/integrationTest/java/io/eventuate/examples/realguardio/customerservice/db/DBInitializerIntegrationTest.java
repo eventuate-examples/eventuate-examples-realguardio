@@ -2,12 +2,15 @@ package io.eventuate.examples.realguardio.customerservice.db;
 
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.CustomerManagementConfiguration;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.*;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.eventpublishing.CustomerManagementEventPublishingConfiguration;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.persistence.CustomerManagementJpaPersistenceConfiguration;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.persistence.OrganizationManagementJpaPersistenceConfiguration;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.MemberRepository;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.MemberRoleRepository;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.OrganizationRepository;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.MemberService;
+import io.eventuate.examples.realguardio.customerservice.organizationmanagement.service.OrganizationService;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
 import io.eventuate.examples.realguardio.customerservice.security.UserService;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
@@ -34,7 +37,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class DBInitializerIntegrationTest {
 
     @Configuration
-    @Import({CustomerManagementConfiguration.class, CustomerManagementEventPublishingConfiguration.class})
+    @Import({CustomerManagementJpaPersistenceConfiguration.class, OrganizationManagementJpaPersistenceConfiguration.class,
+            CustomerService.class, OrganizationService.class, MemberService.class, CustomerManagementEventPublishingConfiguration.class, LocalCustomerActionAuthorizer.class})
     @EnableAutoConfiguration
     public static class Config {
         @Bean

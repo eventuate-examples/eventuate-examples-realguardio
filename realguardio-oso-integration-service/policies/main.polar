@@ -2,9 +2,9 @@ actor CustomerEmployee {}
 
 resource Customer {
   roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "COMPANY_ROLE_ADMIN", "SECURITY_SYSTEM_VIEWER"];               # role at the organization
-  permissions = ["admin"];
+  permissions = ["createCustomerEmployee"];
 
-  "admin" if "COMPANY_ROLE_ADMIN";
+  "createCustomerEmployee" if "COMPANY_ROLE_ADMIN";
 }
 
 resource Team {
@@ -79,5 +79,13 @@ test "Authz Check" {
 
   assert has_permission(CustomerEmployee{"bob"}, "view", SecuritySystem{"ss2"});
   assert has_permission(CustomerEmployee{"mary"}, "view", SecuritySystem{"ss3"});
+
+}
+
+test "customer admin" {
+  setup {
+    has_role(CustomerEmployee{"bob"}, "COMPANY_ROLE_ADMIN", Customer{"acme"});
+  }
+  assert has_permission(CustomerEmployee{"bob"}, "createCustomerEmployee", Customer{"acme"});
 
 }

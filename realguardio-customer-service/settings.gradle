@@ -3,9 +3,19 @@ rootProject.name = 'realguardio-customer-service'
 include 'common-domain'
 include 'test-utils'
 include 'customer-service-domain'
+include 'customer-service-oso-integration'
 include 'customer-service-persistence'
 include 'customer-service-api-messaging'
 include 'customer-service-event-publishing'
 include 'customer-service-restapi'
 include 'customer-service-iam-integration'
 include 'customer-service-main'
+
+includeBuild("../realguardio-oso-integration-service") {
+    dependencySubstitution {
+        substitute(module("io.realguardio.osointegration:oso-service"))
+                .using(project(":oso-service"))
+        substitute(module("io.realguardio.osointegration:oso-service-test-container"))
+                .using(project(":oso-service-test-container"))
+    }
+}

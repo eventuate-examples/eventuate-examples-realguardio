@@ -55,7 +55,10 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
       .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC oso-service:"));
 
   public static GenericContainer<?> customerService =
-      ServiceContainer.makeFromDockerfileInFileSystem("../realguardio-customer-service/Dockerfile-local")
+          new ServiceContainer(new ImageFromDockerfile()
+                  .withFileFromPath(".", Paths.get("..").toAbsolutePath())  // Context: parent directory
+                  .withDockerfilePath("realguardio-customer-service/Dockerfile-local")  // Dockerfile path
+                  .withBuildArgs(BuildArgsResolver.buildArgs()))
           .withNetwork(eventuateKafkaCluster.network)
           .withNetworkAliases("customer-service")
           .withDatabase(customerDatabase)
@@ -64,6 +67,8 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
           .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
           .withEnv("SPRING_PROFILES_ACTIVE", "docker")
           .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
+          .withEnv("OSO_URL", "http://oso-service:8080")
+          .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
           .withReuse(true)
           .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC customer-service:"))
       ;
@@ -149,6 +154,7 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
   @Override
   public void useOsoService() {
     securitySystemService.withEnv("SPRING_PROFILES_ACTIVE", "UseOsoService");
+    customerService.withEnv("SPRING_PROFILES_ACTIVE", "UseOsoService");
   }
 
   @Override
