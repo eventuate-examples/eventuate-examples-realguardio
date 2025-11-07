@@ -101,7 +101,7 @@ jobs:
         path: ./logs
 
   test-compose-up:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-8-core
 
     steps:
     - name: Checkout code
