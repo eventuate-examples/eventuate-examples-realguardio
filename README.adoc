@@ -63,6 +63,44 @@ You can stop the application using the following command:
 docker compose down
 ----
 
+== Running the application with Oso Cloud
+
+By default, `docker compose up` uses the Oso Dev server.
+However, it also supports using Oso Cloud.
+
+First, set some environment variables:
+
+[source, shell]
+----
+export OSO_URL=https://api.osohq.com
+export OSO_AUTH=<your API key>
+----
+
+Note: The https://www.osohq.com/docs/get-started/quickstart[OSO Cloud quickstart guide] describes how to get an API key.
+
+Next, load the policy into the cloud:
+
+[source, shell]
+----
+oso-cloud policy realguardio-oso-integration-service/policies/main.polar
+----
+
+Note: The https://www.osohq.com/docs/develop/local-dev/env-setup#install-the-oso-cloud-cli[OSO documentation] describe how to install the Oso Cloud CLI.
+
+You can also run the policy's built-in tests:
+
+[source, shell]
+----
+oso-cloud test realguardio-oso-integration-service/policies/main.polar
+----
+
+Finally, start the application:
+
+[source, shell]
+----
+docker compose up -d --build
+----
+
 == Using the application
 
 You can access the application at http://localhost:3000.

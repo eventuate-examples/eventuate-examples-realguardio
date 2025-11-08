@@ -206,10 +206,25 @@ run = [
 
 [tasks.backend-end-to-end-with-compose-test-only]
 dir = "end-to-end-tests"
-run = "./gradlew --console=plain build -P endToEndTestMode=DockerCompose -x dockerComposeUp -x dockerComposeBuild -x assembleServices"
+run = [
+  "./gradlew clean",
+  "./gradlew --console=plain build -P endToEndTestMode=DockerCompose -x dockerComposeUp -x dockerComposeBuild -x assembleServices",
+]
 
 [tasks.gh-run-list]
 run = "gh run list --limit=3"
 
 [tasks.gh-run-watch]
 run = "gh run watch $(gh run list --limit=1 --json databaseId --jq '.[0].databaseId')"
+
+[tasks."oso:policy:upload"]
+run = "oso-cloud policy realguardio-oso-integration-service/policies/main.polar"
+
+[tasks."oso:policy:test"]
+run = "oso-cloud test realguardio-oso-integration-service/policies/main.polar"
+
+[tasks."oso:inspect"]
+run = "oso-cloud inspect"
+
+[tasks."oso:policy"]
+run = "oso-cloud policy"
