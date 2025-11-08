@@ -204,6 +204,10 @@ run = [
     "mise compose-down"
 ]
 
+[tasks.backend-end-to-end-with-compose-test-only]
+dir = "end-to-end-tests"
+run = "./gradlew --console=plain build -P endToEndTestMode=DockerCompose -x dockerComposeUp -x dockerComposeBuild -x assembleServices"
+
 [tasks.gh-run-list]
 run = "gh run list --limit=3"
 

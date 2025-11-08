@@ -111,8 +111,8 @@ services:
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CUSTOMER_SERVICE_URL: http://realguardio-customer-service:8080
-      OSO_URL: http://oso-service:8080
-      OSO_AUTH: e_0123456789_12345_osotesttoken01xiIn
+      OSO_URL: ${OSO_URL:-http://oso-service:8080}
+      OSO_AUTH: ${OSO_AUTH:-e_0123456789_12345_osotesttoken01xiIn}
     depends_on:
       - security-system-service-db
       - kafka
@@ -166,8 +166,8 @@ services:
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      OSO_URL: http://oso-service:8080
-      OSO_AUTH: e_0123456789_12345_osotesttoken01xiIn
+      OSO_URL: ${OSO_URL:-http://oso-service:8080}
+      OSO_AUTH: ${OSO_AUTH:-e_0123456789_12345_osotesttoken01xiIn}
     depends_on:
       - customer-service-db
       - kafka
@@ -213,8 +213,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      OSO_URL: http://oso-service:8080
-      OSO_AUTH: e_0123456789_12345_osotesttoken01xiIn
+      OSO_URL: ${OSO_URL:-http://oso-service:8080}
+      OSO_AUTH: ${OSO_AUTH:-e_0123456789_12345_osotesttoken01xiIn}
     depends_on:
       - kafka
       - oso-service

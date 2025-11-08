@@ -122,6 +122,8 @@ task assembleServices {
     group = 'build setup'
 }
 
+endToEndTest.dependsOn "assembleServices"
+
 ['realguardio-orchestration-service', 'realguardio-customer-service', 'realguardio-security-system-service', 'realguardio-oso-integration-service'].each { serviceDir ->
     def taskName = "assemble${serviceDir.replaceAll(/(^\w|-\w)/) { it[0].toUpperCase() }.replaceAll('-', '') }"
     task "$taskName"(type: Exec) {
@@ -129,7 +131,6 @@ task assembleServices {
         commandLine "./gradlew", "assemble"
     }
     assembleServices.dependsOn taskName
-    endToEndTest.dependsOn taskName
 
 }
 
@@ -167,4 +168,6 @@ if (project.hasProperty('endToEndTestMode') && endToEndTestMode == 'DockerCompos
         }
     }
 }
+
+
 
