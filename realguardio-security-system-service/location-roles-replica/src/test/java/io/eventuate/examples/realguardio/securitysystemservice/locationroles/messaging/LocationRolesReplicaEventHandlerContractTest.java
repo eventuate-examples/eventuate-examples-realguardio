@@ -21,7 +21,9 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @AutoConfigureStubRunner(ids = "io.eventuate.examples.realguardio:customer-service-event-publishing",
-        stubsMode = StubRunnerProperties.StubsMode.CLASSPATH )
+        stubsMode = StubRunnerProperties.StubsMode.CLASSPATH,
+        stubsPerConsumer = true,
+        consumerName = "security-system-service")
 @DirtiesContext
 public class LocationRolesReplicaEventHandlerContractTest {
 
