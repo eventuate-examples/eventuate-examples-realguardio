@@ -99,7 +99,7 @@ public class CustomerService {
     public CustomerEmployee createCustomerEmployee(Long customerId, PersonDetails personDetails) {
         Customer customer = customerRepository.findRequiredById(customerId);
 
-        customerActionAuthorizer.verifyCanDo(customerId, "createCustomerEmployee");
+        customerActionAuthorizer.verifyCanDo(customerId, RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE);
 
         return createCustomerEmployeeInternal(customerId, personDetails);
     }
