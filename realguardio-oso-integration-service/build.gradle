@@ -13,6 +13,8 @@ buildscript {
     }
 }
 
+apply plugin: ConfigureContractRepoDirPlugin
+
 allprojects {
     group = "io.realguardio.osointegration"
 }
@@ -30,6 +32,7 @@ subprojects {
     repositories {
         mavenCentral()
         eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
+        maven { url = contractRepoUrl }
     }
     
     configurations.all {

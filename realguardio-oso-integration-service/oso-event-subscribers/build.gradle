@@ -3,6 +3,11 @@ dependencies {
     implementation 'io.eventuate.tram.core:eventuate-tram-spring-events-subscriber-starter'
     implementation "io.eventuate.tram.core:eventuate-tram-spring-consumer-kafka"
 
+    testImplementation(platform("org.springframework.cloud:spring-cloud-contract-dependencies:$springCloudContractDependenciesVersion"))
+    testImplementation "io.eventuate.tram.testingsupport.springcloudcontract:eventuate-tram-spring-testing-support-cloud-contract"
+    testImplementation "org.springframework.cloud:spring-cloud-starter-contract-stub-runner"
+    testImplementation "io.eventuate.examples.realguardio:customer-service-event-publishing:0.1.0-SNAPSHOT:stubs"
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.eventuate.tram.core:eventuate-tram-spring-in-memory'
     testImplementation 'io.eventuate.tram.core:eventuate-tram-spring-events-publisher-starter'
