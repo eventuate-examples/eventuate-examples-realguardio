@@ -9,10 +9,6 @@ resource Customer {
 
 resource Team {
   relations = { members: CustomerEmployee };
-  roles = ["member"];     # optional convenience role
-
-  # optional: give users the 'member' role on the Team if they're in the members relation
-  #"member" if "members" on resource;
 }
 
 # ── Bridge: team membership + team role-at-location → user role-at-location ──
