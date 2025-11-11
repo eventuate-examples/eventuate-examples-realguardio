@@ -207,7 +207,7 @@ Acceptance Criteria:
 
 ### Tasks
 
-#### [ ] Task 2.1: Create docker-build-helper task with caching logic
+#### [x] Task 2.1: Create docker-build-helper task with caching logic
 
 **Prompt:**
 ```

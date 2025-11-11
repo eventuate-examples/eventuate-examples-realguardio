@@ -228,3 +228,108 @@ run = "oso-cloud inspect"
 
 [tasks."oso:policy"]
 run = "oso-cloud policy"
+
+[tasks.docker-build-helper]
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Arguments:
+# $1 = SERVICE (or empty for all services)
+# $2 = ACTION (build, up, up-wait)
+
+SERVICE="${1:-}"
+ACTION="${2:-up}"
+
+# Detect if caching should be enabled
+USE_CACHE=false
+if [ "${GITHUB_ACTIONS:-false}" = "true" ] || [ "${USE_DOCKER_CACHE:-false}" = "true" ]; then
+  USE_CACHE=true
+fi
+
+# Get branch name for cache scoping
+BRANCH_NAME="${GITHUB_REF_NAME:-$(git branch --show-current)}"
+
+# Build command options
+COMPOSE_OPTS="${COMPOSE_OPTS:---build}"
+DOCKERFILE_SUFFIX="${DOCKERFILE_SUFFIX:--local}"
+
+# Services to build (when SERVICE is empty)
+ALL_SERVICES=(
+  "realguardio-iam-service"
+  "realguardio-security-system-service"
+  "realguardio-bff"
+  "realguardio-customer-service"
+  "realguardio-orchestration-service"
+  "realguardio-oso-integration-service"
+)
+
+if [ "$USE_CACHE" = "true" ]; then
+  echo "🚀 Building with Docker layer caching (branch: $BRANCH_NAME)..."
+
+  # Determine services to build
+  if [ -z "$SERVICE" ]; then
+    SERVICES=("${ALL_SERVICES[@]}")
+  else
+    SERVICES=("$SERVICE")
+  fi
+
+  # Phase 1: Build with caching
+  docker buildx bake \
+    -f docker-compose.yaml \
+    --set '*.cache-from=type=gha,scope=build-'"${BRANCH_NAME}" \
+    --set '*.cache-to=type=gha,mode=max,scope=build-'"${BRANCH_NAME}" \
+    "${SERVICES[@]}"
+
+  # Phase 2: Start services based on action
+  case "$ACTION" in
+    build)
+      # Just build, don't start
+      echo "✅ Build complete (images cached)"
+      ;;
+    up)
+      echo "🚀 Starting services..."
+      if [ -z "$SERVICE" ]; then
+        docker compose up -d --no-build
+      else
+        docker compose up -d --no-build "$SERVICE"
+      fi
+      ;;
+    up-wait)
+      echo "🚀 Starting services and waiting..."
+      if [ -z "$SERVICE" ]; then
+        docker compose up -d --wait --no-build
+      else
+        docker compose up -d --wait --no-build "$SERVICE"
+      fi
+      ;;
+  esac
+else
+  echo "🚀 Building without caching (local development)..."
+
+  # Standard docker compose commands
+  case "$ACTION" in
+    build)
+      if [ -z "$SERVICE" ]; then
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose build
+      else
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose build "$SERVICE"
+      fi
+      ;;
+    up)
+      if [ -z "$SERVICE" ]; then
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose up -d $COMPOSE_OPTS
+      else
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose up -d $COMPOSE_OPTS "$SERVICE"
+      fi
+      ;;
+    up-wait)
+      if [ -z "$SERVICE" ]; then
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose up -d --wait $COMPOSE_OPTS
+      else
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose up -d --wait $COMPOSE_OPTS "$SERVICE"
+      fi
+      ;;
+  esac
+fi
+'''
