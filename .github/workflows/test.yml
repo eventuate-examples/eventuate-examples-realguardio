@@ -123,6 +123,27 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'realguardio-bff/package.json'
 
+
+    - name: Verify GitHub Actions cache env vars
+      run: |
+        missing=0
+
+        for var in ACTIONS_CACHE_URL ACTIONS_RUNTIME_TOKEN; do
+          if [ -z "${!var}" ]; then
+            echo "::error::Environment variable '$var' is NOT set."
+            missing=1
+          else
+            echo "✅ $var is set."
+          fi
+        done
+
+        if [ "$missing" -ne 0 ]; then
+          echo "::error::One or more required env vars are missing. type=gha caching will NOT work."
+          exit 1
+        else
+          echo "🎉 All required env vars are available. type=gha caching should work."
+        fi
+
     - name: Build images with caching
       run: mise run docker-build-helper '' build
 
