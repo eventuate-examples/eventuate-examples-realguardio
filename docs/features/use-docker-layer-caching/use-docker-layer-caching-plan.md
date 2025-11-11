@@ -467,7 +467,7 @@ Acceptance Criteria:
 - Builds successfully locally
 ```
 
-#### [ ] Task 2.5: Update security-system-service-compose-up to use helper
+#### [x] Task 2.5: Update security-system-service-compose-up to use helper
 
 **Prompt:**
 ```

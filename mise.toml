@@ -77,7 +77,7 @@ run = "docker compose down realguardio-security-system-service"
 
 [tasks.security-system-service-compose-up]
 depends = ["assemble"]
-run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build} realguardio-security-system-service"
+run = "mise run docker-build-helper realguardio-security-system-service up"
 
 [tasks.e2e-test-only]
 dir = "./realguardio-bff"
