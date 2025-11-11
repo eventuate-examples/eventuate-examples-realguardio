@@ -118,7 +118,7 @@ Acceptance Criteria:
 - No behavioral changes (builds work the same way)
 ```
 
-#### [ ] Task 1.2: Reorder steps and add buildx to `test-compose-up` job
+#### [x] Task 1.2: Reorder steps and add buildx to `test-compose-up` job
 
 **Prompt:**
 ```
