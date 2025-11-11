@@ -92,7 +92,7 @@ Acceptance Criteria:
 - Images are tagged with expected names
 ```
 
-#### [ ] Task 1.1: Add buildx setup to `test` job
+#### [x] Task 1.1: Add buildx setup to `test` job
 
 **Prompt:**
 ```
