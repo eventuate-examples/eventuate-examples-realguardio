@@ -42,7 +42,7 @@ done
 
 [tasks.compose-up]
 depends = ["assemble", "bff-dev-stop"]
-run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build}"
+run = "mise run docker-build-helper '' up"
 
 [tasks.compose-down]
 run = "docker compose down"

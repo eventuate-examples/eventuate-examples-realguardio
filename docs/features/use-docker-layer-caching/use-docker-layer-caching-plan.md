@@ -345,7 +345,7 @@ Acceptance Criteria:
 - Script uses proper error handling (set -euo pipefail)
 ```
 
-#### [ ] Task 2.2: Update compose-up task to use helper
+#### [x] Task 2.2: Update compose-up task to use helper
 
 **Prompt:**
 ```
