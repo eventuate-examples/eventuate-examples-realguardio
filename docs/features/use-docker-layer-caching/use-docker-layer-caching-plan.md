@@ -582,7 +582,7 @@ Acceptance Criteria:
 
 ### Tasks
 
-#### [ ] Task 3.1: Update test-compose-up job to use mise task
+#### [x] Task 3.1: Update test-compose-up job to use mise task
 
 **Prompt:**
 ```

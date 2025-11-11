@@ -123,8 +123,11 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'realguardio-bff/package.json'
 
-    - name: Compose up
-      run: docker compose up -d --build --wait
+    - name: Build images with caching
+      run: mise run docker-build-helper '' build
+
+    - name: Start services
+      run: docker compose up -d --wait --no-build
 
     - name: Install dependencies (ignoring package lock)
       working-directory: ./realguardio-bff
