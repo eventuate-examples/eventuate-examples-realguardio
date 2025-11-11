@@ -64,7 +64,7 @@ dir = "./realguardio-bff"
 run = "npm run e2e-test"
 
 [tasks.iam-service-compose-up]
-run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build} realguardio-iam-service"
+run = "mise run docker-build-helper realguardio-iam-service up"
 
 [tasks.iam-service-compose-build]
 run = "mise run docker-build-helper realguardio-iam-service build"

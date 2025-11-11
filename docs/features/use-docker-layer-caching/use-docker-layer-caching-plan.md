@@ -427,7 +427,7 @@ Acceptance Criteria:
 - Builds successfully locally
 ```
 
-#### [ ] Task 2.4: Update iam-service-compose-up to use helper
+#### [x] Task 2.4: Update iam-service-compose-up to use helper
 
 **Prompt:**
 ```
