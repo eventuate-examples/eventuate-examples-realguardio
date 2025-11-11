@@ -277,6 +277,7 @@ if [ "$USE_CACHE" = "true" ]; then
   # Phase 1: Build with caching
   docker buildx bake \
     -f docker-compose.yaml \
+    --load \
     --set '*.cache-from=type=gha,scope=build-'"${BRANCH_NAME}" \
     --set '*.cache-to=type=gha,mode=max,scope=build-'"${BRANCH_NAME}" \
     "${SERVICES[@]}"
