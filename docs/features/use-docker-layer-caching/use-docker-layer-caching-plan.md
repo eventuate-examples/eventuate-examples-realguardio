@@ -388,7 +388,7 @@ Acceptance Criteria:
 - Services start successfully
 ```
 
-#### [ ] Task 2.3: Update iam-service-compose-build to use helper
+#### [x] Task 2.3: Update iam-service-compose-build to use helper
 
 **Prompt:**
 ```
