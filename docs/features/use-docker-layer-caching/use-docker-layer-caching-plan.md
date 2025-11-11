@@ -21,7 +21,7 @@ This implementation plan follows the Steel Thread methodology to implement Docke
 
 ### Tasks
 
-#### [ ] Task 1.0: Add explicit image tags to all services in docker-compose.yaml
+#### [x] Task 1.0: Add explicit image tags to all services in docker-compose.yaml
 
 **Prompt:**
 ```

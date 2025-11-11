@@ -90,6 +90,7 @@ services:
     #   timeout: 3s
     #   retries: 5
   realguardio-security-system-service:
+    image: eventuate-examples-realguardio-realguardio-security-system-service:latest
     build:
       context: ./
       dockerfile: realguardio-security-system-service/Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
@@ -120,6 +121,7 @@ services:
       - realguardio-iam-service
       - oso-service
   realguardio-bff:
+    image: eventuate-examples-realguardio-realguardio-bff:latest
     build:
       context: ./realguardio-bff
     ports:
@@ -146,6 +148,7 @@ services:
       - realguardio-iam-service
       - realguardio-security-system-service
   realguardio-customer-service:
+    image: eventuate-examples-realguardio-realguardio-customer-service:latest
     build:
       context: ./
       dockerfile: realguardio-customer-service/Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
@@ -175,6 +178,7 @@ services:
       - realguardio-iam-service
       - oso-service
   realguardio-orchestration-service:
+    image: eventuate-examples-realguardio-realguardio-orchestration-service:latest
     build:
       context: ./realguardio-orchestration-service
       dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
@@ -202,6 +206,7 @@ services:
       - realguardio-iam-service
 
   realguardio-oso-integration-service:
+    image: eventuate-examples-realguardio-realguardio-oso-integration-service:latest
     build:
       context: ./realguardio-oso-integration-service
       dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
