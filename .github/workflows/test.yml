@@ -124,6 +124,9 @@ jobs:
         cache-dependency-path: 'realguardio-bff/package.json'
 
 
+    - name: Expose GitHub runtime to env
+      uses: crazy-max/ghaction-github-runtime@v3
+
     - name: Verify GitHub Actions cache env vars
       run: |
         missing=0
