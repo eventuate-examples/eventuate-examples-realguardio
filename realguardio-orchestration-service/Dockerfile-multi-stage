@@ -2,13 +2,17 @@ ARG baseImageVersion
 FROM amazoncorretto:17.0.14-al2023 AS base
 WORKDIR /app
 
-RUN yum update -y && yum install -y findutils
+RUN yum install -y --setopt=tsflags=nodocs findutils && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
 COPY ./gradlew .
 COPY ./gradle ./gradle
 RUN ./gradlew tasks || echo ignored
 
 COPY . .
 RUN ./gradlew clean assemble --no-daemon
+
 FROM eventuateio/eventuate-examples-docker-images-spring-example-base-image:$baseImageVersion
 ARG serviceImageVersion
 COPY --from=base /app/orchestration-main/build/libs/orchestration-main-$serviceImageVersion.jar service.jar
