@@ -10,5 +10,5 @@ _download
 build.log
 wip-docs
 build
-.claude/issues
-.claude/sessions
+**/.claude/issues
+**/.claude/sessions

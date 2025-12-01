@@ -16,13 +16,14 @@ import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration
 import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
+import io.eventuate.tram.testing.producer.kafka.events.DirectToKafkaDomainEventPublisher;
+import io.eventuate.tram.testing.producer.kafka.events.EnableDirectToKafkaDomainEventPublisher;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -61,12 +62,8 @@ public class SecuritySystemServiceComponentTest {
 			EventuateTramFlywayMigrationConfiguration.class,
 			LocationRolesReplicaConfiguration.class
 	})
+	@EnableDirectToKafkaDomainEventPublisher
 	static class TestConfiguration {
-
-		@Bean
-		DirectToKafkaDomainEventPublisher directToKafkaCommandProducer(@Value("${eventuatelocal.kafka.bootstrap.servers}") String bootstrapServer) {
-			return new DirectToKafkaDomainEventPublisher(bootstrapServer);
-		}
 
 		@Bean
 		UserService userService() {

@@ -8,6 +8,8 @@ import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.testcontainers.service.ServiceContainer;
 import io.eventuate.tram.spring.consumer.common.TramNoopDuplicateMessageDetectorConfiguration;
+import io.eventuate.tram.testing.producer.kafka.events.DirectToKafkaDomainEventPublisher;
+import io.eventuate.tram.testing.producer.kafka.events.EnableDirectToKafkaDomainEventPublisher;
 import io.realguardio.osointegration.ososervice.OsoService;
 import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
@@ -15,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
@@ -44,11 +45,8 @@ public class OsoIntegrationServiceComponentTest {
 			TramNoopDuplicateMessageDetectorConfiguration.class
 	})
 	@ComponentScan(basePackageClasses = OsoService.class)
+	@EnableDirectToKafkaDomainEventPublisher
 	static class TestConfiguration {
-		@Bean
-		DirectToKafkaDomainEventPublisher directToKafkaCommandProducer(@Value("${eventuatelocal.kafka.bootstrap.servers}") String bootstrapServer) {
-			return new DirectToKafkaDomainEventPublisher(bootstrapServer);
-		}
 	}
 
 	public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("oso-integration-service-tests");

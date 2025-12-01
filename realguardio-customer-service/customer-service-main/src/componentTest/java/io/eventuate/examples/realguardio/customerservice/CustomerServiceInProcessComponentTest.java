@@ -5,16 +5,16 @@ import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddre
 import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
+import io.eventuate.tram.testing.producer.kafka.commands.DirectToKafkaCommandProducer;
+import io.eventuate.tram.testing.producer.kafka.commands.EnableDirectToKafkaCommandProducer;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -33,12 +33,8 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 	@TestConfiguration
 	@Import({AbstractConfig.class})
 	@EnableAutoConfiguration
+	@EnableDirectToKafkaCommandProducer
 	static class Config {
-
-		@Bean
-		DirectToKafkaCommandProducer directToKafkaCommandProducer(@Value("${eventuatelocal.kafka.bootstrap.servers}") String bootstrapServer) {
-			return new DirectToKafkaCommandProducer(bootstrapServer);
-		}
 	}
 
 	@Autowired

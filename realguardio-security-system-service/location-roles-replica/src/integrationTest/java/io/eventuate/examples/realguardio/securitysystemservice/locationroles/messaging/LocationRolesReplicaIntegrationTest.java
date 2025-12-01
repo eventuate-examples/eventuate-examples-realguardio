@@ -8,9 +8,10 @@ import io.eventuate.examples.realguardio.securitysystemservice.locationroles.com
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.tram.messaging.producer.MessageProducer;
+import io.eventuate.tram.testing.producer.kafka.events.DirectToKafkaDomainEventPublisher;
+import io.eventuate.tram.testing.producer.kafka.events.EnableDirectToKafkaDomainEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
@@ -36,12 +37,8 @@ public class LocationRolesReplicaIntegrationTest {
     @Configuration
     @EnableAutoConfiguration
     @Import({LocationRolesReplicaMessagingConfiguration.class})
+    @EnableDirectToKafkaDomainEventPublisher
     static class Config {
-        @Bean
-        DirectToKafkaDomainEventPublisher directToKafkaDomainEventPublisher(
-                @Value("${eventuatelocal.kafka.bootstrap.servers}") String bootstrapServers) {
-            return new DirectToKafkaDomainEventPublisher(bootstrapServers);
-        }
     }
 
     public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("location-replica-service-tests");

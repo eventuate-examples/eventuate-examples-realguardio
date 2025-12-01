@@ -25,6 +25,7 @@ dependencies {
     integrationTestImplementation 'io.eventuate.common:eventuate-common-testcontainers'
     integrationTestImplementation 'io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers'
     integrationTestImplementation 'io.eventuate.messaging.kafka:eventuate-messaging-kafka-producer'
+    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-producer-kafka"
     integrationTestImplementation 'io.eventuate.util:eventuate-util-test'
     integrationTestImplementation 'org.assertj:assertj-core'
     integrationTestImplementation 'org.awaitility:awaitility'
