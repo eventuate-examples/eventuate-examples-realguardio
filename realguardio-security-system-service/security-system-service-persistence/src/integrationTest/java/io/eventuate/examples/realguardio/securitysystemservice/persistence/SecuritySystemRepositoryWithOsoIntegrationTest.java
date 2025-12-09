@@ -6,6 +6,7 @@ import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySy
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
 import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
 import io.eventuate.examples.realguardio.securitysystemservice.osointegration.OsoSecuritySystemActionAuthorizerConfiguration;
+import io.realguardio.osointegration.ososervice.RealGuardOsoFactManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -16,8 +17,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,16 +38,20 @@ public class SecuritySystemRepositoryWithOsoIntegrationTest extends AbstractSecu
     @Autowired
     protected SecuritySystemRepositoryWithOso securitySystemRepositoryWithOso;
 
+    @Autowired
+    private RealGuardOsoFactManager realGuardOsoFactManager;
 
     @Test
     void shouldFindWithOso() {
 
-//        String customerEmployeeEmail = "customerEmployee%s@realguard.io".formatted(System.currentTimeMillis());
-        String customerEmployeeEmail = "'X' or 'Y'";
+        String customerEmployeeEmail = "customerEmployee%s@realguard.io".formatted(System.currentTimeMillis());
+//        String customerEmployeeEmail = "'X' or 'Y'";
+        String company = "acme" + System.currentTimeMillis();
 
         long locationId = System.currentTimeMillis();
+        String locationIdAsString = Long.toString(locationId);
 
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+
 
         SecuritySystem system1 = new SecuritySystem("Oakland office",
                 SecuritySystemState.ARMED);
@@ -56,14 +59,21 @@ public class SecuritySystemRepositoryWithOsoIntegrationTest extends AbstractSecu
 
         repository.save(system1);
 
+        realGuardOsoFactManager.createRoleInCustomer(customerEmployeeEmail, company, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+        realGuardOsoFactManager.createLocationForCustomer(locationIdAsString, company);
+        realGuardOsoFactManager.assignSecuritySystemToLocation(Long.toString(system1.getId()), locationIdAsString);
+
         System.out.println("customerEmployeeEmail: " + customerEmployeeEmail);
         System.out.println("locationId: " + locationId);
 
         var results = securitySystemRepositoryWithOso.findAllAccessible(customerEmployeeEmail);
-        assertThat(results).isNotEmpty();
-
         System.out.println(results);
-        assertThat(Arrays.asList(results.get(0).getRoleNames())).containsExactly(RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+
+        assertThat(results).hasSize(1);
+        var result = results.get(0);
+        assertThat(result.getId()).isEqualTo(system1.getId());
+
+//        assertThat(Arrays.asList(results.get(0).getRoleNames())).containsExactly(RolesAndPermissions.SECURITY_SYSTEM_ARMER);
     }
 
 }

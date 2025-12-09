@@ -1,7 +1,9 @@
 package io.eventuate.examples.realguardio.securitysystemservice.osointegration;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.UserNameSupplier;
 import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
+import io.realguardio.osointegration.ososervice.RealGuardOsoFactManager;
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -19,7 +21,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 @SpringBootTest(classes = LocalAuthorizationIntegrationTest.Config.class)
 @ActiveProfiles("UseOsoService")
@@ -44,6 +45,9 @@ public class LocalAuthorizationIntegrationTest {
     }
 
     @Autowired
+    private RealGuardOsoFactManager realGuardOsoFactManager;
+
+    @Autowired
     private RealGuardOsoAuthorizer  realGuardOsoAuthorizer;
 
     @MockitoBean
@@ -51,6 +55,12 @@ public class LocalAuthorizationIntegrationTest {
 
     @Test
     public void testLocalAuthorization() {
+        realGuardOsoFactManager.createRoleInCustomer("alice", "acme", RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+        realGuardOsoFactManager.createLocationForCustomer("99", "acme");
+        realGuardOsoFactManager.createLocationForCustomer("101", "acme");
+        realGuardOsoFactManager.assignSecuritySystemToLocation("202", "99");
+        realGuardOsoFactManager.assignSecuritySystemToLocation("203", "101");
+
         var sql = realGuardOsoAuthorizer.listLocal("alice", RolesAndPermissions.ARM, "ss_id");
         assertThat(sql).isNotNull();
         System.out.println(sql);
