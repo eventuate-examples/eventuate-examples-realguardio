@@ -1,3 +1,14 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url 'https://snapshots.repositories.eventuate.io/repository' }
+    }
+    plugins {
+        id 'io.eventuate.plugins.gradle.testing.integration-tests' version "${eventuateTestPluginsVersion}"
+        id 'io.eventuate.plugins.gradle.testing.component-tests' version "${eventuateTestPluginsVersion}"
+    }
+}
+
 rootProject.name = 'realguardio-orchestration-service'
 
 include ':orchestration-sagas'
