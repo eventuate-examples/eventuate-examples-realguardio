@@ -1,5 +1,6 @@
 package io.eventuate.examples.realguardio.securitysystemservice.persistence.finder.oso;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemProjection;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemRepositoryWithOso;
 import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
@@ -7,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
 
 public class SecuritySystemRepositoryWithOsoImpl implements SecuritySystemRepositoryWithOso {
 
@@ -19,7 +19,7 @@ public class SecuritySystemRepositoryWithOsoImpl implements SecuritySystemReposi
 
     @Override
     public List<SecuritySystemProjection> findAllAccessible(String userName) {
-        String filterSql = realGuardOsoAuthorizer.listLocal(userName, RolesAndPermissions.VIEW, "ss.id");
+        String filterSql = realGuardOsoAuthorizer.listLocal(userName, RolesAndPermissions.VIEW, "SecuritySystem", "ss.id");
 
         String query = """
                 SELECT

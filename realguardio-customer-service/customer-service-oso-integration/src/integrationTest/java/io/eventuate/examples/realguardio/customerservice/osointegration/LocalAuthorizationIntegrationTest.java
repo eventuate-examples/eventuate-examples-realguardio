@@ -1,7 +1,7 @@
-package io.eventuate.examples.realguardio.securitysystemservice.osointegration;
+package io.eventuate.examples.realguardio.customerservice.osointegration;
 
-import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPermissions;
-import io.eventuate.examples.realguardio.securitysystemservice.domain.UserNameSupplier;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.RolesAndPermissions;
+import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
 import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
 import io.realguardio.osointegration.ososervice.RealGuardOsoFactManager;
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
@@ -39,7 +39,7 @@ public class LocalAuthorizationIntegrationTest {
     }
 
     @Configuration
-    @Import(OsoSecuritySystemActionAuthorizerConfiguration.class)
+    @Import(OsoCustomerActionAuthorizerConfiguration.class)
     public static class Config {
 
     }
@@ -55,13 +55,10 @@ public class LocalAuthorizationIntegrationTest {
 
     @Test
     public void testLocalAuthorization() {
-        realGuardOsoFactManager.createRoleInCustomer("alice", "acme", RolesAndPermissions.SECURITY_SYSTEM_ARMER);
-        realGuardOsoFactManager.createLocationForCustomer("99", "acme");
-        realGuardOsoFactManager.createLocationForCustomer("101", "acme");
-        realGuardOsoFactManager.assignSecuritySystemToLocation("202", "99");
-        realGuardOsoFactManager.assignSecuritySystemToLocation("203", "101");
+        realGuardOsoFactManager.createRoleInCustomer("alice@example.com", "101", RolesAndPermissions.COMPANY_ROLE_ADMIN);
+        realGuardOsoFactManager.createRoleInCustomer("alice@example.com", "102", RolesAndPermissions.COMPANY_ROLE_ADMIN);
 
-        var sql = realGuardOsoAuthorizer.listLocal("alice", RolesAndPermissions.ARM, "SecuritySystem", "ss_id");
+        var sql = realGuardOsoAuthorizer.listLocal("alice@example.com", RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE, "Customer", "customer_id");
         assertThat(sql).isNotNull();
         System.out.println(sql);
     }

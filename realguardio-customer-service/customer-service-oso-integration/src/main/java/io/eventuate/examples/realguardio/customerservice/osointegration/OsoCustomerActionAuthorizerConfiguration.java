@@ -2,6 +2,7 @@ package io.eventuate.examples.realguardio.customerservice.osointegration;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerActionAuthorizer;
 import io.eventuate.examples.realguardio.customerservice.security.UserNameSupplier;
+import io.realguardio.osointegration.ososervice.LocalAuthorizationConfigFileSupplier;
 import io.realguardio.osointegration.ososervice.OsoServiceConfiguration;
 import io.realguardio.osointegration.ososervice.RealGuardOsoAuthorizer;
 import org.springframework.context.annotation.Bean;
@@ -20,4 +21,8 @@ public class OsoCustomerActionAuthorizerConfiguration {
     return new OsoCustomerActionAuthorizer(userNameSupplier, realGuardOsoAuthorizer);
   }
 
+  @Bean
+  public LocalAuthorizationConfigFileSupplier localAuthorizationConfigFileSupplier() {
+      return new ClasspathLocalAuthorizationConfigFileSupplier();
+  }
 }

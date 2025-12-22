@@ -31,7 +31,7 @@ public class RealGuardOsoAuthorizer {
     return CompletableFuture.completedFuture(false);
   }
 
-  public String listLocal(String userId, String action, String column) {
-      return osoService.listLocal("CustomerEmployee", userId, action, "SecuritySystem", column);
+  public String listLocal(String userId, String action, String resourceType, String column) {
+      return osoService.listLocal("CustomerEmployee", userId, action, resourceType, column);
   }
 }
