@@ -1,5 +1,7 @@
-apply plugin: ComponentTestsPlugin
-apply plugin: IntegrationTestsPlugin
+plugins {
+    id 'io.eventuate.plugins.gradle.testing.component-tests'
+    id 'io.eventuate.plugins.gradle.testing.integration-tests'
+}
 
 componentTest {
     systemProperty "spring.profiles.active", "test,postgres"

@@ -1,4 +1,6 @@
-apply plugin: IntegrationTestsPlugin
+plugins {
+    id 'io.eventuate.plugins.gradle.testing.integration-tests'
+}
 
 dependencies {
     implementation (project(":security-system-service-domain"))
