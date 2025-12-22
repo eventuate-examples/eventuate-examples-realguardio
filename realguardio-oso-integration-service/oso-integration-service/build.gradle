@@ -1,5 +1,7 @@
-apply plugin: "org.springframework.boot"
-apply plugin: ComponentTestsPlugin
+plugins {
+    id 'org.springframework.boot'
+    id 'io.eventuate.plugins.gradle.testing.component-tests'
+}
 
 componentTest {
     systemProperty "spring.profiles.active", "test"
