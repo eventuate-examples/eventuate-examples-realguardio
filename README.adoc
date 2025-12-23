@@ -18,24 +18,24 @@ It's the sample application for a series of articles about authentication and au
 
 == Application architecture
 
-image::https://microservices.io/i/microservices-auth/part-2/Security-Architecture.png[]
+image::https://microservices.io/i/microservices-auth/Security-Architecture_Full.png[]
 
 The key elements of the RealGuardIO architecture are as follows:
 
 * React-based UI - runs in the browser and implements the RealGuardIO UI.
 * `BFF`  - the NextJS/Typescript-based Backend for front-end, which plays the role of an OAuth 2.0 client. It manages the user's session, forwards requests from the React UI to the backend services and implements security using the `next-auth` library.
-* `IAM Service` - handles authentication including the login page and issues access tokens and ID tokens to BFF.
+* `IAM Service` (Spring Authorization Service) - handles authentication including the login page and issues access tokens and ID tokens to BFF.
 * Backend services:
 ** `Security System Service` - manages `SecuritySystems` domain entities.
 ** `Customer Service` - manages `Customers` domain entities.
-** `Orchestration Service` - orchestrates the creation of security systems across Customer Service and Security System Service using the Saga pattern to ensure distributed transaction consistency.
+** `Orchestration Service` - orchestrates the creation of security systems across `Customer Service` and `Security System Service` using the https://microservices.io/patterns/data/saga.html[Saga pattern]
 ** `Oso Integration Service` - integrates Oso Cloud authorization policies with the microservices by consuming domain events from Kafka and updating authorization facts in Oso Cloud.
 
 In addition, there are several supporting services:
 
 * https://www.jaegertracing.io/[`Jaeger`] - distributed tracing for monitoring service interactions.
 * `Kafka` - distributed message broker for inter-service communication and event-driven architecture.
-* `CDC` - Eventuate Change Data Capture service that captures changes from service databases and publishes events to Kafka.
+* `CDC` - https://github.com/eventuate-foundation/eventuate-cdc[Eventuate transaction outbox service] that reads messages from service outbox tables and sends them to Kafka.
 * `PostgreSQL` - separate databases for Customer Service, Security System Service, and Orchestration Service.
 
 The application uses the https://www.osohq.com/docs[Oso Cloud authorization service] as the centralized authorization service.
