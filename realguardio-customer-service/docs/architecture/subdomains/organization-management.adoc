@@ -1,0 +1,139 @@
+== Organization Management Subdomain
+
+The Organization Management subdomain manages the top-level organizational structure including organizations, members, and their role assignments. This subdomain provides the foundation for multi-tenant user management.
+
+=== Domain Model
+
+[plantuml]
+....
+@startuml
+class Organization {
+  +Long id
+  +String name
+  +Set<MemberRole> memberRoles
+  +addMemberRole(MemberRole)
+  +removeMemberRole(Long)
+}
+
+class Member {
+  +Long id
+  +PersonName name
+  +EmailAddress emailAddress
+  +Set<MemberRole> roles
+  +addRole(MemberRole)
+  +removeRole(Long)
+}
+
+class MemberRole {
+  +Long id
+  +String name
+  +LocalDate startDate
+  +LocalDate endDate
+  +Member member
+  +Organization organization
+}
+
+class PersonName {
+  <<value object>>
+  +String firstName
+  +String lastName
+}
+
+class EmailAddress {
+  <<value object>>
+  +String email
+  +validate()
+  +normalize()
+}
+
+class PersonDetails {
+  <<value object>>
+  +PersonName name
+  +EmailAddress emailAddress
+}
+
+Organization "1" -- "*" MemberRole : has
+Member "1" -- "*" MemberRole : has
+MemberRole "*" --> "1" Member : assigned to
+MemberRole "*" --> "1" Organization : within
+Member "1" *-- "1" PersonName : has
+Member "1" *-- "1" EmailAddress : has
+PersonDetails "1" *-- "1" PersonName : contains
+PersonDetails "1" *-- "1" EmailAddress : contains
+
+@enduml
+....
+
+=== Entity Responsibilities
+
+* **Organization** - Aggregate root representing a top-level organizational entity
+** Contains members with specific roles
+** Provides organizational context for customers
+** Methods: `addMemberRole()`, `removeMemberRole()` for managing member-role assignments
+** Serves as the authorization boundary for company-wide permissions
+
+* **Member** - Aggregate root representing a person who can participate in multiple organizations
+** Has a unique identity with name and email address
+** Can have roles in multiple organizations
+** Methods: `addRole()`, `removeRole()` for managing roles
+** Serves as the link between a real person and their organizational memberships
+
+* **MemberRole** - Entity associating a Member with an Organization through a specific role
+** Has temporal validity (startDate, endDate) for role assignments
+** Connects Member and Organization
+** Supports time-bound role assignments (e.g., temporary access, role rotations)
+** Used for auditing and historical tracking of organizational access
+
+=== Value Object Responsibilities
+
+* **PersonName** - Value object for structured person names
+** Validates that firstName and lastName are non-null and non-blank
+** Provides structured access to name components
+** Immutable record type ensures consistency
+
+* **EmailAddress** - Value object for validated email addresses
+** Validates email format on construction
+** Normalizes email addresses (lowercase, trim whitespace)
+** Ensures email uniqueness and validity across the system
+** Throws `IllegalArgumentException` for invalid email formats
+
+* **PersonDetails** - Composite value object for complete person information
+** Combines PersonName and EmailAddress into a single value object
+** Validates both components on construction
+** Used for creating new members and employees
+** Provides a cohesive representation of person data
+
+=== Domain Services
+
+* **OrganizationService** - Primary domain service for organization operations
+** `createOrganization()` - Creates new organizations
+** `assignRole()` - Assigns roles to members within organizations
+** `findRolesByOrganizationId()` - Queries all roles within an organization
+** `findRolesByMemberIdAndOrganizationId()` - Queries specific member roles in an organization
+
+* **MemberService** - Primary domain service for member operations
+** `createMember()` - Creates new members and corresponding IAM user accounts
+** `findMemberById()` - Retrieves member by ID
+** `findMemberByEmail()` - Retrieves member by email address
+** Coordinates with IAM Service for user account creation
+
+=== Domain Events
+
+This subdomain currently does not publish domain events as it's primarily used by the Customer Management subdomain within the same service boundary. Role assignments and member creation are typically handled synchronously.
+
+=== Relationships to Other Subdomains
+
+* **Customer Management** - Customer references Organization (organizationId); CustomerEmployee references Member (memberId)
+** Customers are linked to organizations for authorization context
+** Customer employees are linked to members to represent the same person across contexts
+
+* **IAM Integration** - MemberService coordinates with IAM Service to create user accounts when members are created
+
+=== Business Rules
+
+* Member email addresses must be unique across the system
+* Member email addresses are normalized (lowercase, trimmed) to ensure uniqueness
+* PersonName components (firstName, lastName) must be non-null and non-blank
+* MemberRole assignments can have temporal validity (start/end dates)
+* A member can have multiple roles across different organizations
+* Member and Organization are separate aggregates with their own lifecycle management

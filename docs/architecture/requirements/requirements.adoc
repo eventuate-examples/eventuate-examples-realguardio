@@ -1,0 +1,29 @@
+== Requirements
+
+This section describes the user stories and requirements for the RealGuardIO application. Each user story is written in Gherkin format.
+
+=== Authentication & Authorization
+
+include::oauth2-login.adoc[]
+
+=== Customer Management
+
+include::create-customer.adoc[]
+
+include::list-customers.adoc[]
+
+include::create-employee.adoc[]
+
+include::assign-location-role.adoc[]
+
+=== Security System Management
+
+include::create-security-system.adoc[]
+
+include::list-security-systems.adoc[]
+
+include::get-security-system.adoc[]
+
+include::arm-security-system.adoc[]
+
+include::disarm-security-system.adoc[]

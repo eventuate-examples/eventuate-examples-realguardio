@@ -1,0 +1,203 @@
+== Scenario: Create Customer Employee
+
+=== Overview
+
+This scenario describes how an administrator creates a customer employee and assigns them location-based roles. The operation involves creating the employee record, creating a user account in the IAM Service, assigning roles, and synchronizing authorization facts to Oso Cloud.
+
+=== Sequence Diagram
+
+[plantuml]
+....
+@startuml
+actor "Admin" as Admin
+participant "BFF" as BFF
+participant "Customer\nService" as Customer
+participant "IAM Service" as IAM
+database "Kafka" as Kafka
+participant "Oso Integration\nService" as Oso
+database "Oso Cloud" as OsoCloud
+participant "Security System\nService\n(Location Roles Replica)" as Replica
+
+Admin -> BFF: POST /api/customers/{id}/employees\n{name, userId, locationRoles: [\n  {locationId, role}\n]}
+activate BFF
+
+BFF -> Customer: POST /customers/{customerId}/employees\n{name, userId}\n+ Bearer token
+activate Customer
+
+Customer -> IAM: Validate JWT token\n(via JWKS endpoint)
+activate IAM
+IAM --> Customer: Token valid\n{userId, roles: [REALGUARDIO_ADMIN]}
+deactivate IAM
+
+Customer -> Customer: Check user has\nREALGUARDIO_ADMIN role
+
+alt User is REALGUARDIO_ADMIN
+    Customer -> Customer: Create CustomerEmployee entity\n{customerId, employeeId, name, userId}
+
+    ' User account creation in IAM Service
+    Customer -> IAM: POST /oauth2/token\ngrant_type=client_credentials\nAuthorization: Basic (client_id:client_secret)
+    activate IAM
+    IAM -> IAM: Validate client credentials
+    IAM --> Customer: 200 OK\n{access_token: JWT}
+    deactivate IAM
+
+    Customer -> IAM: POST /api/users\n{username: userId,\npassword: "{noop}password",\nroles: ["REALGUARDIO_CUSTOMER_EMPLOYEE"]}\nAuthorization: Bearer <client_token>
+    activate IAM
+    IAM -> IAM: Create user account
+    IAM --> Customer: 201 Created\n{userId, username}
+    deactivate IAM
+
+    Customer -> Customer: Persist to database\n(transactional outbox)
+
+    Customer --> BFF: 201 Created\n{employeeId}
+
+    BFF -> Customer: PUT /customers/{customerId}/location-roles\n{employeeId, locationId, role: "SECURITY_SYSTEM_ARMER"}\n+ Bearer token
+
+    Customer -> Customer: Validate location belongs to customer
+
+    Customer -> Customer: Create CustomerEmployeeLocationRole\n{customerId, employeeId, locationId, role}
+
+    Customer -> Customer: Persist to database\n(transactional outbox)
+
+    Customer -> Kafka: CustomerEmployeeAssignedLocationRole event
+
+    Customer --> BFF: 200 OK
+    deactivate Customer
+
+    BFF --> Admin: Success: Employee created\nwith location role assigned
+    deactivate BFF
+
+    ' Event processing
+    Kafka -> Oso: CustomerEmployeeAssignedLocationRole event
+    activate Oso
+    Oso -> OsoCloud: Insert fact:\nhas_role(CustomerEmployee, "SECURITY_SYSTEM_ARMER", Location)
+    deactivate Oso
+
+    Kafka -> Replica: CustomerEmployeeAssignedLocationRole event
+    activate Replica
+    Replica -> Replica: Replicate role assignment\nto local database
+    note right: Enables Security System Service\nto make authorization decisions\nwith local data
+    deactivate Replica
+
+else User is not REALGUARDIO_ADMIN
+    Customer --> BFF: 403 Forbidden
+    deactivate Customer
+    BFF --> Admin: Error: Access denied
+    deactivate BFF
+end
+
+@enduml
+....
+
+=== Description
+
+The sequence of events is:
+
+. The Admin user submits a request via the BFF UI to create a customer employee, providing the employee's name, user ID, and optionally location roles to assign.
+
+. The BFF sends a POST request to the Customer Service at `/customers/{customerId}/employees` with the employee details and the admin's JWT bearer token.
+
+. The Customer Service validates the JWT token with the IAM Service's JWKS endpoint to verify its authenticity and extract the user's roles.
+
+. The IAM Service confirms the token is valid and returns the user's ID and roles, including `REALGUARDIO_ADMIN`.
+
+. The Customer Service checks if the authenticated user has the `REALGUARDIO_ADMIN` role required to create employees.
+
+. *If the user is a REALGUARDIO_ADMIN*:
+.. The Customer Service creates a new CustomerEmployee entity with a generated `employeeId`, linking it to the customer and the provided `userId`.
+.. The Customer Service requests a client credentials access token from the IAM Service by sending a POST request to `/oauth2/token` with `grant_type=client_credentials`, authenticating with client ID (`realguardio-client`) and client secret via HTTP Basic authentication.
+.. The IAM Service validates the client credentials and returns a JWT access token for service-to-service authentication.
+.. The Customer Service calls the IAM Service's `/api/users` endpoint to create a user account, sending the employee's `userId` as the username, a default password, and the role `REALGUARDIO_CUSTOMER_EMPLOYEE`, authenticated with the client credentials token.
+.. The IAM Service creates the user account and returns confirmation with the user details.
+.. The entity is persisted to the database using the transactional outbox pattern.
+.. The Customer Service returns a 201 Created response to the BFF with the newly created `employeeId`.
+
+. The BFF then sends a PUT request to assign location roles at `/customers/{customerId}/location-roles` with the `employeeId`, `locationId`, and the desired role (e.g., `SECURITY_SYSTEM_ARMER`).
+
+. The Customer Service validates that the specified location belongs to the customer to prevent unauthorized role assignments.
+
+. The Customer Service creates a CustomerEmployeeLocationRole entity representing the role assignment.
+
+. The role assignment is persisted to the database using the transactional outbox pattern.
+
+. The Customer Service publishes a `CustomerEmployeeAssignedLocationRole` event to Kafka.
+
+. The Customer Service returns a 200 OK response confirming the role assignment.
+
+. The BFF displays a success message to the admin indicating the employee was created and roles assigned.
+
+. The Oso Integration Service consumes the `CustomerEmployeeAssignedLocationRole` event from Kafka.
+
+. The Oso Integration Service inserts a `has_role(CustomerEmployee, "SECURITY_SYSTEM_ARMER", Location)` fact into Oso Cloud, granting the employee permission to arm security systems at that location.
+
+. The Security System Service's Location Roles Replica module also consumes the `CustomerEmployeeAssignedLocationRole` event.
+
+. The Location Roles Replica stores a local copy of the role assignment in the Security System Service's database, enabling the service to make authorization decisions without cross-service calls.
+
+. *If the user is not a REALGUARDIO_ADMIN*:
+.. The Customer Service returns a 403 Forbidden response.
+.. The BFF displays an error message indicating the user lacks permission to create employees.
+
+=== Authorization Requirements
+
+To create a customer employee:
+
+* The requesting user must have the `REALGUARDIO_ADMIN` role in their JWT token.
+* This is enforced through Spring Security's `@PreAuthorize` annotation or method security configuration.
+* Example: `@PreAuthorize("hasRole('REALGUARDIO_ADMIN')")`
+
+To assign location roles:
+
+* The requesting user must have the `REALGUARDIO_CUSTOMER_EMPLOYEE` role or be a `REALGUARDIO_ADMIN`.
+* The location must belong to the specified customer (validated by the service).
+* Valid roles include:
+** `SECURITY_SYSTEM_ARMER` - Can arm security systems
+** `SECURITY_SYSTEM_DISARMER` - Can disarm security systems
+** `SECURITY_SYSTEM_VIEWER` - Can view security system status
+
+=== Data Synchronization
+
+The operation demonstrates the application's data synchronization strategy:
+
+. *Source of Truth*: Customer Service database is the source of truth for employee and role data.
+
+. *Event Publishing*: Domain events are published via the transactional outbox pattern for reliable delivery.
+
+. *Authorization Sync*: Oso Integration Service keeps Oso Cloud synchronized with employee and role data.
+
+. *Read Replica*: Security System Service maintains a read replica of role assignments for:
+** Reduced latency (no cross-service calls)
+** Improved resilience (works even if Customer Service is down)
+** Simplified queries (local database joins)
+
+. *Eventual Consistency*: All systems eventually converge to the same state, though there may be a brief delay (typically milliseconds to seconds).
+
+=== Key Characteristics
+
+* *Role-Based Access Control*: Only admins can create employees
+* *Service-to-Service Authentication*: Customer Service uses OAuth2 client credentials grant to authenticate with IAM Service for user account creation
+* *User Account Provisioning*: Creating an employee automatically provisions a user account in IAM Service, enabling the employee to log in
+* *Location-Based Authorization*: Roles are assigned per location, not globally
+* *Event-Driven Synchronization*: Authorization state synchronized via events
+* *Transactional Outbox*: Ensures events are published reliably with database changes
+* *Multiple Consumers*: Events consumed by both Oso Integration Service and Security System Service
+* *Idempotent Processing*: Event handlers ensure duplicate events don't cause issues
+* *Auditability*: All employee and role creations recorded as events
+
+=== Error Scenarios
+
+* *Invalid Token*: If the JWT token is invalid, the service returns 401 Unauthorized at step 3.
+
+* *Insufficient Permissions*: If the user is not a REALGUARDIO_ADMIN, the service returns 403 Forbidden at step 5.
+
+* *IAM Service Client Credentials Failure*: If the Customer Service cannot obtain a client credentials token from IAM Service (invalid client ID/secret, IAM Service unavailable), the employee creation fails and returns 500 Internal Server Error or 503 Service Unavailable.
+
+* *IAM Service User Creation Failure*: If the IAM Service `/api/users` call fails (duplicate username, IAM Service error, validation failure), the Customer Service should handle this gracefully. The current implementation may throw an exception, causing the entire employee creation to fail.
+
+* *Location Not Found*: If the location ID doesn't exist or doesn't belong to the customer, the service returns 404 Not Found or 400 Bad Request.
+
+* *Duplicate Employee*: If an employee with the same `userId` already exists for the customer, the service returns 409 Conflict.
+
+* *Kafka Unavailable*: Events are stored in the outbox table; Eventuate CDC retries publishing when Kafka becomes available.
+
+* *Oso Cloud Unavailable*: The Oso Integration Service retries event processing; authorization may use stale data temporarily.

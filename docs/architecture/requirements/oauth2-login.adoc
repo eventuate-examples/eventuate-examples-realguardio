@@ -1,0 +1,44 @@
+=== User Story: OAuth2 Login
+
+[source,gherkin]
+----
+Feature: User Authentication via OAuth2
+  As a user
+  I want to authenticate using OAuth2
+  So that I can securely access the RealGuardIO application
+
+  Scenario: Successful login with valid credentials
+    Given I am not authenticated
+    When I navigate to a protected page
+    Then I am redirected to the login page
+    When I enter my username "admin" and password "password"
+    And I submit the login form
+    Then I am authenticated via OAuth2 authorization code flow with PKCE
+    And I receive an access token, refresh token, and ID token
+    And my session is stored in an encrypted HTTP-only cookie
+    And I am redirected to the dashboard
+
+  Scenario: Failed login with invalid credentials
+    Given I am not authenticated
+    When I navigate to the login page
+    And I enter invalid username or password
+    And I submit the login form
+    Then I see an error message "Invalid username or password"
+    And I am not authenticated
+    And I remain on the login page
+
+  Scenario: Access token refresh
+    Given I am authenticated
+    And my access token has expired
+    When I make a request to a protected endpoint
+    Then the BFF automatically refreshes my access token using the refresh token
+    And I receive a new access token
+    And my request completes successfully
+
+  Scenario: Refresh token expiration
+    Given I am authenticated
+    And my refresh token has expired
+    When I make a request to a protected endpoint
+    Then I receive a 401 Unauthorized response
+    And I am redirected to the login page
+----

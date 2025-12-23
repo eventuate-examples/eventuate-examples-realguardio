@@ -1,0 +1,131 @@
+== Security System Subdomain
+
+The Security System subdomain manages the lifecycle and state of physical security systems, including their armed/disarmed states and the business rules governing state transitions.
+
+=== Domain Model
+
+[plantuml]
+....
+@startuml
+class SecuritySystem {
+  +Long id
+  +String locationName
+  +SecuritySystemState state
+  +Long locationId
+  +String rejectionReason
+  +Long version
+  +arm()
+  +disarm()
+}
+
+enum SecuritySystemState {
+  CREATION_PENDING
+  CREATION_FAILED
+  DISARMED
+  ARMED
+  ALARMED
+  +allowedActions(): Set<SecuritySystemAction>
+}
+
+enum SecuritySystemAction {
+  ARM
+  DISARM
+  ACKNOWLEDGE
+}
+
+SecuritySystem "1" --> "1" SecuritySystemState : has
+SecuritySystemState --> SecuritySystemAction : allows
+
+@enduml
+....
+
+=== Entity Responsibilities
+
+* **SecuritySystem** - Aggregate root representing a physical security system installation
+** Manages the security system lifecycle and state
+** Tracks the current state (CREATION_PENDING, CREATION_FAILED, DISARMED, ARMED, ALARMED)
+** References the location where the system is installed
+** Includes optimistic locking (`version` field) to prevent concurrent state changes
+** Methods:
+*** `arm()` - Transitions system to ARMED state (if allowed by current state)
+*** `disarm()` - Transitions system to DISARMED state (if allowed by current state)
+** Enforces state transition rules: Cannot arm from ALARMED state
+** Stores rejection reason when creation fails
+
+=== Enum Responsibilities
+
+* **SecuritySystemState** - Domain-critical enum defining security system states
+** Values:
+*** `CREATION_PENDING` - Initial state when security system is being provisioned
+*** `CREATION_FAILED` - Creation process failed (terminal state)
+*** `DISARMED` - Security system is not monitoring (default operational state)
+*** `ARMED` - Security system is actively monitoring for intrusions
+*** `ALARMED` - Security system detected an intrusion (requires acknowledgment)
+** Business Logic: Each state defines allowed actions through `allowedActions()` method
+** State Machine:
+*** `CREATION_PENDING` → No actions allowed (waiting for provisioning)
+*** `DISARMED` → Can ARM
+*** `ARMED` → Can DISARM
+*** `ALARMED` → Can DISARM or ACKNOWLEDGE
+** Prevents invalid state transitions at the domain level
+
+* **SecuritySystemAction** - Domain-critical enum defining actions that can be performed
+** Values:
+*** `ARM` - Activate security monitoring
+*** `DISARM` - Deactivate security monitoring
+*** `ACKNOWLEDGE` - Acknowledge alarm condition (for future use)
+** Used to validate requested actions against current state
+
+=== Domain Services
+
+* **SecuritySystemService** - Primary domain service coordinating security system operations
+** `createSecuritySystem()` - Creates security system in CREATION_PENDING state
+** `noteLocationCreated()` - Updates security system with location reference after saga completion
+** `updateCreationFailed()` - Handles creation failure (sets CREATION_FAILED state and rejection reason)
+** `arm()` - Arms the security system (with authorization check)
+** `disarm()` - Disarms the security system (with authorization check)
+** `findAll()` - Queries all security systems
+** `findById()` - Retrieves specific security system by ID
+** Coordinates with Oso Cloud for authorization checks before state changes
+
+=== Domain Events
+
+* `SecuritySystemCreated` - Published when a new security system is created
+* `SecuritySystemArmed` - Published when security system transitions to ARMED state
+* `SecuritySystemDisarmed` - Published when security system transitions to DISARMED state
+* `LocationLinked` - Published when location is associated with security system
+
+=== Relationships to Other Subdomains
+
+* **Customer Management** - SecuritySystem references Location from Customer Management subdomain
+** Location provides the authorization context (who can arm/disarm)
+** Location name is cached in SecuritySystem for performance
+** Bi-directional reference: Location also references SecuritySystem
+
+* **Orchestration** - Saga orchestrates creation of SecuritySystem and Location together
+** SecuritySystem created first in CREATION_PENDING state
+** Location created and linked via saga
+** Compensation: If location creation fails, SecuritySystem marked as CREATION_FAILED
+
+=== Business Rules
+
+* Security systems must be in a valid state before accepting arm/disarm commands
+* Cannot arm a security system that is in ALARMED state (must disarm or acknowledge first)
+* State transitions are atomic and protected by optimistic locking
+* Only users with appropriate location-based roles can arm or disarm systems
+* Security system creation and location linking must complete atomically (via saga)
+* Failed security system creations are preserved with rejection reasons for auditing
+
+=== Authorization Integration
+
+* Authorization checks are performed before state transitions (arm/disarm)
+* Uses Oso Cloud for policy-based authorization
+* Required permissions:
+** `arm` permission - To arm a security system
+** `disarm` permission - To disarm a security system
+* Permissions evaluated based on user's location-based roles
+* Supported roles for authorization:
+** SECURITY_SYSTEM_ARMER - Can arm systems
+** SECURITY_SYSTEM_DISARMER - Can disarm systems
+** SECURITY_SYSTEM_VIEWER - Can view system status (read-only)
+** COMPANY_ROLE_ADMIN - Can perform all operations

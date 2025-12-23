@@ -1,0 +1,290 @@
+== About the documentation
+
+This is the architecture documentation for this application.
+
+== Conventions
+
+* The documentation uses Asciidoc for the text documents.
+* The directory containing this file is the top-level directory
+
+== Essential Guideline: Document What Exists
+
+IMPORTANT: Documentation must describe what actually exists in the code, not imaginary, planned, or idealized scenarios.
+
+* Only document REST endpoints that actually exist in the code
+* Only document events that are actually published (verified via `domainEventPublisher.publish()` calls)
+* Only document event handlers that actually exist (verified via `@EventuateDomainEventHandler` annotations)
+* Use exact class names, method names, and event names from the code
+* If functionality is planned but not implemented, do NOT document it as if it exists
+* When in doubt, search the codebase to verify before documenting
+
+== Structure
+
+In the top-level directory there is an `architecture.adoc` document:
+
+* It includes the other ADOC files described below - if the docs are in a subdirectory then the architecture.adoc should include foo/foo.adoc which includes the files in that directory.
+
+
+== Requirements
+
+There is a requirements subdirectory which contains the following:
+
+* A user story ADOC document, named after the story, in Gherkin format for each story supported by the system
+
+== System context
+
+In the top-level directory contains system-context.adoc.
+It describes the external actors and systems that this application interacts with.
+Create a context diagram using Mermaid that's embedded in the ADOC file.
+Follow the diagram with a bullet list describing each actor and external system.
+
+IMPORTANT: 
+
+* A system context shows the application as a blackbox - the focus is on the actors and external systems.
+* Infrastructure services - such as Postgres and Kafka - are part of the application, not external services.
+
+== Architecture overview
+
+In the top-level directory contains architecture-overview.adoc.
+
+This document is an overview of the architecture and contains the following:
+
+* An overview architecture diagram - e.g. Mermaid embedded in the ADOC fil
+* The diagram is followed by a bullet point list - each bullet point describes an element of the architecture
+
+== Documenting the subdomains
+
+There is a `domains/domains.adoc` overview document that:
+
+* Describes the subdomain relationships with a diagram
+* Links to each subdomain's detailed documentation in the owning service
+
+Each service owns one or more DDD-style subdomains.
+The documentation for each subdomain should be in the owning service's `docs/architecture/subdomains` subdirectory in a file named after the subdomain (e.g., `customer-management.adoc`, `security-system.adoc`).
+
+Each subdomain document should consist of the following:
+
+* A PlantUML class diagram showing the key entities and their relationships
+* A bullet list summarizing the responsibilities of each entity
+
+IMPORTANT: The Domain Model description should only document the domain entities (aggregates, entities, value objects) that contain business logic. Do not include:
+
+* CQRS view tables (document these in the CQRS View section instead)
+* Infrastructure tables (e.g., outbox tables, idempotency tables)
+* DTOs or API request/response objects
+* Enums
+
+== Documenting the BFF and the services
+
+There is a `services/services.adoc` overview document that:
+
+* Contains an architecture diagram showing the services and their interactions
+* Provides a brief description of each service
+* Includes the detailed documentation from each service's `docs/architecture` subdirectory
+
+The documentation for each service (including the BFF) should be in that service's `docs/architecture` subdirectory with the following structure:
+
+----
+<service>/docs/architecture/
+├── <service>.adoc           # Main service documentation
+└── subdomains/              # Subdomain documentation (if service owns subdomains)
+    ├── <subdomain-1>.adoc
+    └── <subdomain-2>.adoc
+----
+
+For each backend service:
+
+* The main `<service>.adoc` file is a microservice canvas document following the https://github.com/cer/microservice-canvas[Microservice Canvas] format
+* It includes the subdomain documentation from the `subdomains` subdirectory
+
+For the BFF:
+
+* The main `<service>.adoc` file describes its structure and the calls that it makes to the backend services.
+
+=== Service documentation requirements
+
+The microservice canvas must list all outbound synchronous dependencies:
+
+* REST API calls to other services (document: target service, endpoints called, purpose)
+* OAuth2/IAM Service calls for authentication (token requests, user management)
+* Authorization service calls (Oso Cloud permission checks)
+
+Use the outbound dependencies list to identify which scenarios need to be documented.
+
+The domains subsection should reference the subdomains that the service contains.
+
+The service documentation must document any CQRS views that are maintained by the service.
+For each CQRS view:
+
+* A table summarizing the events that are consumed with two columns: Event Type and Published By (the service name)
+* A table summarizing the database tables that implement the view with three columns: Table Name, Column Names, and Events that update it
+* The queries that the view supports
+
+=== Saga Documentation Requirements
+
+For services that orchestrate sagas (e.g., Orchestration Service), document each saga with:
+
+* A brief description of the saga's purpose
+* A table showing the saga steps with the following columns:
+
+|===
+|Step |Participant |Transaction |Compensating Transaction
+
+|1
+|Service Name
+|Command sent
+|Compensation command (or "—" if none)
+
+|2
+|...
+|...
+|...
+|===
+
+Example:
+
+|===
+|Step |Participant |Transaction |Compensating Transaction
+
+|1
+|Security System Service
+|`CreateSecuritySystemCommand`
+|`UpdateCreationFailedCommand`
+
+|2
+|Customer Service
+|`CreateLocationWithSecuritySystemCommand`
+|—
+
+|3
+|Security System Service
+|`NoteLocationCreatedCommand`
+|—
+|===
+
+=== Event Subscription Documentation Requirements
+
+For services that consume domain events (including authorization services like Oso Integration Service):
+
+IMPORTANT: Event names in documentation MUST exactly match the actual event class names in the code.
+
+To ensure accuracy:
+
+1. Search the codebase for all `@EventuateDomainEventHandler` annotations in the service
+2. Extract the exact event type from each handler method's `DomainEventEnvelope<EventType>` parameter
+3. Document only the events that have actual handler implementations
+4. Use the exact class name as it appears in the code (e.g., `LocationCreatedForCustomer`, not `LocationCreated`)
+5. For each event handler, document:
+   * The exact event class name
+   * The channel/aggregate the event is published from
+   * What authorization facts or data are created/updated from the event
+   * The service that publishes the event
+
+DO NOT:
+
+* Infer or guess event names based on domain concepts
+* Document events that don't have corresponding `@EventuateDomainEventHandler` methods
+* Use abbreviated or "cleaned up" event names
+* List events from service documentation without verifying the actual handler code exists
+
+Example of correct event subscription documentation:
+
+====
+==== Customer Service Events
+
+* `CustomerEmployeeAssignedCustomerRole` - Creates role assignment at customer level
+** Handler: `CustomerEventConsumer.handleCustomerEmployeeAssignedCustomerRole()`
+** Channel: `io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer`
+** Maps to: `has_role(CustomerEmployee, roleName, Customer)` fact in Oso Cloud
+
+* `LocationCreatedForCustomer` - Creates location and links to customer
+** Handler: `CustomerEventConsumer.handleLocationCreatedForCustomer()`
+** Channel: `io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer`
+** Maps to: `has_relation(Location, "customer", Customer)` fact in Oso Cloud
+====
+
+== Documenting the multi-service scenarios
+
+There is a `scenarios` directory that contains a document describing each request that spans multiple services including any OAuth2 flows.
+
+Each scenarios document contains the following:
+
+* An embedded plantuml diagram (asciidoc diagram) that shows the sequence
+* A text-based description of the scenario. It starts with "The sequence of events is:" and is followed by numbered steps describing what happens, e.g. ". The X does Y"
+
+=== How to identify scenarios to document
+
+To ensure completeness, systematically review the codebase:
+
+1. List all REST API endpoints in each service (look for @GetMapping, @PostMapping, @PutMapping, @DeleteMapping, etc.)
+2. For each endpoint, trace through the implementation code to identify:
+   * WebClient or RestTemplate calls to other services
+   * OAuth2 token requests (look for OAuth2RestTemplate, client credentials flows)
+   * Event publishing via Kafka/TRAM (these trigger actions in other services)
+   * Saga orchestration commands
+3. If an endpoint triggers interactions with 2+ services (including IAM for non-validation calls), create a scenario document
+4. Search for these patterns in the code:
+   * `WebClient.post()` or `.get()` - indicates HTTP calls to other services
+   * `@Bean OAuth2RestTemplate` or client credentials configurations - indicates service-to-service auth
+   * `domainEventPublisher.publish()` - triggers async processing in other services
+   * Command/reply patterns in saga orchestrators
+5. Look for ``DomainEventPublisher``s in one service and coresponding ``EventuateDomainEventHandler``s
+A multi-service services includes requests that query a CQRS view.
+
+=== What to include in scenarios
+
+IMPORTANT: All service-to-service interactions MUST be documented in scenarios.
+This includes:
+
+* OAuth2 client credentials token requests
+* OAuth2 authorization code exchanges
+* User creation/management API calls to IAM Service
+* Permission checks to authorization services (Oso Cloud)
+
+May be omitted for brevity:
+
+* JWT token validation via JWKS endpoints - this happens on every authenticated request and can clutter diagrams. Show it in the OAuth2 login scenario and the first authenticated request scenario, then omit it from subsequent scenarios with a note like "JWT validated (not shown)".
+
+=== Event names in scenarios
+
+IMPORTANT: When documenting event-driven interactions in scenarios:
+
+1. Use the exact event class name from the code in both:
+   * PlantUML sequence diagrams (e.g., `Kafka -> Oso: CustomerEmployeeAssignedCustomerRole event`)
+   * Textual descriptions (e.g., "The Customer Service publishes a `CustomerEmployeeAssignedCustomerRole` event")
+
+2. Verify event names by checking:
+   * The publishing code: Search for `domainEventPublisher.publish()` or event publishing in the aggregate
+   * The consuming code: Search for `@EventuateDomainEventHandler` methods with `DomainEventEnvelope<EventType>`
+
+3. Cross-reference events in scenarios against:
+   * The service documentation's Event Subscriptions section
+   * The actual event handler implementations
+
+4. If an event appears in a scenario but has no consumer implementation, either:
+   * Remove it from the scenario (if not actually published)
+   * Add a note: "Event published but not yet consumed by any service"
+
+Example of correct event documentation in scenarios:
+
+====
+. The Customer Service publishes a `CustomerEmployeeAssignedCustomerRole` event to Kafka.
+. The Oso Integration Service consumes the `CustomerEmployeeAssignedCustomerRole` event from Kafka.
+. The Oso Integration Service inserts a `has_role(CustomerEmployee, "COMPANY_ROLE_ADMIN", Customer)` fact into Oso Cloud.
+====
+
+DO NOT use generic or inferred event names like `CustomerCreated` when the actual code uses `CustomerCreatedEvent` or a different name.
+
+== Document security architecture
+
+Create a security/security.adoc file that describes:
+
+* Authentication flow - OAuth2/OIDC with authorization code + PKCE
+* Token types and lifetimes (access tokens, refresh tokens, ID tokens)
+* How JWTs are validated (JWKS endpoint, signature verification, claims extraction)
+* Service-to-service authentication (client credentials grant)
+* Authorization approach (RBAC via Spring Security + policy-based via Oso Cloud)
+* Where security decisions are made (which services check which permissions)
+* How user accounts are managed (IAM Service user creation API)
+
+Cross-reference the OAuth2 login scenario and other authentication-related scenarios.

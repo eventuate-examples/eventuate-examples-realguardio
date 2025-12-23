@@ -1,0 +1,51 @@
+=== User Story: Disarm Security System
+
+[source,gherkin]
+----
+Feature: Disarm Security System
+  As an authorized employee
+  I want to disarm a security system at a location
+  So that authorized personnel can access the location
+
+  Scenario: Successfully disarm security system with proper authorization
+    Given I am authenticated as employee with ID 456
+    And a security system exists with ID 789 at location 123
+    And I have role "SECURITY_SYSTEM_DISARMER" at location 123
+    And the security system is currently armed
+    When I submit a request to disarm security system 789
+    Then the Security System Service validates my JWT token
+    And the service retrieves the security system and associated location
+    And the service queries Oso Cloud: "Can employee 456 'disarm' security system 789?"
+    And Oso Cloud evaluates the policy and returns "allowed: true"
+    And the security system armed status is updated to false
+    And I receive a 200 OK response
+    And a SecuritySystemDisarmed event is published to Kafka
+    And the Oso Integration Service processes the event for audit logging
+
+  Scenario: Attempt to disarm security system without proper authorization
+    Given I am authenticated as employee with ID 456
+    And a security system exists with ID 789 at location 123
+    And I have role "SECURITY_SYSTEM_ARMER" but not "SECURITY_SYSTEM_DISARMER" at location 123
+    When I submit a request to disarm security system 789
+    Then the Security System Service queries Oso Cloud
+    And Oso Cloud evaluates the policy and returns "allowed: false"
+    And I receive a 403 Forbidden response
+    And the error message indicates "Insufficient permissions to disarm this security system"
+    And the security system remains armed
+
+  Scenario: Attempt to disarm non-existent security system
+    Given I am authenticated as employee with ID 456
+    When I submit a request to disarm security system 999
+    Then I receive a 404 Not Found response
+    And the error message indicates "Security system not found"
+
+  Scenario: Disarm security system when Oso Cloud is unavailable
+    Given I am authenticated as employee with ID 456
+    And a security system exists with ID 789 at location 123
+    And I have role "SECURITY_SYSTEM_DISARMER" at location 123
+    When I submit a request to disarm security system 789
+    And Oso Cloud is unreachable
+    Then I receive a 503 Service Unavailable response
+    And the error message indicates "Authorization service unavailable"
+    And the security system remains in its current state (fail-safe behavior)
+----

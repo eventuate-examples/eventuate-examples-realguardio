@@ -1,0 +1,128 @@
+== Services
+
+This section describes the BFF and backend services that make up the RealGuardIO application.
+
+=== Service Architecture
+
+[plantuml]
+....
+@startuml
+!define SERVICE_COLOR #E8F5E9
+!define BFF_COLOR #FFF9C4
+!define AUTH_COLOR #F3E5F5
+!define INFRA_COLOR #E0E0E0
+
+package "Frontend" BFF_COLOR {
+  [BFF\n(Next.js)]
+}
+
+package "Backend Services" SERVICE_COLOR {
+  [Customer\nService]
+  [Security System\nService]
+  [Orchestration\nService]
+}
+
+package "Infrastructure Services" AUTH_COLOR {
+  [IAM Service\n(OAuth2)]
+  [Oso Integration\nService]
+}
+
+cloud "External Services" INFRA_COLOR {
+  [Oso Cloud]
+}
+
+' User interactions
+actor User
+User --> [BFF\n(Next.js)] : HTTPS
+
+' BFF to backend
+[BFF\n(Next.js)] --> [Customer\nService] : REST + JWT
+[BFF\n(Next.js)] --> [Security System\nService] : REST + JWT
+[BFF\n(Next.js)] --> [Orchestration\nService] : REST + JWT
+
+' Service to service
+[Customer\nService] --> [IAM Service\n(OAuth2)] : JWT validation,\nuser creation
+[Security System\nService] --> [IAM Service\n(OAuth2)] : JWT validation
+[Orchestration\nService] --> [IAM Service\n(OAuth2)] : JWT validation
+
+' OAuth2 flow
+[BFF\n(Next.js)] ..> [IAM Service\n(OAuth2)] : OAuth2\nauthorization code
+
+' Authorization
+[Customer\nService] --> [Oso Cloud] : permission checks
+[Security System\nService] --> [Oso Cloud] : permission checks
+
+' Event-driven communication
+[Oso Integration\nService] ..> [Oso Cloud] : sync facts
+[Customer\nService] .down.> [Oso Integration\nService] : domain events\n(Kafka)
+[Security System\nService] .down.> [Oso Integration\nService] : domain events\n(Kafka)
+
+' Saga orchestration
+[Orchestration\nService] ..> [Customer\nService] : saga commands\n(Kafka)
+[Orchestration\nService] ..> [Security System\nService] : saga commands\n(Kafka)
+
+' CQRS replication
+[Customer\nService] ..> [Security System\nService] : domain events\n(Kafka, CQRS)
+
+@enduml
+....
+
+=== Service Descriptions
+
+* **BFF (Backend for Frontend)** - Next.js web application serving the React UI and acting as API gateway
+** Handles OAuth2 authentication flow with IAM Service
+** Manages user sessions with next-auth
+** Proxies authenticated REST requests to backend services
+** Attaches JWT bearer tokens to all backend requests
+** Port: 3000
+
+* **Customer Service** - Manages customer domain including customers, employees, locations, and role assignments
+** Contains Customer Management and Organization Management subdomains
+** Publishes domain events for customer, employee, and location changes
+** Handles saga commands for location creation
+** Integrates with IAM Service for user account creation
+** Performs authorization checks via Oso Cloud
+** Port: 3002
+
+* **Security System Service** - Manages security systems and their armed/disarmed states
+** Contains Security System subdomain
+** Handles arm/disarm operations with authorization checks
+** Maintains CQRS view of location roles by subscribing to Customer Service events
+** Publishes domain events for security system state changes
+** Performs authorization checks via Oso Cloud
+** Port: 3001
+
+* **Orchestration Service** - Coordinates distributed transactions using the Saga pattern
+** Contains Orchestration subdomain
+** Orchestrates creation of security systems and locations atomically
+** Manages saga state and compensation logic
+** Sends saga commands to Customer Service and Security System Service
+** Ensures eventual consistency across service boundaries
+** Port: 3003
+
+* **IAM Service** - OAuth2/OIDC Authorization Server for authentication
+** Issues JWT access tokens and refresh tokens
+** Provides JWKS endpoint for token validation by resource servers
+** Manages OAuth2 client registrations
+** Supports authorization code flow with PKCE
+** Provides user account management API
+** Port: 9000
+
+* **Oso Integration Service** - Synchronizes domain events to Oso Cloud authorization facts
+** Subscribes to domain events from Customer Service and Security System Service
+** Transforms events into Oso Cloud authorization facts (roles, relations, permissions)
+** Maintains eventual consistency between domain state and authorization state
+** Handles idempotency to prevent duplicate fact creation
+** Port: 8081
+
+include::../../../realguardio-bff/docs/architecture/realguardio-bff.adoc[leveloffset=+1]
+
+include::../../../realguardio-customer-service/docs/architecture/realguardio-customer-service.adoc[leveloffset=+1]
+
+include::../../../realguardio-security-system-service/docs/architecture/realguardio-security-system-service.adoc[leveloffset=+1]
+
+include::../../../realguardio-orchestration-service/docs/architecture/realguardio-orchestration-service.adoc[leveloffset=+1]
+
+include::../../../realguardio-iam-service/docs/architecture/realguardio-iam-service.adoc[leveloffset=+1]
+
+include::../../../realguardio-oso-integration-service/docs/architecture/realguardio-oso-integration-service.adoc[leveloffset=+1]

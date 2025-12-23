@@ -1,0 +1,203 @@
+== Oso Integration Service
+
+The Oso Integration Service bridges domain events from business services to Oso Cloud, ensuring authorization facts stay synchronized with the application's domain model. It consumes events and updates Oso Cloud's authorization graph in real-time.
+
+=== Responsibilities
+
+* Subscribe to domain events from Customer Service and Security System Service
+* Transform domain events into Oso Cloud authorization facts
+* Sync facts to Oso Cloud via HTTP API
+* Load and validate Oso authorization policies from `/policies/main.polar`
+* Maintain eventual consistency between domain state and authorization state
+* Handle idempotency to prevent duplicate fact creation
+* Provide observability for authorization data synchronization
+
+=== Event Subscriptions
+
+Subscribes to events via Kafka:
+
+==== Customer Service Events
+
+The `CustomerEventConsumer` class handles these domain events:
+
+* `CustomerEmployeeAssignedCustomerRole` - Creates role assignment at customer level
+** Handler: `CustomerEventConsumer.handleCustomerEmployeeAssignedCustomerRole()`
+** Channel: `io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer`
+** Action: Calls `osoFactManager.createRoleInCustomer(employeeId, customerId, roleName)`
+** Maps to: `has_role(CustomerEmployee, roleName, Customer)` fact in Oso Cloud
+
+* `LocationCreatedForCustomer` - Creates location and links to customer
+** Handler: `CustomerEventConsumer.handleLocationCreatedForCustomer()`
+** Channel: `io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer`
+** Action: Calls `osoFactManager.createLocationForCustomer(locationId, customerId)`
+** Maps to: `has_relation(Location, "customer", Customer)` fact in Oso Cloud
+
+* `SecuritySystemAssignedToLocation` - Links security system to location
+** Handler: `CustomerEventConsumer.handleSecuritySystemAssignedToLocation()`
+** Channel: `io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer`
+** Action: Calls `osoFactManager.assignSecuritySystemToLocation(securitySystemId, locationId)`
+** Maps to: `has_relation(SecuritySystem, "location", Location)` fact in Oso Cloud
+
+* `CustomerEmployeeAssignedLocationRole` - Creates role assignment at location level
+** Handler: `CustomerEventConsumer.handleCustomerEmployeeAssignedLocationRole()`
+** Channel: `io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer`
+** Action: Calls `osoFactManager.createRoleAtLocation(userName, locationId, roleName)`
+** Maps to: `has_role(CustomerEmployee, roleName, Location)` fact in Oso Cloud
+** Grants permissions like SECURITY_SYSTEM_ARMER, SECURITY_SYSTEM_DISARMER, SECURITY_SYSTEM_VIEWER
+
+=== Outbound Dependencies
+
+==== Synchronous
+
+* *Oso Cloud API* - HTTPS REST API for managing authorization data
+** Endpoint: `https://api.osohq.com` (production) or `http://oso-service:8080` (dev)
+** Operations:
+*** POST `/facts` - Insert authorization facts
+*** DELETE `/facts` - Remove authorization facts
+*** POST `/authorize` - Check permissions (used by other services)
+** Authentication: Bearer token via `OSO_API_KEY` environment variable
+
+=== Technology Stack
+
+* *Framework*: Spring Boot 3.4.5
+* *Language*: Java 17
+* *Event Consumption*: Eventuate TRAM Event Consumers
+* *HTTP Client*: Spring WebClient or RestTemplate
+* *Oso Integration*: Oso Java SDK
+* *Messaging*: Apache Kafka via Eventuate
+* *Observability*: Micrometer, OpenTelemetry
+
+=== Oso Authorization Model
+
+The service maintains the following authorization model in Oso Cloud:
+
+==== Actors
+
+* `CustomerEmployee` - Represents employees who can access resources
+** Attributes: `customerId`, `employeeId`
+
+==== Resources
+
+* `Customer` - Top-level organization
+** Attributes: `customerId`
+
+* `Location` - Physical location belonging to a customer
+** Attributes: `customerId`, `locationId`
+** Relations: `customer` (belongs to Customer)
+
+* `SecuritySystem` - Security system at a location
+** Attributes: `securitySystemId`
+** Relations: `location` (belongs to Location)
+
+==== Roles
+
+* `SECURITY_SYSTEM_ARMER` - Can arm security systems
+* `SECURITY_SYSTEM_DISARMER` - Can disarm security systems
+* `SECURITY_SYSTEM_VIEWER` - Can view security system status
+* `COMPANY_ROLE_ADMIN` - Organizational administrator
+
+==== Permissions
+
+* `arm` - Arm a security system
+* `disarm` - Disarm a security system
+* `view` - View security system details
+* `createCustomerEmployee` - Create employees for a customer
+
+==== Relations
+
+* `has_role(CustomerEmployee, Role, Location)` - Employee has role at location
+* `has_location(SecuritySystem, Location)` - Security system belongs to location
+* `has_customer(Location, Customer)` - Location belongs to customer
+
+=== Event Processing Flow
+
+1. Domain event published to Kafka by Customer/Security System Service
+2. Eventuate CDC captures event from outbox table
+3. Oso Integration Service event handler receives event
+4. Handler extracts authorization-relevant data
+5. Transforms data into Oso fact(s)
+6. Calls Oso Cloud API to insert/update facts
+7. Oso Cloud updates authorization graph
+8. Authorization checks by other services now reflect new state
+
+=== Idempotency
+
+* Uses Eventuate's idempotent message processing
+* Prevents duplicate fact creation from event redelivery
+* Tracks processed messages in database (if configured)
+
+=== Module Structure
+
+* `oso-integration-service` - Main Spring Boot application
+* `oso-event-subscribers` - Event consumer implementations
+* `oso-service` - Shared Oso service abstraction for API calls
+* `oso-service-test-container` - Testcontainers support for Oso Dev Server
+
+=== Deployment
+
+* *Port*: 3004
+* *Container Image*: Built using Docker multi-stage build
+* *Environment Variables*:
+** `OSO_URL` - Oso Cloud/Dev Server URL (e.g., `http://oso-service:8080` or `https://api.osohq.com`)
+** `OSO_API_KEY` - Oso Cloud authentication token
+** `EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS` - Kafka bootstrap servers
+** `OTEL_EXPORTER_OTLP_ENDPOINT` - OpenTelemetry collector endpoint
+
+=== Oso Policy
+
+The service reads and validates Oso policies from `/policies/main.polar`. Key policy rules:
+
+* Employees with `SECURITY_SYSTEM_ARMER` role at a location can `arm` security systems at that location
+* Employees with `SECURITY_SYSTEM_DISARMER` role can `disarm` security systems
+* Company admins have elevated permissions across their organization
+* Permissions inherit through organizational hierarchy (Customer → Location → SecuritySystem)
+
+Example policy excerpt:
+```polar
+actor CustomerEmployee {}
+
+resource Customer {
+    roles = ["COMPANY_ROLE_ADMIN"];
+}
+
+resource Location {
+    roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "SECURITY_SYSTEM_VIEWER"];
+    relations = { customer: Customer };
+}
+
+resource SecuritySystem {
+    permissions = ["arm", "disarm", "view"];
+    relations = { location: Location };
+}
+
+has_permission(employee: CustomerEmployee, "arm", system: SecuritySystem) if
+    has_role(employee, "SECURITY_SYSTEM_ARMER", system.location);
+```
+
+=== Testing Strategy
+
+* *Event Handler Tests*: Mock Oso Cloud API, verify correct facts are sent
+* *Integration Tests*: Use Oso Dev Server (Testcontainers) to verify end-to-end flow
+* *Policy Tests*: Verify Polar policy loads correctly and evaluates permissions as expected
+* *Idempotency Tests*: Verify duplicate events don't create duplicate facts
+
+=== Error Handling
+
+* *Oso Cloud Unavailable*: Events are retried automatically by Kafka consumer
+* *Invalid Events*: Logged and skipped (dead letter queue pattern can be added)
+* *Policy Errors*: Service fails to start if policy is invalid (fail-fast)
+
+=== Benefits
+
+* *Decoupled Authorization*: Business services don't need to know authorization implementation details
+* *Centralized Policies*: All authorization logic in one place (Polar policies)
+* *Real-time Updates*: Authorization reflects domain changes immediately
+* *Auditability*: Authorization changes tracked via event log
+* *Scalability*: Event-driven architecture scales independently
+
+=== Key Design Patterns
+
+* *Event-Driven Architecture* - Reacts to domain events asynchronously
+* *Eventual Consistency* - Authorization state converges with domain state
+* *Adapter Pattern* - Adapts domain events to Oso authorization facts
+* *Policy as Code* - Authorization policies defined in declarative Polar language

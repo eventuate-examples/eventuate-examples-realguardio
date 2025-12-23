@@ -1,0 +1,125 @@
+== Customer Service
+
+The Customer Service manages the customer domain including customers, employees, and locations. It is responsible for maintaining customer organizational structure and publishing domain events for other services to consume.
+
+=== Responsibilities
+
+* Create and manage customers
+* Create and manage customer employees
+* Create and manage locations associated with customers
+* Assign location-based roles to employees
+* Publish domain events for customer, employee, and location changes
+* Handle saga commands for location creation with security systems
+* Enforce authorization policies via Oso Cloud integration
+
+=== Subdomains
+
+This service contains the following subdomains:
+
+* **Customer Management** - Manages customers, locations, employees, teams, and location-based role assignments
+* **Organization Management** - Manages top-level organizations, members, and organizational role assignments
+
+include::subdomains/customer-management.adoc[leveloffset=+1]
+
+include::subdomains/organization-management.adoc[leveloffset=+1]
+
+=== Inbound Dependencies
+
+==== Synchronous (REST API)
+
+* `POST /customers` - Create a new customer (requires REALGUARDIO_ADMIN role)
+* `GET /customers` - List all customers
+* `POST /customers/{customerId}/employees` - Create a customer employee (requires REALGUARDIO_CUSTOMER_EMPLOYEE role)
+* `PUT /customers/{customerId}/location-roles` - Assign location roles to employee
+
+==== Asynchronous (Commands via Kafka)
+
+* `CreateLocationWithSecuritySystemCommand` - Saga command to create location with associated security system
+** Channel: `customer-service`
+** Handler: `CustomerCommandHandler`
+** Reply: `CreateLocationWithSecuritySystemReply` (success) or `Failure` (error)
+
+=== Outbound Dependencies
+
+==== Synchronous
+
+* *IAM Service* - Multiple integrations:
+** JWT token validation via JWKS endpoint (`/oauth2/jwks`)
+** OAuth2 client credentials token acquisition (`POST /oauth2/token` with `grant_type=client_credentials`)
+** User account creation (`POST /api/users`) - Creates user accounts for newly created employees with role `REALGUARDIO_CUSTOMER_EMPLOYEE`
+* *Oso Cloud* - Authorization policy evaluation for permission checks
+
+==== Asynchronous (Events via Kafka)
+
+Publishes domain events:
+
+* `CustomerCreated` - New customer created
+* `CustomerEmployeeCreated` - New employee added to customer
+* `LocationCreated` - New location created for customer
+* `CustomerEmployeeLocationRoleCreated` - Location role assigned to employee
+
+Events are published via Eventuate TRAM using the transactional outbox pattern to ensure reliability.
+
+=== Technology Stack
+
+* *Framework*: Spring Boot 3.4.5
+* *Language*: Java 17
+* *Persistence*: Spring Data JPA with Hibernate
+* *Database*: PostgreSQL (port 5432)
+* *Messaging*: Eventuate TRAM
+* *Security*: Spring Security OAuth2 Resource Server
+* *Authorization*: Oso Cloud integration
+* *Observability*: Micrometer, OpenTelemetry
+
+=== Module Structure
+
+The service is organized into multiple Gradle submodules:
+
+* `customer-service-domain` - Domain entities and business logic
+* `customer-service-persistence` - JPA repositories and database persistence
+* `customer-service-restapi` - REST controllers and API layer
+* `customer-service-iam-integration` - OAuth2 resource server configuration
+* `customer-service-api-messaging` - Command handlers for saga integration
+* `customer-service-event-publishing` - Domain event publishing
+* `customer-service-oso-integration` - Oso Cloud authorization integration
+* `common-domain` - Shared domain models
+* `test-utils` - Testing utilities
+
+=== Security
+
+==== Authentication
+* Uses JWT Bearer tokens issued by IAM Service
+* Validates tokens via IAM Service JWKS endpoint
+* Configured as OAuth2 Resource Server
+
+==== Authorization
+* Role-based access control (RBAC): REALGUARDIO_ADMIN, REALGUARDIO_CUSTOMER_EMPLOYEE
+* Policy-based authorization via Oso Cloud for fine-grained permissions
+* Location-based access control enforced through Oso policies
+
+=== Deployment
+
+* *Port*: 8080 (internally), 3002 (Docker exposed)
+* *Container Image*: Built using Docker multi-stage build
+* *Environment Variables*:
+** `SPRING_DATASOURCE_URL` - PostgreSQL connection URL
+** `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` - Database credentials
+** `EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS` - Kafka bootstrap servers
+** `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` - IAM Service URL
+** `OSO_URL` - Oso Cloud/Dev Server URL
+** `OSO_API_KEY` - Oso Cloud authentication token
+** `OTEL_EXPORTER_OTLP_ENDPOINT` - OpenTelemetry collector endpoint
+
+=== Testing Strategy
+
+* *Unit Tests*: Test domain logic and business rules in isolation
+* *Integration Tests*: Test database persistence and API endpoints with Testcontainers
+* *Command Handler Tests*: Test saga command handlers with mocked dependencies
+* *Authorization Tests*: Verify Oso policy enforcement
+
+=== Key Design Patterns
+
+* *Transactional Outbox Pattern* - Ensures reliable event publishing atomically with database updates
+* *Domain Events* - Publishes events for all significant domain changes
+* *Command Handler Pattern* - Processes saga commands asynchronously
+* *Repository Pattern* - Abstracts data access through JPA repositories

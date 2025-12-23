@@ -1,0 +1,31 @@
+== System Context
+
+This section describes the external actors and systems that the RealGuardIO application interacts with. The system context shows RealGuardIO as a black box, focusing on external actors and systems.
+
+=== Context Diagram
+
+[mermaid]
+....
+graph TB
+    User[End User<br/>Browser]
+    Admin[System Administrator]
+
+    RealGuardIO[RealGuardIO Application<br/>Microservices Platform]
+
+    OsoCloud[Oso Cloud<br/>Authorization Service]
+
+    User -->|HTTPS| RealGuardIO
+    Admin -->|HTTPS| RealGuardIO
+
+    RealGuardIO <-->|Authorization API| OsoCloud
+....
+
+=== External Actors
+
+* *End User*: Interacts with the system through a web browser to manage security systems, customers, employees, and locations. Users authenticate via OAuth2 and receive role-based permissions (REALGUARDIO_ADMIN, REALGUARDIO_CUSTOMER_EMPLOYEE).
+
+* *System Administrator*: Has elevated privileges (REALGUARDIO_ADMIN role) to create customers, manage employees, and configure the system. Accesses the system through the same web interface.
+
+=== External Systems
+
+* *Oso Cloud*: External policy-based authorization service that RealGuardIO integrates with for fine-grained access control. The application synchronizes authorization facts (relationships between employees, customers, locations, and security systems) to Oso Cloud and queries it to make permission decisions. Authorization policies are written in Polar language and define rules such as which employees can arm/disarm security systems at specific locations. Can run as cloud service (https://api.osohq.com) or local dev server for development/testing.

@@ -1,0 +1,153 @@
+== Scenario: Create Security System
+
+=== Overview
+
+This scenario describes the distributed transaction for creating a security system and its associated location. The operation spans multiple services and is coordinated by the CreateSecuritySystemSaga orchestrator.
+
+=== Sequence Diagram
+
+[plantuml]
+....
+@startuml
+actor User
+participant "BFF" as BFF
+participant "Orchestration\nService" as Orchestration
+participant "Security System\nService" as SecuritySystem
+participant "Customer\nService" as Customer
+participant "Oso Integration\nService" as Oso
+database "Kafka" as Kafka
+database "Oso Cloud" as OsoCloud
+
+User -> BFF: POST /api/securitysystems\n{customerId, name, locationName}
+activate BFF
+
+BFF -> Orchestration: POST /securitysystems\n{customerId, name, locationName}\n+ Bearer token
+activate Orchestration
+
+Orchestration -> Orchestration: Create CreateSecuritySystemSaga
+Orchestration -> Kafka: CreateSecuritySystemCommand
+Orchestration --> BFF: 202 Accepted\n{sagaId}
+deactivate Orchestration
+
+BFF --> User: Security system creation initiated
+deactivate BFF
+
+Kafka -> SecuritySystem: CreateSecuritySystemCommand
+activate SecuritySystem
+
+SecuritySystem -> SecuritySystem: Create SecuritySystem entity\n(armed=false)
+SecuritySystem -> SecuritySystem: Persist to database\n(transactional outbox)
+SecuritySystem -> Kafka: SecuritySystemCreated event
+SecuritySystem -> Kafka: CreateSecuritySystemReply\n{securitySystemId}
+deactivate SecuritySystem
+
+Kafka -> Orchestration: CreateSecuritySystemReply\n{securitySystemId}
+activate Orchestration
+
+Orchestration -> Orchestration: Update saga state\n(securitySystemId received)
+Orchestration -> Kafka: CreateLocationWithSecuritySystemCommand\n{customerId, locationName, securitySystemId}
+deactivate Orchestration
+
+Kafka -> Customer: CreateLocationWithSecuritySystemCommand
+activate Customer
+
+Customer -> Customer: Create Location entity\n(securitySystemId linked)
+Customer -> Customer: Persist to database\n(transactional outbox)
+Customer -> Kafka: SecuritySystemAssignedToLocation event
+Customer -> Kafka: CreateLocationWithSecuritySystemReply\n{locationId}
+deactivate Customer
+
+Kafka -> Orchestration: CreateLocationWithSecuritySystemReply\n{locationId}
+activate Orchestration
+
+Orchestration -> Orchestration: Update saga state\n(locationId received)
+Orchestration -> Kafka: NoteLocationCreatedCommand\n{securitySystemId, locationId}
+deactivate Orchestration
+
+Kafka -> SecuritySystem: NoteLocationCreatedCommand
+activate SecuritySystem
+
+SecuritySystem -> SecuritySystem: Link locationId to\nSecuritySystem entity
+SecuritySystem -> SecuritySystem: Update database
+SecuritySystem -> Kafka: NoteLocationCreatedReply
+deactivate SecuritySystem
+
+Kafka -> Orchestration: NoteLocationCreatedReply
+activate Orchestration
+
+Orchestration -> Orchestration: Mark saga as completed
+deactivate Orchestration
+
+' Event processing by Oso Integration Service
+Kafka -> Oso: SecuritySystemAssignedToLocation event
+activate Oso
+Oso -> OsoCloud: Insert fact:\nhas_relation(SecuritySystem, "location", Location)
+deactivate Oso
+
+@enduml
+....
+
+=== Description
+
+The sequence of events is:
+
+. The User submits a request to create a security system via the BFF UI, providing the customer ID, security system name, and location name.
+
+. The BFF proxies the request to the Orchestration Service's `/securitysystems` endpoint, attaching the user's JWT bearer token for authentication.
+
+. The Orchestration Service creates a new instance of the CreateSecuritySystemSaga and immediately returns a 202 Accepted response with the saga ID, allowing asynchronous processing.
+
+. The BFF informs the user that security system creation has been initiated.
+
+. The Orchestration Service sends a CreateSecuritySystemCommand to the Security System Service via Kafka.
+
+. The Security System Service receives the command, creates a new SecuritySystem entity with `armed=false`, persists it to the database using the transactional outbox pattern, and publishes a SecuritySystemCreated event to Kafka.
+
+. The Security System Service sends a CreateSecuritySystemReply containing the newly created `securitySystemId` back to the Orchestration Service via Kafka.
+
+. The Orchestration Service receives the reply, updates the saga state with the `securitySystemId`, and proceeds to the next step.
+
+. The Orchestration Service sends a CreateLocationWithSecuritySystemCommand to the Customer Service, including the `customerId`, `locationName`, and the `securitySystemId` from the previous step.
+
+. The Customer Service receives the command, creates a new Location entity (or finds existing location by name) linked to the security system ID, persists it to the database using the transactional outbox pattern, and publishes a `SecuritySystemAssignedToLocation` event.
+
+. The Customer Service sends a CreateLocationWithSecuritySystemReply containing the `locationId` back to the Orchestration Service.
+
+. The Orchestration Service receives the reply, updates the saga state with the `locationId`, and proceeds to the final step.
+
+. The Orchestration Service sends a NoteLocationCreatedCommand to the Security System Service with both `securitySystemId` and `locationId`.
+
+. The Security System Service receives the command, updates the SecuritySystem entity to include the `locationId`, establishing the bidirectional link between security system and location.
+
+. The Security System Service sends a NoteLocationCreatedReply confirming the update.
+
+. The Orchestration Service receives the reply and marks the saga as successfully completed.
+
+. In parallel, the Oso Integration Service consumes the `SecuritySystemAssignedToLocation` event from Kafka.
+
+. The Oso Integration Service inserts a `has_relation(SecuritySystem, "location", Location)` fact into Oso Cloud, linking the security system to its location.
+
+. Authorization policies can now be enforced for the newly created security system based on location-based roles.
+
+=== Failure Handling
+
+If any step fails (e.g., step 10 or 13), the saga executes compensating transactions:
+
+. The Orchestration Service detects the failure via an error reply or timeout.
+
+. The Orchestration Service sends an UpdateCreationFailedCommand to the Security System Service.
+
+. The Security System Service marks the SecuritySystem entity as failed or deletes it (depending on implementation).
+
+. The saga is marked as failed, and the error is logged for operator intervention.
+
+. The user may be notified of the failure via a notification system or by polling the saga status.
+
+=== Key Characteristics
+
+* *Asynchronous Processing*: The BFF returns immediately; saga execution happens in the background
+* *Eventual Consistency*: All services eventually converge to a consistent state
+* *Reliable Messaging*: Commands and events use Kafka with at-least-once delivery
+* *Compensating Transactions*: Failed operations are rolled back via compensating actions
+* *Distributed Tracing*: OpenTelemetry traces provide end-to-end visibility
+* *Idempotency*: Services handle duplicate messages gracefully

@@ -1,0 +1,89 @@
+== Domain Model
+
+This section describes the DDD-style subdomains that make up the RealGuardIO application. Each subdomain represents a distinct area of business functionality with its own domain model, business rules, and bounded context.
+
+=== Subdomain Overview
+
+The application is organized into four main subdomains:
+
+* **Customer Management** - Manages customers, locations, employees, teams, and location-based role assignments
+* **Organization Management** - Manages top-level organizations, members, and organizational role assignments
+* **Security System** - Manages security systems, their states, and state transitions
+* **Orchestration** - Coordinates distributed transactions across services using the Saga pattern
+
+[plantuml]
+....
+@startuml
+!define CORE_COLOR #B3E5FC
+!define SUPPORTING_COLOR #FFE0B2
+
+package "Customer Management" CORE_COLOR {
+}
+
+package "Organization Management" CORE_COLOR {
+}
+
+package "Security System" CORE_COLOR {
+}
+
+package "Orchestration" SUPPORTING_COLOR {
+}
+
+' Relationships between subdomains
+"Customer Management" --> "Organization Management" : references\nOrganization, Member
+"Customer Management" <--> "Security System" : bi-directional\nLocation ↔ SecuritySystem
+"Orchestration" ..> "Customer Management" : creates\nLocation
+"Orchestration" ..> "Security System" : creates\nSecuritySystem
+"Security System" ..> "Customer Management" : subscribes to\nevents (CQRS)
+
+' Notes
+note right of "Customer Management"
+  **Core Domain**
+  Customers, locations,
+  employees, teams,
+  role assignments
+end note
+
+note right of "Organization Management"
+  **Core Domain**
+  Organizations, members,
+  organizational roles
+  (same service as Customer Mgmt)
+end note
+
+note right of "Security System"
+  **Core Domain**
+  Security systems,
+  states, state transitions,
+  authorization
+end note
+
+note bottom of "Orchestration"
+  **Supporting Domain**
+  Saga orchestration for
+  distributed transactions
+end note
+
+@enduml
+....
+
+==== Subdomain Relationships
+
+* **Customer Management → Organization Management**: Customer references Organization; CustomerEmployee references Member. These subdomains are tightly coupled and exist within the same service (Customer Service).
+
+* **Customer Management ↔ Security System**: Bi-directional reference between Location and SecuritySystem. These subdomains are loosely coupled across different services, communicating via domain events and saga orchestration.
+
+* **Orchestration → Customer Management**: Orchestration coordinates the creation of Locations through saga commands.
+
+* **Orchestration → Security System**: Orchestration coordinates the creation of SecuritySystems and links them to Locations through saga commands.
+
+* **Security System → Customer Management**: Security System Service maintains a CQRS view (LocationRole replica) by subscribing to Customer Management events for authorization purposes.
+
+=== Subdomains
+
+Each subdomain is documented within its owning service's documentation:
+
+* **Customer Management** - See <<_customer_management_subdomain,Customer Management Subdomain>> in Customer Service
+* **Organization Management** - See <<_organization_management_subdomain,Organization Management Subdomain>> in Customer Service
+* **Security System** - See <<_security_system_subdomain,Security System Subdomain>> in Security System Service
+* **Orchestration** - See <<_orchestration_subdomain,Orchestration Subdomain>> in Orchestration Service

@@ -1,0 +1,97 @@
+== Orchestration Subdomain
+
+The Orchestration subdomain coordinates distributed transactions across multiple services using the Saga pattern. It ensures atomicity and consistency for operations that span service boundaries.
+
+=== Domain Model
+
+[plantuml]
+....
+@startuml
+class CreateSecuritySystemSaga {
+  +SagaDefinition<CreateSecuritySystemSagaData> sagaDefinition
+  +createSecuritySystem(CreateSecuritySystemSagaData)
+  -handleCreateSecuritySystemReply()
+  -handleCreateLocationReply()
+  -noteLocationCreated()
+  -handleCreateLocationFailure()
+  -updateCreationFailed()
+}
+
+class CreateSecuritySystemSagaData {
+  +String sagaId
+  +Long customerId
+  +String locationName
+  +Long securitySystemId
+  +Long locationId
+  +String rejectionReason
+}
+
+CreateSecuritySystemSaga ..> CreateSecuritySystemSagaData : orchestrates
+
+@enduml
+....
+
+=== Entity Responsibilities
+
+* **CreateSecuritySystemSaga** - Saga orchestrator for creating security systems with locations
+** Coordinates distributed transaction across Security System Service and Customer Service
+** Ensures atomicity: Either both security system and location are created, or neither exists
+** Manages compensation logic when operations fail
+** Saga Steps:
+*** Step 1: Create SecuritySystem in Security System Service (with compensation)
+*** Step 2: Create Location with SecuritySystem reference in Customer Service
+*** Step 3: Note Location Created in Security System Service
+** Compensation: If location creation fails, mark SecuritySystem as CREATION_FAILED
+
+* **CreateSecuritySystemSagaData** - Saga state holder
+** Maintains state throughout the saga execution
+** Fields:
+*** `sagaId` - Unique identifier for saga instance
+*** `customerId` - Customer for whom location/system is being created
+*** `locationName` - Name of the location being created
+*** `securitySystemId` - ID of created security system (set after Step 1)
+*** `locationId` - ID of created location (set after Step 2)
+*** `rejectionReason` - Reason for failure (if saga fails)
+** Passed between saga steps to accumulate results
+** Immutable - each step produces new state
+
+=== Domain Services
+
+* **CreateSecuritySystemSagaService** - Entry point for initiating sagas
+** Accepts saga data from orchestration REST API
+** Creates saga instance and starts execution
+** Returns saga ID for tracking
+
+=== Relationships to Other Subdomains
+
+* **Security System** - Creates and updates SecuritySystem aggregate
+** Commands sent: `CreateSecuritySystemCommand`, `NoteLocationCreatedCommand`, `UpdateCreationFailedCommand`
+** Manages security system lifecycle during creation
+
+* **Customer Management** - Creates Location and links to SecuritySystem
+** Command sent: `CreateLocationWithSecuritySystemCommand`
+** Ensures location references valid security system
+
+=== Business Rules
+
+* Security system and location must be created atomically
+* If location creation fails, security system must be marked as failed (not deleted)
+* Rejection reasons must be captured for failed creations
+* Saga must be idempotent (can replay safely if system crashes)
+* Each saga step must be able to detect if it has already been executed
+
+=== Technology Details
+
+* Uses Eventuate TRAM Sagas framework with Simple DSL
+* Commands and replies are sent via Kafka
+* Saga state is persisted in Eventuate Saga tables
+* Supports automatic retry for transient failures
+* Provides saga orchestration dashboard for monitoring
+
+=== Design Patterns
+
+* **Saga Pattern** - Coordinates distributed transactions with compensation
+* **Command Pattern** - Each saga step sends commands to services
+* **State Machine** - Saga definition is a state machine of steps
+* **Compensation** - Failed steps trigger compensating transactions
+* **Eventual Consistency** - Saga ensures consistency across services over time

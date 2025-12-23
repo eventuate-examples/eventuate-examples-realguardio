@@ -1,0 +1,6 @@
+# Generated diagram images
+images/
+diag-*.png
+.asciidoctor
+# Generated PDF
+architecture.pdf

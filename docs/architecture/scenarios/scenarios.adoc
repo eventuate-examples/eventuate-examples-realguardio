@@ -1,0 +1,15 @@
+== Scenarios
+
+This section describes complex request flows that span multiple services.
+
+include::oauth2-login.adoc[leveloffset=+1]
+
+include::create-customer.adoc[leveloffset=+1]
+
+include::create-customer-employee.adoc[leveloffset=+1]
+
+include::create-security-system.adoc[leveloffset=+1]
+
+include::list-security-systems.adoc[leveloffset=+1]
+
+include::arm-security-system.adoc[leveloffset=+1]

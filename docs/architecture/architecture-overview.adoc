@@ -1,0 +1,82 @@
+== Architecture Overview
+
+This section provides an overview of the internal architecture of the RealGuardIO application, showing the key components and their interactions.
+
+=== Architecture Diagram
+
+[mermaid]
+....
+graph TB
+    User[End User<br/>Browser]
+    Admin[System Administrator]
+
+    BFF[RealGuardIO BFF<br/>Next.js Application]
+    IAM[IAM Service<br/>OAuth2 Server]
+    Customer[Customer Service]
+    SecuritySystem[Security System Service]
+    Orchestration[Orchestration Service]
+    OsoIntegration[Oso Integration Service]
+
+    PostgreSQL[(PostgreSQL<br/>Databases)]
+    Kafka[Apache Kafka<br/>Message Broker]
+    OsoCloud[Oso Cloud<br/>Authorization Service]
+    CDC[Eventuate CDC<br/>Service]
+    Jaeger[Jaeger<br/>Distributed Tracing]
+
+    User -->|HTTPS| BFF
+    Admin -->|HTTPS| BFF
+
+    BFF -->|OAuth2/JWT| IAM
+    BFF -->|REST API + JWT| Customer
+    BFF -->|REST API + JWT| SecuritySystem
+    BFF -->|REST API + JWT| Orchestration
+
+    Customer -->|Validate JWT| IAM
+    SecuritySystem -->|Validate JWT| IAM
+    Orchestration -->|Validate JWT| IAM
+
+    Customer -->|JPA/SQL| PostgreSQL
+    SecuritySystem -->|JPA/SQL| PostgreSQL
+    Orchestration -->|JPA/SQL| PostgreSQL
+
+    Customer -->|Commands/Events| Kafka
+    SecuritySystem -->|Commands/Events| Kafka
+    Orchestration -->|Commands/Events| Kafka
+    OsoIntegration -->|Subscribe Events| Kafka
+
+    CDC -->|Publish CDC Events| Kafka
+    PostgreSQL -->|Read Outbox| CDC
+
+    OsoIntegration -->|Sync Authorization Facts| OsoCloud
+    Customer -->|Check Permissions| OsoCloud
+    SecuritySystem -->|Check Permissions| OsoCloud
+
+    BFF -->|Trace Data| Jaeger
+    Customer -->|Trace Data| Jaeger
+    SecuritySystem -->|Trace Data| Jaeger
+    Orchestration -->|Trace Data| Jaeger
+....
+
+=== Architecture Components
+
+* *RealGuardIO BFF (Backend for Frontend)*: Next.js application serving as the web UI and API gateway. Handles user authentication via OAuth2/OpenID Connect, manages user sessions using next-auth, and proxies authenticated requests to backend services with JWT tokens. Runs on port 3000.
+
+* *IAM Service*: Spring Authorization Server providing OAuth2/OIDC authentication. Issues JWT access tokens and ID tokens, provides JWKS endpoint for token validation, and manages user credentials and client registrations. Runs on port 9000.
+
+* *Customer Service*: Manages customer domain including customers, employees, and locations. Exposes REST API for customer operations, publishes domain events (CustomerCreated, EmployeeCreated, LocationCreated), handles saga commands for location creation, and integrates with Oso Cloud for authorization. Runs on port 8080 (Docker: 3002).
+
+* *Security System Service*: Manages security systems and their states. Exposes REST API for security system operations (arm/disarm), publishes domain events (SecuritySystemCreated, SecuritySystemArmed, etc.), replicates location role assignments from Customer Service via events, and integrates with Oso Cloud for permission checks. Runs on port 8080 (Docker: 3001).
+
+* *Orchestration Service*: Coordinates distributed transactions using saga pattern. Orchestrates CreateSecuritySystemSaga across Customer and Security System services, uses Eventuate TRAM Sagas for reliable workflow execution, and implements compensating transactions for failure scenarios. Runs on port 8080 (Docker: 3003).
+
+* *Oso Integration Service*: Bridges domain events to Oso Cloud. Subscribes to events from Customer and Security System services, syncs authorization facts to Oso Cloud in real-time, reads Oso policies from /policies/main.polar, and ensures authorization data stays consistent with business entities. Runs on port 3004.
+
+* *PostgreSQL Databases*: Three separate PostgreSQL database instances provide persistent storage for Customer Service (port 5432), Security System Service (port 5433), and Orchestration Service (port 5434). All databases use the transactional outbox pattern for reliable event publishing.
+
+* *Apache Kafka*: Message broker that enables asynchronous, event-driven communication between services. Transports domain events published via Eventuate TRAM, facilitates command/reply pattern for saga orchestration, and enables event sourcing and CQRS patterns. Runs in KRaft mode on ports 9092 (external) and 29092 (internal).
+
+* *Eventuate CDC Service*: Change Data Capture service that monitors transactional outbox tables in each service database, publishes events to Kafka topics ensuring at-least-once delivery, and enables reliable event-driven architecture without distributed transactions. Runs on port 8099.
+
+* *Oso Cloud*: Centralized policy-based authorization service. Stores authorization policies written in Polar language, maintains authorization facts (relationships between actors and resources), provides real-time permission checks for fine-grained access control, and supports location-based and role-based permissions. Can run as cloud service (https://api.osohq.com) or local dev server (port 8080).
+
+* *Jaeger*: Distributed tracing platform. Collects trace data from all services via OpenTelemetry, provides visualization of request flows across microservices, and helps diagnose performance issues and trace errors. UI accessible on port 16686, accepts traces via OTLP protocol (gRPC: 4317, HTTP: 4318).
