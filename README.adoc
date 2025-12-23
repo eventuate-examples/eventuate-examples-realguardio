@@ -25,6 +25,7 @@ The key elements of the RealGuardIO architecture are as follows:
 * React-based UI - runs in the browser and implements the RealGuardIO UI.
 * `BFF`  - the NextJS/Typescript-based Backend for front-end, which plays the role of an OAuth 2.0 client. It manages the user's session, forwards requests from the React UI to the backend services and implements security using the `next-auth` library.
 * `IAM Service` (Spring Authorization Service) - handles authentication including the login page and issues access tokens and ID tokens to BFF.
+* https://www.osohq.com/docs/get-started/introduction[`Oso Authorization Service`] - a cloud-based authorization service that makes authorization decisions based on declarative authorization rules
 * Backend services:
 ** `Security System Service` - manages `SecuritySystems` domain entities.
 ** `Customer Service` - manages `Customers` domain entities.
