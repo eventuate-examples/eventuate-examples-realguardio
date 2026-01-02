@@ -6,8 +6,6 @@ import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySy
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-
 public class DBInitializer {
 
   public static final String LOCATION_OAKLAND_OFFICE = "Oakland office";
@@ -21,29 +19,29 @@ public class DBInitializer {
     this.repository = repository;
   }
 
-  public void initializeForLocation(long locationId) {
-    initialize(Optional.of(locationId));
+  public void initializeForLocation(long baseLocationId) {
+    initialize(baseLocationId);
   }
 
-  public void initialize(Optional<Long> locationId) {
+  public void initialize(long baseLocationId) {
       logger.info("Initializing database with sample security systems");
 
       // Set.of(SecuritySystemAction.DISARM)
       SecuritySystem system1 = new SecuritySystem(LOCATION_OAKLAND_OFFICE, SecuritySystemState.ARMED);
-      locationId.ifPresent(system1::setLocationId);
+      system1.setLocationId(baseLocationId);
       repository.save(system1);
       logger.info("Created security system: {}", system1.getLocationName());
 
       // Set.of(SecuritySystemAction.ARM)
 
       SecuritySystem system2 = new SecuritySystem(LOCATION_BERKELEY_OFFICE, SecuritySystemState.DISARMED);
-      locationId.ifPresent(system2::setLocationId);
+      system2.setLocationId(baseLocationId + 1);
       repository.save(system2);
       logger.info("Created security system: {}", system2.getLocationName());
 
       // Set.of(SecuritySystemAction.ACKNOWLEDGE, SecuritySystemAction.DISARM)
       SecuritySystem system3 = new SecuritySystem(LOCATION_HAYWARD_OFFICE, SecuritySystemState.ALARMED);
-      locationId.ifPresent(system3::setLocationId);
+      system3.setLocationId(baseLocationId + 2);
       repository.save(system3);
       logger.info("Created security system: {}", system3.getLocationName());
 
@@ -57,8 +55,25 @@ public class DBInitializer {
       return;
     }
 
-    initialize(Optional.empty());
-
+    initializeWithoutLocationIds();
   }
+
+  private void initializeWithoutLocationIds() {
+      logger.info("Initializing database with sample security systems (no locationIds)");
+
+      SecuritySystem system1 = new SecuritySystem(LOCATION_OAKLAND_OFFICE, SecuritySystemState.ARMED);
+      repository.save(system1);
+      logger.info("Created security system: {}", system1.getLocationName());
+
+      SecuritySystem system2 = new SecuritySystem(LOCATION_BERKELEY_OFFICE, SecuritySystemState.DISARMED);
+      repository.save(system2);
+      logger.info("Created security system: {}", system2.getLocationName());
+
+      SecuritySystem system3 = new SecuritySystem(LOCATION_HAYWARD_OFFICE, SecuritySystemState.ALARMED);
+      repository.save(system3);
+      logger.info("Created security system: {}", system3.getLocationName());
+
+      logger.info("Database initialization complete. Created {} security systems", repository.count());
+    }
 }
 

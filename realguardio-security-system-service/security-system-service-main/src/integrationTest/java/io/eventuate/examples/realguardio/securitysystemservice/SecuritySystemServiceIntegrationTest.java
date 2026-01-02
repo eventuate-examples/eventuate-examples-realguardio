@@ -96,19 +96,23 @@ class SecuritySystemServiceIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-    @Test 
+    @Test
     void shouldReturnSecuritySystemsWithValidToken() {
         // Get JWT token from IAM service
         String customerEmployeeEmail = "customerEmployee%s@realguard.io".formatted(System.currentTimeMillis());
         userService.createCustomerEmployeeUser(customerEmployeeEmail);
 
-        long locationId = System.currentTimeMillis();
+        long baseLocationId = System.currentTimeMillis();
 
-        dbInitializer.initializeForLocation(locationId);
+        dbInitializer.initializeForLocation(baseLocationId);
 
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_ACKNOWLEDGER");
+        // Set up location roles for all three locations
+        for (int i = 0; i < 3; i++) {
+            long locationId = baseLocationId + i;
+            locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+            locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
+            locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, "SECURITY_SYSTEM_ACKNOWLEDGER");
+        }
 
         String token = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, customerEmployeeEmail, "password");
         

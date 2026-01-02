@@ -14,9 +14,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 
+import org.springframework.dao.DataIntegrityViolationException;
+
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 abstract class AbstractSecuritySystemRepositoryIntegrationTest {
 
@@ -70,22 +73,25 @@ abstract class AbstractSecuritySystemRepositoryIntegrationTest {
     void shouldFindAllSecuritySystems() {
         String customerEmployeeEmail = "customerEmployee%s@realguard.io".formatted(System.currentTimeMillis());
 
-        long locationId = System.currentTimeMillis();
+        long locationId1 = System.currentTimeMillis();
+        long locationId2 = locationId1 + 1;
 
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
-        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId1, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId1, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId2, RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+        locationRolesReplicaService.saveLocationRole(customerEmployeeEmail, locationId2, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
 
         // Set.of(SecuritySystemAction.DISARM)
 
         SecuritySystem system1 = new SecuritySystem("Oakland office",
             SecuritySystemState.ARMED);
-        system1.setLocationId(locationId);
+        system1.setLocationId(locationId1);
 
         // Set.of(SecuritySystemAction.ARM)
 
         SecuritySystem system2 = new SecuritySystem("Berkeley office",
             SecuritySystemState.DISARMED);
-        system2.setLocationId(locationId);
+        system2.setLocationId(locationId2);
 
         repository.save(system1);
         repository.save(system2);
@@ -136,11 +142,26 @@ abstract class AbstractSecuritySystemRepositoryIntegrationTest {
         // Not setting locationId or rejectionReason - they should be null
 
         SecuritySystem saved = repository.save(securitySystem);
-        
+
         Optional<SecuritySystem> found = repository.findById(saved.getId());
         assertThat(found).isPresent();
         assertThat(found.get().getLocationId()).isNull();
         assertThat(found.get().getRejectionReason()).isNull();
+    }
+
+    @Test
+    void shouldEnforceUniqueLocationIdConstraint() {
+        Long locationId = System.currentTimeMillis();
+
+        SecuritySystem first = new SecuritySystem("First Office", SecuritySystemState.DISARMED);
+        first.setLocationId(locationId);
+        repository.save(first);
+
+        SecuritySystem second = new SecuritySystem("Second Office", SecuritySystemState.DISARMED);
+        second.setLocationId(locationId);
+
+        assertThatThrownBy(() -> repository.saveAndFlush(second))
+            .isInstanceOf(DataIntegrityViolationException.class);
     }
 
 }
