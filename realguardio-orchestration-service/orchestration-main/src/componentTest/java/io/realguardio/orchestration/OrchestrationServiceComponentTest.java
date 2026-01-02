@@ -10,6 +10,7 @@ import io.eventuate.tram.messaging.common.Message;
 import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemResponse;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.ValidateLocationCommand;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationNotFound;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationValidated;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
@@ -214,20 +215,65 @@ public class OrchestrationServiceComponentTest {
 				.as(CreateSecuritySystemResponse.class)
 		);
 
-		// Step 1: Intercept ValidateLocationCommand sent to customer-service
-		Message validateCommandMessage = componentTestSupport.assertThatCommandMessageSent(ValidateLocationCommand.class, customerServiceChannel);
+		// Step 1: Intercept ValidateLocationCommand with matching locationId
+		Message validateCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+				ValidateLocationCommand.class, customerServiceChannel,
+				cmd -> cmd.locationId().equals(locationId));
 
 		// Reply with LocationValidated
 		componentTestSupport.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationValidated(locationId, locationName, customerId));
 
-		// Step 2: Intercept CreateSecuritySystemWithLocationIdCommand sent to security-system-service
-		Message createCommandMessage = componentTestSupport.assertThatCommandMessageSent(CreateSecuritySystemWithLocationIdCommand.class, securitySystemServiceChannel);
+		// Step 2: Intercept CreateSecuritySystemWithLocationIdCommand with matching locationId
+		Message createCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+				CreateSecuritySystemWithLocationIdCommand.class, securitySystemServiceChannel,
+				cmd -> cmd.locationId().equals(locationId));
 
 		// Reply with SecuritySystemCreated
 		componentTestSupport.sendReply(createCommandMessage, CreateSecuritySystemWithLocationIdCommand.class, new SecuritySystemCreated(securitySystemId));
 
 		// Verify response
 		assertThat(createResponse.get().securitySystemId()).isEqualTo(securitySystemId);
+	}
+
+	@Test
+	void shouldReturn404WhenLocationNotFound() throws Exception {
+		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
+		String baseUri = String.format("http://localhost:%d", service.getFirstMappedPort());
+
+		long nonExistentLocationId = System.currentTimeMillis();
+
+		// Start the saga via REST API with locationId that doesn't exist
+		String sagaRequestJson = """
+		{
+			"locationId": %d
+		}
+		""".formatted(nonExistentLocationId);
+
+		logger.info("Starting CreateSecuritySystemWithLocationIdSaga for non-existent locationId {}", nonExistentLocationId);
+
+		CompletableFuture<Integer> statusCodeFuture = CompletableFuture.supplyAsync(() ->
+			RestAssured.given()
+				.baseUri(baseUri)
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(ContentType.JSON)
+				.body(sagaRequestJson)
+				.when()
+				.post("/securitysystems")
+				.then()
+				.extract()
+				.statusCode()
+		);
+
+		// Step 1: Intercept ValidateLocationCommand with matching locationId
+		Message validateCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+				ValidateLocationCommand.class, customerServiceChannel,
+				cmd -> cmd.locationId().equals(nonExistentLocationId));
+
+		// Reply with LocationNotFound (failure)
+		componentTestSupport.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationNotFound());
+
+		// Verify response is 404 Not Found
+		assertThat(statusCodeFuture.get()).isEqualTo(404);
 	}
 
 }

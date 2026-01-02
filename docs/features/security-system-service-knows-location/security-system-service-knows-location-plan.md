@@ -196,16 +196,16 @@ Implements: "SecuritySystem Creation with Invalid LocationId" scenario.
 
 ### Task 9.1: Handle LocationNotFound error in saga and REST endpoint
 
-- [ ] When `ValidateLocationCommand` returns `LocationNotFound`, saga fails
-- [ ] Saga state reflects failure reason
-- [ ] No SecuritySystem is created
-- [ ] Modify `SecuritySystemController` to handle saga failure
-- [ ] Return 404 with error message "Location not found"
+- [x] When `ValidateLocationCommand` returns `LocationNotFound`, saga fails
+- [x] Saga state reflects failure reason
+- [x] No SecuritySystem is created
+- [x] Modify `SecuritySystemController` to handle saga failure
+- [x] Return 404 with error message "Location not found"
 
 ### Task 9.2: Integration test for invalid locationId
 
-- [ ] Test: POST /securitysystems with non-existent locationId returns 404
-- [ ] Test: No SecuritySystem is created
+- [x] Test: POST /securitysystems with non-existent locationId returns 404
+- [x] Test: No SecuritySystem is created
 
 ---
 

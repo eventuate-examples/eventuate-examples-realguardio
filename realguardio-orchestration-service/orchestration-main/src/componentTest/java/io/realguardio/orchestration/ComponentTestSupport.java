@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import static io.eventuate.tram.commands.consumer.CommandHandlerReplyBuilder.withSuccess;
 import static io.eventuate.util.test.async.Eventually.eventually;
@@ -46,18 +47,36 @@ public class ComponentTestSupport {
   }
 
   public <T extends Command> Message assertThatCommandMessageSent(Class<T> commandMessageType, String channel) {
-    // Wait for the message to appear in the outbox
+    return assertThatCommandMessageSent(commandMessageType, channel, cmd -> true);
+  }
+
+  public <T extends Command> Message assertThatCommandMessageSent(Class<T> commandMessageType, String channel, Predicate<T> predicate) {
+    // Wait for a matching message to appear in the outbox
     eventually(10, 500, TimeUnit.MILLISECONDS, () -> {
-      List<Message> messages = findMessagesOfType(channel, commandMessageType);
-      assertThat(messages).withFailMessage("Expected to find %s in channel %s", commandMessageType.getSimpleName(), channel).isNotEmpty();
+      List<T> commands = findCommandsOfType(channel, commandMessageType);
+      assertThat(commands.stream().anyMatch(predicate))
+              .withFailMessage("Expected to find matching %s in channel %s", commandMessageType.getSimpleName(), channel)
+              .isTrue();
     });
 
     logger.info("Verified {} was sent to {}", commandMessageType.getSimpleName(), channel);
 
-    // Find the most recently sent message of this type
+    // Find the matching command and return its message
     List<Message> messages = findMessagesOfType(channel, commandMessageType);
-    // Return the last (most recent) message
-    return messages.get(messages.size() - 1);
+    for (int i = messages.size() - 1; i >= 0; i--) {
+      Message msg = messages.get(i);
+      T command = JSonMapper.fromJson(msg.getPayload(), commandMessageType);
+      if (predicate.test(command)) {
+        return msg;
+      }
+    }
+    throw new IllegalStateException("No matching message found");
+  }
+
+  public <T extends Command> List<T> findCommandsOfType(String channel, Class<T> commandType) {
+    return findMessagesOfType(channel, commandType).stream()
+            .map(msg -> JSonMapper.fromJson(msg.getPayload(), commandType))
+            .toList();
   }
 
   public <T extends Command> List<Message> findMessagesOfType(String channel, Class<T> commandType) {

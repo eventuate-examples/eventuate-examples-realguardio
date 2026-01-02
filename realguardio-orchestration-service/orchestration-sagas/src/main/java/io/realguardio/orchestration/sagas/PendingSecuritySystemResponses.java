@@ -31,6 +31,19 @@ public class PendingSecuritySystemResponses {
             future.complete(securitySystemId);
         }
     }
+
+    public void completeExceptionally(String sagaId, Throwable exception) {
+        if (sagaId == null) {
+            logger.warn("sagaId is null, cannot complete exceptionally");
+            return;
+        }
+
+        CompletableFuture<Long> future = pendingResponses.remove(sagaId);
+        logger.info("Completing exceptionally for sagaId {}: {} future: {}", sagaId, exception.getMessage(), future != null);
+        if (future != null) {
+            future.completeExceptionally(exception);
+        }
+    }
     
     public boolean containsKey(String sagaId) {
         return pendingResponses.containsKey(sagaId);

@@ -70,6 +70,7 @@ public class CreateSecuritySystemWithLocationIdSaga implements SimpleSaga<Create
     private void handleLocationNotFound(CreateSecuritySystemWithLocationIdSagaData data, LocationNotFound reply) {
         logger.info("LocationNotFound received for locationId: {}", data.getLocationId());
         data.setRejectionReason("Location not found");
+        pendingResponses.completeExceptionally(data.getSagaId(), new LocationNotFoundException(data.getLocationId()));
     }
 
     // Step 2: Create Security System with Location Id
