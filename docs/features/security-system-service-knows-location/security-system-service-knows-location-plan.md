@@ -59,18 +59,18 @@ Implements support for saga to validate locationId exists and retrieve locationN
 
 ### Task 2.1: Implement ValidateLocationCommand handler
 
-- [ ] Create `ValidateLocationCommand` record with `locationId` field in `customer-service-api-messaging`
-- [ ] Create `LocationValidated` reply record with `locationId`, `locationName`, `customerId` fields
-- [ ] Create `LocationNotFound` reply record
-- [ ] Add handler method for `ValidateLocationCommand` in `CustomerCommandHandler`
-- [ ] Handler looks up Location by ID
-- [ ] Returns `LocationValidated` with location details if found
-- [ ] Returns `LocationNotFound` if not found
+- [x] Create `ValidateLocationCommand` record with `locationId` field in `customer-service-api-messaging`
+- [x] Create `LocationValidated` reply record with `locationId`, `locationName`, `customerId` fields
+- [x] Create `LocationNotFound` reply record
+- [x] Add handler method for `ValidateLocationCommand` in `CustomerCommandHandler`
+- [x] Handler looks up Location by ID
+- [x] Returns `LocationValidated` with location details if found
+- [x] Returns `LocationNotFound` if not found
 
 ### Task 2.2: Unit test for ValidateLocationCommand handler
 
-- [ ] Test: Valid locationId returns `LocationValidated` with correct details
-- [ ] Test: Invalid locationId returns `LocationNotFound`
+- [x] Test: Valid locationId returns `LocationValidated` with correct details
+- [x] Test: Invalid locationId returns `LocationNotFound`
 
 ---
 
