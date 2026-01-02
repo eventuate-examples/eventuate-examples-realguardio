@@ -2,7 +2,6 @@ package io.realguardio.osointegration.eventsubscribers;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeAssignedCustomerRole;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationCreatedForCustomer;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.SecuritySystemAssignedToLocation;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
 import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import io.eventuate.tram.spring.inmemory.TramInMemoryConfiguration;
@@ -72,25 +71,6 @@ public class CustomerEventConsumerTest {
             verify(osoFactManager).createLocationForCustomer(
                 locationId.toString(),
                 customerId
-            );
-        });
-    }
-
-    @Test
-    public void shouldHandleSecuritySystemAssignedToLocation() {
-        Long locationId = 789L;
-        Long securitySystemId = 101L;
-        String customerId = "456";
-
-        SecuritySystemAssignedToLocation event =
-            new SecuritySystemAssignedToLocation(locationId, securitySystemId);
-
-        domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId, Collections.singletonList(event));
-
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(osoFactManager).assignSecuritySystemToLocation(
-                securitySystemId.toString(),
-                locationId.toString()
             );
         });
     }

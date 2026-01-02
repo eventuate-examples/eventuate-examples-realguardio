@@ -2,7 +2,6 @@ package io.realguardio.osointegration.eventsubscribers;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeAssignedCustomerRole;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationCreatedForCustomer;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.SecuritySystemAssignedToLocation;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
 import io.eventuate.tram.events.subscriber.DomainEventEnvelope;
 import io.eventuate.tram.events.subscriber.annotations.EventuateDomainEventHandler;
@@ -50,19 +49,6 @@ public class CustomerEventConsumer {
         osoFactManager.createLocationForCustomer(
             event.locationId().toString(),
             customerId
-        );
-    }
-
-    @EventuateDomainEventHandler(subscriberId = "osoEventSubscribersDispatcher", channel = "io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer")
-    public void handleSecuritySystemAssignedToLocation(DomainEventEnvelope<SecuritySystemAssignedToLocation> envelope) {
-        SecuritySystemAssignedToLocation event = envelope.getEvent();
-
-        logger.info("Handling SecuritySystemAssignedToLocation event: securitySystemId={}, locationId={}",
-                   event.securitySystemId(), event.locationId());
-
-        osoFactManager.assignSecuritySystemToLocation(
-            event.securitySystemId().toString(),
-            event.locationId().toString()
         );
     }
 

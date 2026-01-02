@@ -332,14 +332,14 @@ Removes the listener for `SecuritySystemAssignedToLocation` from Customer Servic
 
 ### Task 15.1: Remove old event handler from CustomerEventConsumer
 
-- [ ] Remove `handleSecuritySystemAssignedToLocation` method that listens to Customer Service channel
-- [ ] Keep `SecuritySystemEventConsumer` that listens to Security System Service channel
+- [x] Remove `handleSecuritySystemAssignedToLocation` method that listens to Customer Service channel
+- [x] Keep `SecuritySystemEventConsumer` that listens to Security System Service channel
 
 ### Task 15.2: Run E2E tests after OSO Integration Service changes
 
-- [ ] Run full E2E test suite
-- [ ] Verify all tests pass
-- [ ] Verify authorization still works correctly
+- [x] Run full E2E test suite
+- [x] Verify all tests pass
+- [x] Verify authorization still works correctly
 
 ---
 

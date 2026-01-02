@@ -68,12 +68,4 @@ public class CustomerEventConsumerContractTest {
         );
     }
 
-    @Test
-    public void shouldHandleSecuritySystemAssignedToLocationEvent() {
-        stubFinder.trigger("securitySystemAssignedToLocationEvent");
-        eventuallyAssertThat(() ->
-            verify(osoFactManager).assignSecuritySystemToLocation("401", "101")
-        );
-    }
-
 }

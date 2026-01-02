@@ -2,8 +2,8 @@ package io.realguardio.osointegration;
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeAssignedCustomerRole;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationCreatedForCustomer;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.SecuritySystemAssignedToLocation;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAssignedToLocation;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.testcontainers.service.ServiceContainer;
@@ -112,8 +112,7 @@ public class OsoIntegrationServiceComponentTest {
 		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new LocationCreatedForCustomer(locationId));
 
-		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
-				new SecuritySystemAssignedToLocation(locationId, ss1Id));
+		publishSecuritySystemAssignedToLocationFromSecuritySystemService(ss1Id, locationId);
 
 		logger.info("Verifying alice can disarm ss1 but not ss2");
 
@@ -143,8 +142,7 @@ public class OsoIntegrationServiceComponentTest {
 		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new LocationCreatedForCustomer(locationId));
 
-		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
-				new SecuritySystemAssignedToLocation(locationId, ss2Id));
+		publishSecuritySystemAssignedToLocationFromSecuritySystemService(ss2Id, locationId);
 
 		logger.info("Verifying bob can disarm ss2 but not ss1");
 
@@ -172,8 +170,7 @@ public class OsoIntegrationServiceComponentTest {
 		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new CustomerEmployeeAssignedLocationRole(maryUserName, locationId, "SECURITY_SYSTEM_DISARMER"));
 
-		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
-				new SecuritySystemAssignedToLocation(locationId, securitySystemId));
+		publishSecuritySystemAssignedToLocationFromSecuritySystemService(securitySystemId, locationId);
 
 		logger.info("Verifying mary can disarm security system at her location");
 
