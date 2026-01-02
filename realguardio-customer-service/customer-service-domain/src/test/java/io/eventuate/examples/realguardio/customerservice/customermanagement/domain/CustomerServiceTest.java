@@ -321,6 +321,24 @@ class CustomerServiceTest {
   }
 
   @Test
+  public void shouldCreateLocationForCustomerWithAuthorization() {
+    // Given
+    var customer = testCustomerFactory.createCustomer();
+    loggedInUser.withUser(customer);
+    String locationName = "Warehouse";
+
+    // When
+    Location location = customerService.createLocationForCustomer(customer.customer().getId(), locationName);
+
+    // Then
+    assertThat(location).isNotNull();
+    assertThat(location.getName()).isEqualTo(locationName);
+    assertThat(location.getCustomerId()).isEqualTo(customer.customer().getId());
+
+    verify(customerActionAuthorizer).verifyCanDo(customer.customer().getId(), RolesAndPermissions.CREATE_LOCATION);
+  }
+
+  @Test
   public void shouldPublishTeamAssignedLocationRoleEventWhenAssigningTeamRole() {
     // Given
     var customer = testCustomerFactory.createCustomer();

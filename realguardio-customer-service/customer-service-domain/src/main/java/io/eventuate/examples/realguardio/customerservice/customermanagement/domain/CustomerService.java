@@ -157,7 +157,8 @@ public class CustomerService {
      */
     @PreAuthorize("hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
     public Location createLocationForCustomer(Long customerId, String name) {
-        throw new UnsupportedOperationException("implement me");
+        customerActionAuthorizer.verifyCanDo(customerId, RolesAndPermissions.CREATE_LOCATION);
+        return createLocation(customerId, name);
     }
 
     /**

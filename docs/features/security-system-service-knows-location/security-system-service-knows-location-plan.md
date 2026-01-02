@@ -40,10 +40,10 @@ Implements: "As an administrator, I want to create a Location for a Customer wit
 
 ### Task 1.2: Add CustomerService.createLocationForCustomer method
 
-- [ ] Add `createLocationForCustomer(Long customerId, String name)` method to `CustomerService`
-- [ ] Method finds Customer by ID, creates Location, returns locationId
-- [ ] Method publishes `LocationCreatedForCustomer` event (already exists)
-- [ ] Throws exception if Customer not found
+- [x] Add `createLocationForCustomer(Long customerId, String name)` method to `CustomerService`
+- [x] Method finds Customer by ID, creates Location, returns locationId
+- [x] Method publishes `LocationCreatedForCustomer` event (already exists)
+- [x] Throws exception if Customer not found
 
 ### Task 1.3: Integration test for Location creation endpoint
 

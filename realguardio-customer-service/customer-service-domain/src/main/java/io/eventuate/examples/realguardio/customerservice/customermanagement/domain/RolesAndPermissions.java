@@ -10,9 +10,10 @@ public class RolesAndPermissions {
     public static final String COMPANY_ROLE_ADMIN = "COMPANY_ROLE_ADMIN";
 
     public static final String CREATE_CUSTOMER_EMPLOYEE = "createCustomerEmployee";
+    public static final String CREATE_LOCATION = "createLocation";
 
     public static final Map<String, Set<String>> rolesToPermissions = Map.of(
-            COMPANY_ROLE_ADMIN, Set.of(CREATE_CUSTOMER_EMPLOYEE)
+            COMPANY_ROLE_ADMIN, Set.of(CREATE_CUSTOMER_EMPLOYEE, CREATE_LOCATION)
     );
 
     public static final Map<String, Set<String>> permissionsToRoles = invertMap(rolesToPermissions);
