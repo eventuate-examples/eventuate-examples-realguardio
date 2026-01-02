@@ -314,15 +314,15 @@ Removes `CREATION_PENDING` state and `noteLocationCreated` method.
 
 ### Task 14.2: Remove noteLocationCreated method
 
-- [ ] Remove `noteLocationCreated(Long locationId)` method from `SecuritySystem` entity
-- [ ] Remove `NoteLocationCreatedCommand` class
-- [ ] Remove handler for `NoteLocationCreatedCommand` from `SecuritySystemCommandHandler`
-- [ ] Remove `LocationNoted` reply class
+- [x] Remove `noteLocationCreated(Long locationId)` method from `SecuritySystem` entity
+- [x] Remove `NoteLocationCreatedCommand` class
+- [x] Remove handler for `NoteLocationCreatedCommand` from `SecuritySystemCommandHandler`
+- [x] Remove `LocationNoted` reply class
 
 ### Task 14.3: Run E2E tests after Security System Service changes
 
-- [ ] Run full E2E test suite
-- [ ] Verify all tests pass
+- [x] Run full E2E test suite
+- [x] Verify all tests pass
 
 ---
 

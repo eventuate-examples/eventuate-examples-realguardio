@@ -3,7 +3,6 @@ package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaCluster;
 import io.eventuate.tram.commands.producer.CommandProducer;
@@ -88,26 +87,6 @@ public class SecuritySystemCommandHandlerIntegrationTest {
         // Then
         Eventually.eventually(() -> {
             verify(securitySystemService).createSecuritySystemWithLocation(locationId, locationName);
-            commandOutboxTestSupport.assertCommandReplyMessageSent(replyTo);
-        });
-    }
-
-    @Test
-    public void shouldHandleNoteLocationCreatedCommand() {
-        // Given
-        String replyTo = "my-reply-to-channel-" + System.currentTimeMillis();
-        Long securitySystemId = System.currentTimeMillis();
-        Long locationId = System.currentTimeMillis() + 1000;
-
-        // When
-        commandProducer.send("security-system-service",
-            new NoteLocationCreatedCommand(securitySystemId, locationId),
-            replyTo,
-            Collections.emptyMap());
-
-        // Then
-        Eventually.eventually(() -> {
-            verify(securitySystemService).noteLocationCreated(securitySystemId, locationId);
             commandOutboxTestSupport.assertCommandReplyMessageSent(replyTo);
         });
     }

@@ -8,8 +8,6 @@ public interface SecuritySystemService {
 
     Optional<SecuritySystem> findById(Long id);
 
-    void noteLocationCreated(Long securitySystemId, Long locationId);
-
     void updateCreationFailed(Long securitySystemId, String rejectionReason);
 
     Long createSecuritySystemWithLocation(Long locationId, String locationName);

@@ -23,16 +23,6 @@ public class SecuritySystemServiceProxy {
     }
 
     @SagaParticipantOperation(
-        commandClass = NoteLocationCreatedCommand.class,
-        replyClasses = LocationNoted.class
-    )
-    public CommandWithDestination noteLocationCreated(Long securitySystemId, Long locationId) {
-        return CommandWithDestinationBuilder.send(new NoteLocationCreatedCommand(securitySystemId, locationId))
-                .to(CHANNEL)
-                .build();
-    }
-
-    @SagaParticipantOperation(
         commandClass = CreateSecuritySystemWithLocationIdCommand.class,
         replyClasses = SecuritySystemCreated.class
     )

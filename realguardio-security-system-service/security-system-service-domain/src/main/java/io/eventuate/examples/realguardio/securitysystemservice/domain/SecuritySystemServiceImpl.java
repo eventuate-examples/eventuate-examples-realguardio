@@ -78,15 +78,6 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     }
 
     @Override
-    public void noteLocationCreated(Long securitySystemId, Long locationId) {
-        SecuritySystem securitySystem = securitySystemRepository.findById(securitySystemId)
-            .orElseThrow(() -> new IllegalArgumentException("Security system not found: " + securitySystemId));
-        securitySystem.setLocationId(locationId);
-        securitySystem.setState(SecuritySystemState.DISARMED);
-        securitySystemRepository.save(securitySystem);
-    }
-    
-    @Override
     public void updateCreationFailed(Long securitySystemId, String rejectionReason) {
         SecuritySystem securitySystem = securitySystemRepository.findById(securitySystemId)
             .orElseThrow(() -> new IllegalArgumentException("Security system not found: " + securitySystemId));

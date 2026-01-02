@@ -1,10 +1,8 @@
 package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationAlreadyHasSecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationNoted;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.LocationAlreadyHasSecuritySystemException;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.tram.commands.consumer.CommandMessage;
@@ -21,13 +19,6 @@ public class SecuritySystemCommandHandler {
 
     public SecuritySystemCommandHandler(SecuritySystemService securitySystemService) {
         this.securitySystemService = securitySystemService;
-    }
-
-    @EventuateCommandHandler(subscriberId = "securitySystemCommandDispatcher", channel = "security-system-service")
-    public LocationNoted handleNoteLocationCreated(CommandMessage<NoteLocationCreatedCommand> cm) {
-        NoteLocationCreatedCommand command = cm.getCommand();
-        securitySystemService.noteLocationCreated(command.securitySystemId(), command.locationId());
-        return new LocationNoted();
     }
 
     @EventuateCommandHandler(subscriberId = "securitySystemCommandDispatcher", channel = "security-system-service")
