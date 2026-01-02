@@ -12,3 +12,4 @@ wip-docs
 build
 **/.claude/issues
 **/.claude/sessions
+*SessionID.txt
