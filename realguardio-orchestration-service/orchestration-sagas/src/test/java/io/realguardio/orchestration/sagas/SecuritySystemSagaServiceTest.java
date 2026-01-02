@@ -17,6 +17,7 @@ class SecuritySystemSagaServiceTest {
 
     private SagaInstanceFactory sagaInstanceFactory;
     private CreateSecuritySystemSaga createSecuritySystemSaga;
+    private CreateSecuritySystemWithLocationIdSaga createSecuritySystemWithLocationIdSaga;
     private PendingSecuritySystemResponses pendingResponses;
     private SecuritySystemSagaService service;
 
@@ -24,8 +25,10 @@ class SecuritySystemSagaServiceTest {
     void setUp() {
         sagaInstanceFactory = mock(SagaInstanceFactory.class);
         createSecuritySystemSaga = mock(CreateSecuritySystemSaga.class);
+        createSecuritySystemWithLocationIdSaga = mock(CreateSecuritySystemWithLocationIdSaga.class);
         pendingResponses = new PendingSecuritySystemResponses();
-        service = new SecuritySystemSagaService(sagaInstanceFactory, createSecuritySystemSaga, pendingResponses);
+        service = new SecuritySystemSagaService(sagaInstanceFactory, createSecuritySystemSaga,
+                createSecuritySystemWithLocationIdSaga, pendingResponses);
     }
 
     @Test
@@ -71,18 +74,41 @@ class SecuritySystemSagaServiceTest {
     void shouldCompleteFutureWhenSecuritySystemCreated() {
         String sagaId = "saga-123";
         Long securitySystemId = 200L;
-        
+
         SagaInstance sagaInstance = mock(SagaInstance.class);
         when(sagaInstance.getId()).thenReturn(sagaId);
         when(sagaInstanceFactory.create(eq(createSecuritySystemSaga), any(CreateSecuritySystemSagaData.class)))
                 .thenReturn(sagaInstance);
-        
+
         CompletableFuture<Long> future = service.createSecuritySystem(100L, "Warehouse");
-        
+
         service.completeSecuritySystemCreation(sagaId, securitySystemId);
-        
+
         assertThat(future.isDone()).isTrue();
         assertThat(future.getNow(null)).isEqualTo(securitySystemId);
         assertThat(service.hasPendingResponse(sagaId)).isFalse();
+    }
+
+    @Test
+    void shouldStartLocationIdSagaWhenCreatingWithLocationId() {
+        Long locationId = 100L;
+        String sagaId = "saga-456";
+
+        SagaInstance sagaInstance = mock(SagaInstance.class);
+        when(sagaInstance.getId()).thenReturn(sagaId);
+        when(sagaInstanceFactory.create(eq(createSecuritySystemWithLocationIdSaga), any(CreateSecuritySystemWithLocationIdSagaData.class)))
+                .thenReturn(sagaInstance);
+
+        CompletableFuture<Long> future = service.createSecuritySystemWithLocationId(locationId);
+
+        ArgumentCaptor<CreateSecuritySystemWithLocationIdSagaData> dataCaptor =
+                ArgumentCaptor.forClass(CreateSecuritySystemWithLocationIdSagaData.class);
+        verify(sagaInstanceFactory).create(eq(createSecuritySystemWithLocationIdSaga), dataCaptor.capture());
+
+        CreateSecuritySystemWithLocationIdSagaData capturedData = dataCaptor.getValue();
+        assertThat(capturedData.getLocationId()).isEqualTo(locationId);
+
+        assertThat(service.hasPendingResponse(sagaId)).isTrue();
+        assertThat(future).isNotNull();
     }
 }

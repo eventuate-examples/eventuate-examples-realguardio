@@ -1,13 +1,19 @@
 package io.realguardio.orchestration.restapi.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 public record CreateSecuritySystemRequest(
-    @NotNull(message = "Customer ID must not be null")
     Long customerId,
-    
-    @NotBlank(message = "Location name must not be blank")
-    String locationName
+    String locationName,
+    Long locationId
 ) {
+    public boolean usesLocationIdFlow() {
+        return locationId != null;
+    }
+
+    public boolean usesLegacyFlow() {
+        return customerId != null && locationName != null && !locationName.isBlank();
+    }
+
+    public boolean isValid() {
+        return usesLocationIdFlow() || usesLegacyFlow();
+    }
 }

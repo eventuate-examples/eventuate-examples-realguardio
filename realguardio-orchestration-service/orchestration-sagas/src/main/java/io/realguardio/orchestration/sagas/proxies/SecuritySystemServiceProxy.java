@@ -41,4 +41,14 @@ public class SecuritySystemServiceProxy {
                 .to(CHANNEL)
                 .build();
     }
+
+    @SagaParticipantOperation(
+        commandClass = CreateSecuritySystemWithLocationIdCommand.class,
+        replyClasses = SecuritySystemCreated.class
+    )
+    public CommandWithDestination createSecuritySystemWithLocationId(Long locationId, String locationName) {
+        return CommandWithDestinationBuilder.send(new CreateSecuritySystemWithLocationIdCommand(locationId, locationName))
+                .to(CHANNEL)
+                .build();
+    }
 }

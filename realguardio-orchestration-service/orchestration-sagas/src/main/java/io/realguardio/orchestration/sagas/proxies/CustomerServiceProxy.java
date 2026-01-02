@@ -25,4 +25,14 @@ public class CustomerServiceProxy {
                 .to(CHANNEL)
                 .build();
     }
+
+    @SagaParticipantOperation(
+        commandClass = ValidateLocationCommand.class,
+        replyClasses = LocationValidated.class
+    )
+    public CommandWithDestination validateLocation(Long locationId) {
+        return CommandWithDestinationBuilder.send(new ValidateLocationCommand(locationId))
+                .to(CHANNEL)
+                .build();
+    }
 }

@@ -152,20 +152,20 @@ Implements: "As an administrator, I want to create a SecuritySystem for an exist
 
 ### Task 7.1: Implement CreateSecuritySystemWithLocationIdSaga and route requests
 
-- [ ] Add optional `locationId` field to `CreateSecuritySystemRequest` in `orchestration-restapi`
-- [ ] Keep existing `locationName` field for backwards compatibility
-- [ ] Request is valid if either `locationId` OR (`customerId` + `locationName`) is provided
-- [ ] Create `CreateSecuritySystemWithLocationIdSagaData` class in `orchestration-sagas`
-- [ ] Contains: `locationId`, `locationName`, `customerId`, `securitySystemId`
-- [ ] Create new saga class `CreateSecuritySystemWithLocationIdSaga` in `orchestration-sagas`
-- [ ] Step 1: Send `ValidateLocationCommand` to Customer Service
-- [ ] On reply: Store `locationName` and `customerId` from `LocationValidated`
-- [ ] Step 2: Send `CreateSecuritySystemWithLocationIdCommand` to Security System Service
-- [ ] On reply: Store `securitySystemId`
-- [ ] No compensation needed (validation is read-only, creation failure doesn't require rollback)
-- [ ] Modify `SecuritySystemController` in `orchestration-restapi`
-- [ ] If `locationId` is provided in request, start `CreateSecuritySystemWithLocationIdSaga`
-- [ ] If `locationName` + `customerId` is provided, use existing `CreateSecuritySystemSaga`
+- [x] Add optional `locationId` field to `CreateSecuritySystemRequest` in `orchestration-restapi`
+- [x] Keep existing `locationName` field for backwards compatibility
+- [x] Request is valid if either `locationId` OR (`customerId` + `locationName`) is provided
+- [x] Create `CreateSecuritySystemWithLocationIdSagaData` class in `orchestration-sagas`
+- [x] Contains: `locationId`, `locationName`, `customerId`, `securitySystemId`
+- [x] Create new saga class `CreateSecuritySystemWithLocationIdSaga` in `orchestration-sagas`
+- [x] Step 1: Send `ValidateLocationCommand` to Customer Service
+- [x] On reply: Store `locationName` and `customerId` from `LocationValidated`
+- [x] Step 2: Send `CreateSecuritySystemWithLocationIdCommand` to Security System Service
+- [x] On reply: Store `securitySystemId`
+- [x] No compensation needed (validation is read-only, creation failure doesn't require rollback)
+- [x] Modify `SecuritySystemController` in `orchestration-restapi`
+- [x] If `locationId` is provided in request, start `CreateSecuritySystemWithLocationIdSaga`
+- [x] If `locationName` + `customerId` is provided, use existing `CreateSecuritySystemSaga`
 
 ### Task 7.2: Integration test for locationId-based SecuritySystem creation
 

@@ -39,9 +39,9 @@ class SecuritySystemControllerTest {
 
     @Test
     void shouldCreateSecuritySystemSuccessfully() throws Exception {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, "Warehouse");
+        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, "Warehouse", null);
         Long securitySystemId = 200L;
-        
+
         when(securitySystemSagaService.createSecuritySystem(100L, "Warehouse"))
                 .thenReturn(CompletableFuture.completedFuture(securitySystemId));
 
@@ -51,7 +51,7 @@ class SecuritySystemControllerTest {
                 .andExpect(request().asyncStarted())
                 .andDo(print())
                 .andReturn();
-        
+
         mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -59,34 +59,32 @@ class SecuritySystemControllerTest {
     }
 
     @Test
-    void shouldReturn400WhenCustomerIdIsNull() throws Exception {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(null, "Warehouse");
+    void shouldReturn400WhenNeitherLocationIdNorCustomerIdProvided() throws Exception {
+        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(null, null, null);
 
         mockMvc.perform(post("/securitysystems")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors").exists());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void shouldReturn400WhenLocationNameIsBlank() throws Exception {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, "");
+    void shouldReturn400WhenLocationNameIsBlankForOldFlow() throws Exception {
+        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, "", null);
 
         mockMvc.perform(post("/securitysystems")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors").exists());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldReturn503WhenTimeoutOccurs() throws Exception {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, "Warehouse");
-        
+        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, "Warehouse", null);
+
         CompletableFuture<Long> future = new CompletableFuture<>();
         future.completeExceptionally(new TimeoutException("Request timed out"));
-        
+
         when(securitySystemSagaService.createSecuritySystem(anyLong(), anyString()))
                 .thenReturn(future);
 
@@ -95,9 +93,31 @@ class SecuritySystemControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        
+
         mockMvc.perform(asyncDispatch(result))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.error").value("Service temporarily unavailable"));
+    }
+
+    @Test
+    void shouldCreateSecuritySystemWithLocationId() throws Exception {
+        Long locationId = 100L;
+        Long securitySystemId = 200L;
+        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(null, null, locationId);
+
+        when(securitySystemSagaService.createSecuritySystemWithLocationId(locationId))
+                .thenReturn(CompletableFuture.completedFuture(securitySystemId));
+
+        var result = mockMvc.perform(post("/securitysystems")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(request().asyncStarted())
+                .andDo(print())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(result))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.securitySystemId").value(200));
     }
 }
