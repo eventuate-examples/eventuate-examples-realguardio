@@ -212,6 +212,17 @@ Each scenarios document contains the following:
 * An embedded plantuml diagram (asciidoc diagram) that shows the sequence
 * A text-based description of the scenario. It starts with "The sequence of events is:" and is followed by numbered steps describing what happens, e.g. ". The X does Y"
 
+=== Hyperlinking architecture elements
+
+References to architecture elements in scenario documentation should be hyperlinked to the appropriate documentation section:
+
+* Service names should link to the service documentation (e.g., `<<_customer_service,Customer Service>>`)
+* Subdomain names should link to the subdomain documentation (e.g., `<<_customer_management_subdomain,Customer Management>>`)
+* Domain entities/aggregates should link to the entity documentation (e.g., `<<_securitysystem,SecuritySystem>>`, `<<_customer,Customer>>`)
+* Saga names should link to the saga definition (e.g., `<<_createsecuritysystemsaga,CreateSecuritySystemSaga>>`)
+
+This allows readers to easily navigate to detailed documentation about the components involved in each scenario.
+
 === How to identify scenarios to document
 
 To ensure completeness, systematically review the codebase:
