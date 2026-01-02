@@ -182,11 +182,11 @@ Implements: "As a customer employee, I want my existing location-based permissio
 
 ### Task 8.1: End-to-end authorization test with new flow
 
-- [ ] Create Location via new endpoint
-- [ ] Create SecuritySystem with locationId
-- [ ] Assign `SECURITY_SYSTEM_ARMER` role to employee at Location
-- [ ] Verify: Employee can arm the SecuritySystem
-- [ ] Verify: Employee without role cannot arm the SecuritySystem
+- [x] Create Location via new endpoint
+- [x] Create SecuritySystem with locationId
+- [x] Assign `SECURITY_SYSTEM_ARMER` role to employee at Location
+- [x] Verify: Employee can arm the SecuritySystem
+- [x] Verify: Employee without role cannot arm the SecuritySystem
 
 ---
 

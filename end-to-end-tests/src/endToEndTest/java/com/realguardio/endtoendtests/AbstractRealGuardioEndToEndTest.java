@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.realguardio.endtoendtests.dto.CreateCustomerRequest;
 import com.realguardio.endtoendtests.dto.CreateCustomerResponse;
+import com.realguardio.endtoendtests.dto.CreateLocationRequest;
+import com.realguardio.endtoendtests.dto.CreateLocationResponse;
 import com.realguardio.endtoendtests.dto.EmailAddress;
 import com.realguardio.endtoendtests.dto.PersonDetails;
 import com.realguardio.endtoendtests.dto.PersonName;
@@ -82,6 +84,119 @@ public abstract class AbstractRealGuardioEndToEndTest {
         armSecuritySystem(securitySystemId, adminAuthToken);
 
         verifySecuritySystemArmed(adminAuthToken, securitySystemId);
+    }
+
+    @Test
+    void shouldCreateSecuritySystemWithLocationIdFlow() {
+        // Step 1: Create customer with admin
+        CustomerCreationResult customerResult = createCustomerWithAdmin();
+        CreateCustomerResponse customerResponse = customerResult.response();
+        long customerId = customerResponse.customer().id();
+        long adminEmployeeId = customerResponse.initialAdministrator().id();
+        String adminEmail = customerResult.adminEmail();
+
+        String adminAuthToken = getTokenForCustomerAdmin(adminEmail);
+
+        // Step 2: Create Location via Customer Service endpoint
+        Long locationId = createLocationViaCustomerService(customerId, adminAuthToken);
+
+        // Step 3: Create SecuritySystem with locationId via Orchestration Service
+        Long securitySystemId = createSecuritySystemWithLocationId(locationId);
+
+        // Step 4: Verify SecuritySystem has correct locationId
+        verifySecuritySystemLocation(securitySystemId, locationId, authTokenForRealGuardIoAdmin);
+
+        // Step 5: Assign permissions to location
+        assignPermissionsToLocation(adminEmployeeId, locationId, adminAuthToken, customerId);
+
+        waitForUntilPermissionsHaveBeenAssigned(adminAuthToken, adminEmail, locationId);
+
+        // Step 6: Verify employee can arm the SecuritySystem
+        armSecuritySystem(securitySystemId, adminAuthToken);
+        verifySecuritySystemArmed(adminAuthToken, securitySystemId);
+    }
+
+    private Long createLocationViaCustomerService(long customerId, String adminAuthToken) {
+        String locationName = "New Flow Location - " + System.currentTimeMillis();
+
+        logger.info("Creating location '{}' for customer {}", locationName, customerId);
+
+        CreateLocationResponse response = RestAssured.given()
+            .baseUri("http://localhost:" + aut.getCustomerServicePort())
+            .header("Authorization", "Bearer " + adminAuthToken)
+            .contentType(ContentType.JSON)
+            .body(new CreateLocationRequest(locationName))
+            .log().all()
+            .when()
+            .post("/customers/" + customerId + "/locations")
+            .then()
+            .log().all()
+            .statusCode(200)
+            .extract()
+            .as(CreateLocationResponse.class);
+
+        Long locationId = response.locationId();
+        assertThat(locationId).isNotNull();
+        logger.info("Location created with ID: {}", locationId);
+        return locationId;
+    }
+
+    private Long createSecuritySystemWithLocationId(Long locationId) {
+        String sagaRequestJson = """
+        {
+            "locationId": %d
+        }
+        """.formatted(locationId);
+
+        logger.info("Creating security system with locationId {}", locationId);
+
+        CreateSecuritySystemResponse createResponse = RestAssured.given()
+            .baseUri("http://localhost:" + aut.getOrchestrationServicePort())
+            .header("Authorization", "Bearer " + authTokenForRealGuardIoAdmin)
+            .contentType(ContentType.JSON)
+            .body(sagaRequestJson)
+            .log().all()
+            .when()
+            .post("/securitysystems")
+            .then()
+            .log().all()
+            .statusCode(201)
+            .extract()
+            .body()
+            .as(CreateSecuritySystemResponse.class);
+
+        Long securitySystemId = createResponse.securitySystemId();
+        assertThat(securitySystemId).isNotNull();
+        logger.info("Security system created with ID: {}", securitySystemId);
+        return securitySystemId;
+    }
+
+    private void verifySecuritySystemLocation(Long securitySystemId, Long expectedLocationId, String authToken) {
+        logger.info("Verifying security system {} has locationId {}", securitySystemId, expectedLocationId);
+
+        Long actualLocationId = await().atMost(60, TimeUnit.SECONDS)
+            .pollInterval(2, TimeUnit.SECONDS)
+            .until(() -> {
+                var response = RestAssured.given()
+                    .baseUri("http://localhost:" + aut.getSecurityServicePort())
+                    .header("Authorization", "Bearer " + authToken)
+                    .when()
+                    .get("/securitysystems/" + securitySystemId)
+                    .then()
+                    .extract()
+                    .response();
+
+                if (response.statusCode() == 200) {
+                    Long locId = response.jsonPath().getLong("locationId");
+                    if (locId != null && locId.equals(expectedLocationId)) {
+                        return locId;
+                    }
+                }
+                return null;
+            }, loc -> loc != null && loc.equals(expectedLocationId));
+
+        assertThat(actualLocationId).isEqualTo(expectedLocationId);
+        logger.info("Security system {} has correct locationId: {}", securitySystemId, actualLocationId);
     }
 
     private static String getTokenForCustomerAdmin(String adminEmail) {
