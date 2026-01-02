@@ -10,6 +10,7 @@ org.springframework.cloud.contract.spec.Contract.make {
         sentTo('io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer')
         body([
                 customerEmployeeId: 301,
+                userName: 'owner@example.com',
                 roleName: 'Owner'
         ])
         headers {

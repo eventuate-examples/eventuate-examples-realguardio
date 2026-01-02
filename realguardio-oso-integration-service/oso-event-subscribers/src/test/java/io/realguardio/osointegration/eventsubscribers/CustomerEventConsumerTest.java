@@ -40,17 +40,18 @@ public class CustomerEventConsumerTest {
     @Test
     public void shouldHandleCustomerEmployeeAssignedCustomerRole() {
         Long customerEmployeeId = 123L;
+        String userName = "admin@example.com";
         String customerId = "456";
         String roleName = "COMPANY_ROLE_ADMIN";
 
         CustomerEmployeeAssignedCustomerRole event =
-            new CustomerEmployeeAssignedCustomerRole(customerEmployeeId, roleName);
+            new CustomerEmployeeAssignedCustomerRole(customerEmployeeId, userName, roleName);
 
         domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId, Collections.singletonList(event));
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(osoFactManager).createRoleInCustomer(
-                customerEmployeeId.toString(),
+                userName,
                 customerId,
                 roleName
             );

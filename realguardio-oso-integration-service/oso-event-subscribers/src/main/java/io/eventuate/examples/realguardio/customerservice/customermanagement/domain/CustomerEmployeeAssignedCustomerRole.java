@@ -2,5 +2,5 @@ package io.eventuate.examples.realguardio.customerservice.customermanagement.dom
 
 import io.eventuate.tram.events.common.DomainEvent;
 
-public record CustomerEmployeeAssignedCustomerRole(Long customerEmployeeId, String roleName) implements DomainEvent {
+public record CustomerEmployeeAssignedCustomerRole(Long customerEmployeeId, String userName, String roleName) implements DomainEvent {
 }

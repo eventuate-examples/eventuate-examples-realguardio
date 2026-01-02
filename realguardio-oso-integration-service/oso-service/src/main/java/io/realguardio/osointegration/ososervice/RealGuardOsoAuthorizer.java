@@ -21,13 +21,13 @@ public class RealGuardOsoAuthorizer {
   @CircuitBreaker(name = "osoAuthorizer")
   @TimeLimiter(name = "osoAuthorizer")
   @Retry(name = "osoAuthorizer", fallbackMethod = "isAuthorizedFallback")
-  public CompletableFuture<Boolean> isAuthorized(String user, String action, String securitySystem) {
-        return CompletableFuture.supplyAsync(() -> osoService.authorize("CustomerEmployee", user, action, "SecuritySystem", securitySystem));
+  public CompletableFuture<Boolean> isAuthorized(String user, String action, String resourceType, String resourceId) {
+        return CompletableFuture.supplyAsync(() -> osoService.authorize("CustomerEmployee", user, action, resourceType, resourceId));
   }
 
-  private CompletableFuture<Boolean> isAuthorizedFallback(String user, String action, String securitySystem, Exception exception) {
-    logger.error("isAuthorizedFallback: Authorization service unavailable for user {} attempting action {} on security system {}. Denying access.",
-        user, action, securitySystem, exception);
+  private CompletableFuture<Boolean> isAuthorizedFallback(String user, String action, String resourceType, String resourceId, Exception exception) {
+    logger.error("isAuthorizedFallback: Authorization service unavailable for user {} attempting action {} on {} {}. Denying access.",
+        user, action, resourceType, resourceId, exception);
     return CompletableFuture.completedFuture(false);
   }
 

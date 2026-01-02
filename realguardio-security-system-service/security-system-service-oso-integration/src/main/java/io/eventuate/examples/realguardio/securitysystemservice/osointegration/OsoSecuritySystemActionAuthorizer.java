@@ -38,7 +38,7 @@ public class OsoSecuritySystemActionAuthorizer implements SecuritySystemActionAu
 
     private boolean isAuthorized(String user, String action, String securitySystem) {
         try {
-            return realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem).get();
+            return realGuardOsoAuthorizer.isAuthorized(user, action, "SecuritySystem", securitySystem).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

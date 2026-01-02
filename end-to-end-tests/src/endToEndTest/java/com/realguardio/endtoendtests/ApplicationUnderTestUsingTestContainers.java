@@ -69,7 +69,7 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
           .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
           .withEnv("OSO_URL", "http://oso-service:8080")
           .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
-          .withReuse(true)
+          .withReuse(false)
           .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC customer-service:"))
       ;
 
@@ -83,7 +83,7 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
           .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
           .withEnv("SPRING_PROFILES_ACTIVE", "docker")
           .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
-          .withReuse(true)
+          .withReuse(false)
           .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC orchestration-service:"));
 
   public static final GenericContainer<?> securitySystemService =

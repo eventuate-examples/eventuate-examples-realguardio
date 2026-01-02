@@ -142,8 +142,11 @@ public class CustomerService {
             throw new IllegalArgumentException("Customer employee does not belong to the specified customer");
         }
 
+        Member member = memberService.findMemberById(customerEmployee.getMemberId());
+        String userName = member.getEmailAddress().email();
+
         customerEventPublisher.publish(customer,
-            new CustomerEmployeeAssignedCustomerRole(customerEmployeeId, roleName));
+            new CustomerEmployeeAssignedCustomerRole(customerEmployeeId, userName, roleName));
 
         return organizationService.assignRole(customer.getOrganizationId(), customerEmployee.getMemberId(), roleName);
     }

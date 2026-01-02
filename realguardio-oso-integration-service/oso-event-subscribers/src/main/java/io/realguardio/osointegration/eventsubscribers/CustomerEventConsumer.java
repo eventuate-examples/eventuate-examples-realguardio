@@ -29,11 +29,11 @@ public class CustomerEventConsumer {
         CustomerEmployeeAssignedCustomerRole event = envelope.getEvent();
         String customerId = envelope.getAggregateId();
 
-        logger.info("Handling CustomerEmployeeAssignedCustomerRole event: customerEmployeeId={}, customerId={}, roleName={}",
-                   event.customerEmployeeId(), customerId, event.roleName());
+        logger.info("Handling CustomerEmployeeAssignedCustomerRole event: userName={}, customerId={}, roleName={}",
+                   event.userName(), customerId, event.roleName());
 
         osoFactManager.createRoleInCustomer(
-            event.customerEmployeeId().toString(),
+            event.userName(),
             customerId,
             event.roleName()
         );

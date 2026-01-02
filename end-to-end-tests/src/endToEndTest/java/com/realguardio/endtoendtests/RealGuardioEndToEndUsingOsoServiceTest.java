@@ -21,4 +21,14 @@ public class RealGuardioEndToEndUsingOsoServiceTest extends AbstractRealGuardioE
         throw new RuntimeException(e);
       }
     }
+
+    @Override
+    protected void waitForCustomerAdminPermission(String adminEmail, long customerId) {
+      // Wait for COMPANY_ROLE_ADMIN permission to propagate to Oso
+      try {
+        TimeUnit.SECONDS.sleep(10);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
 }

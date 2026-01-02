@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -100,6 +99,7 @@ public class OsoIntegrationServiceComponentTest {
 	void shouldAuthorizeAliceForCustomerAcme() throws Exception {
 		String customerId = "acme-" + System.currentTimeMillis();
 		Long aliceId = System.currentTimeMillis();
+		String aliceUserName = "alice-" + aliceId + "@example.com";
 		Long locationId = System.currentTimeMillis() + 1000;
 		Long ss1Id = System.currentTimeMillis() + 2000;
 		Long ss2Id = System.currentTimeMillis() + 3000;
@@ -107,7 +107,7 @@ public class OsoIntegrationServiceComponentTest {
 		logger.info("Setting up customer {} with location {} and security systems", customerId, locationId);
 
 		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
-				new CustomerEmployeeAssignedCustomerRole(aliceId, "SECURITY_SYSTEM_DISARMER"));
+				new CustomerEmployeeAssignedCustomerRole(aliceId, aliceUserName, "SECURITY_SYSTEM_DISARMER"));
 
 		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new LocationCreatedForCustomer(locationId));
@@ -118,11 +118,11 @@ public class OsoIntegrationServiceComponentTest {
 		logger.info("Verifying alice can disarm ss1 but not ss2");
 
 		eventually(() -> {
-			boolean authorized = isAuthorized(aliceId.toString(), "disarm", ss1Id.toString());
+			boolean authorized = isAuthorized(aliceUserName, "disarm", ss1Id.toString());
 			assertThat(authorized).isTrue();
 		});
 
-		boolean unauthorizedAccess = isAuthorized(aliceId.toString(), "disarm", ss2Id.toString());
+		boolean unauthorizedAccess = isAuthorized(aliceUserName, "disarm", ss2Id.toString());
 		assertThat(unauthorizedAccess).isFalse();
 	}
 
@@ -130,6 +130,7 @@ public class OsoIntegrationServiceComponentTest {
 	void shouldAuthorizeBobForCustomerFoo() throws Exception {
 		String customerId = "foo-" + System.currentTimeMillis();
 		Long bobId = System.currentTimeMillis();
+		String bobUserName = "bob-" + bobId + "@example.com";
 		Long locationId = System.currentTimeMillis() + 1000;
 		Long ss1Id = System.currentTimeMillis() + 2000;
 		Long ss2Id = System.currentTimeMillis() + 3000;
@@ -137,7 +138,7 @@ public class OsoIntegrationServiceComponentTest {
 		logger.info("Setting up customer {} with location {} and security system {}", customerId, locationId, ss2Id);
 
 		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
-				new CustomerEmployeeAssignedCustomerRole(bobId, "SECURITY_SYSTEM_DISARMER"));
+				new CustomerEmployeeAssignedCustomerRole(bobId, bobUserName, "SECURITY_SYSTEM_DISARMER"));
 
 		domainEventPublisher.publish("io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer", customerId,
 				new LocationCreatedForCustomer(locationId));
@@ -148,11 +149,11 @@ public class OsoIntegrationServiceComponentTest {
 		logger.info("Verifying bob can disarm ss2 but not ss1");
 
 		eventually(() -> {
-			boolean authorized = isAuthorized(bobId.toString(), "disarm", ss2Id.toString());
+			boolean authorized = isAuthorized(bobUserName, "disarm", ss2Id.toString());
 			assertThat(authorized).isTrue();
 		});
 
-		boolean unauthorizedAccess = isAuthorized(bobId.toString(), "disarm", ss1Id.toString());
+		boolean unauthorizedAccess = isAuthorized(bobUserName, "disarm", ss1Id.toString());
 		assertThat(unauthorizedAccess).isFalse();
 	}
 
@@ -184,7 +185,7 @@ public class OsoIntegrationServiceComponentTest {
 
     private boolean isAuthorized(String user, String action, String securitySystem) {
         try {
-            return realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem).get();
+            return realGuardOsoAuthorizer.isAuthorized(user, action, "SecuritySystem", securitySystem).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

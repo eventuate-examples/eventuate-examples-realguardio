@@ -48,7 +48,7 @@ public class CustomerEventConsumerContractTest {
     public void shouldHandleCustomerEmployeeAssignedCustomerRoleEvent() {
         stubFinder.trigger("customerEmployeeAssignedCustomerRoleEvent");
         eventuallyAssertThat(() ->
-            verify(osoFactManager).createRoleInCustomer("301", "123", "Owner")
+            verify(osoFactManager).createRoleInCustomer("owner@example.com", "123", "Owner")
         );
     }
 

@@ -54,7 +54,7 @@ public abstract class BaseClass {
     }
 
     public void customerEmployeeAssignedCustomerRole() {
-        customerEventPublisher.publish(createCustomerWithId(123L), new CustomerEmployeeAssignedCustomerRole(301L, "Owner"));
+        customerEventPublisher.publish(createCustomerWithId(123L), new CustomerEmployeeAssignedCustomerRole(301L, "owner@example.com", "Owner"));
     }
 
     @Configuration

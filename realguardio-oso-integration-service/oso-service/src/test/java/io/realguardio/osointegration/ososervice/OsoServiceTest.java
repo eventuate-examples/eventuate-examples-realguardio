@@ -104,7 +104,7 @@ public class OsoServiceTest {
   private void assertIsAuthorized(String user, String action, String securitySystem) {
       Boolean result;
       try {
-          result = realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem).get();
+          result = realGuardOsoAuthorizer.isAuthorized(user, action, "SecuritySystem", securitySystem).get();
       } catch (InterruptedException | ExecutionException e) {
           throw new RuntimeException(e);
       }
@@ -114,7 +114,7 @@ public class OsoServiceTest {
   private void assertIsNotAuthorized(String user, String action, String securitySystem) {
       Boolean result;
       try {
-          result = realGuardOsoAuthorizer.isAuthorized(user, action, securitySystem).get();
+          result = realGuardOsoAuthorizer.isAuthorized(user, action, "SecuritySystem", securitySystem).get();
       } catch (InterruptedException | ExecutionException e) {
           throw new RuntimeException(e);
       }

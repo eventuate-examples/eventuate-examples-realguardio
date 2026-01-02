@@ -71,6 +71,9 @@ public abstract class AbstractRealGuardioEndToEndTest {
 
         String adminAuthToken = getTokenForCustomerAdmin(adminEmail);
 
+        // Wait for COMPANY_ROLE_ADMIN permission to propagate to Oso
+        waitForCustomerAdminPermission(adminEmail, customerId);
+
         // Step 2: Create Location via Customer Service endpoint (new flow)
         Long locationId = createLocationViaCustomerService(customerId, adminAuthToken);
 
@@ -295,6 +298,10 @@ public abstract class AbstractRealGuardioEndToEndTest {
     }
 
     protected abstract void waitForUntilPermissionsHaveBeenAssigned(String adminAuthToken, String adminEmail, Long locationId);
+
+    protected void waitForCustomerAdminPermission(String adminEmail, long customerId) {
+        // Default: no wait needed for non-Oso modes
+    }
 
     private record CustomerCreationResult(CreateCustomerResponse response, String adminEmail) {}
     

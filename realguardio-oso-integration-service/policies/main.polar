@@ -2,9 +2,10 @@ actor CustomerEmployee {}
 
 resource Customer {
   roles = ["SECURITY_SYSTEM_ARMER", "SECURITY_SYSTEM_DISARMER", "COMPANY_ROLE_ADMIN", "SECURITY_SYSTEM_VIEWER"];               # role at the organization
-  permissions = ["createCustomerEmployee"];
+  permissions = ["createCustomerEmployee", "createLocation"];
 
   "createCustomerEmployee" if "COMPANY_ROLE_ADMIN";
+  "createLocation" if "COMPANY_ROLE_ADMIN";
 }
 
 resource Team {
@@ -83,5 +84,5 @@ test "customer admin" {
     has_role(CustomerEmployee{"bob"}, "COMPANY_ROLE_ADMIN", Customer{"acme"});
   }
   assert has_permission(CustomerEmployee{"bob"}, "createCustomerEmployee", Customer{"acme"});
-
+  assert has_permission(CustomerEmployee{"bob"}, "createLocation", Customer{"acme"});
 }
