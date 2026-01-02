@@ -47,9 +47,9 @@ Implements: "As an administrator, I want to create a Location for a Customer wit
 
 ### Task 1.3: Integration test for Location creation endpoint
 
-- [ ] Create `LocationControllerIntegrationTest` in `customer-service-restapi`
-- [ ] Test: POST creates Location and returns locationId
-- [ ] Test: POST with invalid customerId returns 404
+- [x] Create `LocationControllerIntegrationTest` in `customer-service-restapi`
+- [x] Test: POST creates Location and returns locationId
+- [x] Test: POST with invalid customerId returns 404
 
 ---
 

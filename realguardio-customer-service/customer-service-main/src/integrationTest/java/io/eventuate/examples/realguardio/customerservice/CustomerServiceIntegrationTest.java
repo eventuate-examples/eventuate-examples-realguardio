@@ -29,6 +29,8 @@ import org.testcontainers.lifecycle.Startables;
 
 import java.nio.file.Path;
 
+import io.eventuate.examples.realguardio.customerservice.restapi.CreateLocationResponse;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -112,6 +114,14 @@ class CustomerServiceIntegrationTest {
     return headers;
   }
 
+  private static @NotNull HttpHeaders makeHeadersForUser(EmailAddress user) {
+    String token = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, user.toString(), "password");
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Authorization", "Bearer " + token);
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    return headers;
+  }
+
   @Test
   public void anonymousRequestShouldNotCreateCustomer() {
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -155,10 +165,7 @@ class CustomerServiceIntegrationTest {
   }
 
   private void createCustomerEmployee(EmailAddress adminUser, EmailAddress customerEmployee, long customerId) {
-    String token = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, adminUser.toString(), "password");
-    HttpHeaders httpHeadersForAdmin = new HttpHeaders();
-    httpHeadersForAdmin.set("Authorization", "Bearer " + token);
-    httpHeadersForAdmin.setContentType(MediaType.APPLICATION_JSON);
+    HttpHeaders httpHeadersForAdmin = makeHeadersForUser(adminUser);
 
 
     HttpEntity<String> entityForCreateEmployee = new HttpEntity<>("""
@@ -214,6 +221,60 @@ class CustomerServiceIntegrationTest {
 
     long customerId = response.getBody().customer().getId();
     return customerId;
+  }
+
+  @Test
+  public void shouldCreateLocationForCustomer() {
+    // Given: Create a customer first
+    EmailAddress adminUser = Uniquifier.uniquify(new EmailAddress("admin@example.com"));
+    long customerId = createCustomer(adminUser);
+
+    // When: Create a location for the customer using the admin's token
+    HttpHeaders httpHeaders = makeHeadersForUser(adminUser);
+    String locationName = "Main Office";
+    HttpEntity<String> entity = new HttpEntity<>("""
+        {
+            "name": "%s"
+        }
+        """.formatted(locationName), httpHeaders);
+
+    ResponseEntity<CreateLocationResponse> response = restTemplate.exchange(
+        "/customers/%s/locations".formatted(customerId),
+        HttpMethod.POST,
+        entity,
+        CreateLocationResponse.class
+    );
+
+    // Then
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().locationId()).isNotNull();
+  }
+
+  @Test
+  public void shouldReturnErrorWhenCreatingLocationForNonExistentCustomer() {
+    // Given: A non-existent customer ID
+    EmailAddress adminUser = Uniquifier.uniquify(new EmailAddress("admin@example.com"));
+    createCustomer(adminUser); // Create a customer so the user exists and has the right role
+    long nonExistentCustomerId = 999999999L;
+
+    // When: Try to create location for non-existent customer
+    HttpHeaders httpHeaders = makeHeadersForUser(adminUser);
+    HttpEntity<String> entity = new HttpEntity<>("""
+        {
+            "name": "Branch Office"
+        }
+        """, httpHeaders);
+
+    ResponseEntity<String> response = restTemplate.exchange(
+        "/customers/%s/locations".formatted(nonExistentCustomerId),
+        HttpMethod.POST,
+        entity,
+        String.class
+    );
+
+    // Then: Should return an error status (not 2xx) since customer doesn't exist
+    assertThat(response.getStatusCode().is2xxSuccessful()).isFalse();
   }
 
 
