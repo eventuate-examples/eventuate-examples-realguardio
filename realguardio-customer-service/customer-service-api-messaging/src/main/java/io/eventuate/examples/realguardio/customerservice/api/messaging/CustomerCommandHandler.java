@@ -1,11 +1,16 @@
 package io.eventuate.examples.realguardio.customerservice.api.messaging;
 
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.ValidateLocationCommand;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.CreateLocationResult;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.CustomerNotFound;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationCreatedWithSecuritySystem;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationNotFound;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationValidated;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.ValidateLocationResult;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerNotFoundException;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Location;
 import io.eventuate.tram.commands.consumer.CommandMessage;
 import io.eventuate.tram.commands.consumer.annotations.EventuateCommandHandler;
 import org.slf4j.Logger;
@@ -39,5 +44,18 @@ public class CustomerCommandHandler {
             logger.error("Failed to CreateLocationWithSecuritySystemCommand: ", e);
             return new CustomerNotFound();
         }
+    }
+
+    @EventuateCommandHandler(subscriberId = "customerCommandDispatcher", channel = "customer-service")
+    public ValidateLocationResult handleValidateLocation(CommandMessage<ValidateLocationCommand> cm) {
+        logger.info("Handling ValidateLocationCommand: " + cm);
+        ValidateLocationCommand command = cm.getCommand();
+        Location location = customerService.findLocationById(command.locationId());
+        if (location == null) {
+            logger.info("Location not found: " + command.locationId());
+            return new LocationNotFound();
+        }
+        logger.info("Location validated: " + location.getId());
+        return new LocationValidated(location.getId(), location.getName(), location.getCustomerId());
     }
 }

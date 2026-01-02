@@ -1,7 +1,9 @@
 package io.eventuate.examples.realguardio.customerservice.api.messaging;
 
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.ValidateLocationCommand;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Location;
 import io.eventuate.tram.commands.consumer.CommandDispatcher;
 import io.eventuate.tram.commands.producer.CommandProducer;
 import io.eventuate.tram.sagas.participant.SagaCommandDispatcherFactory;
@@ -93,5 +95,62 @@ class CustomerCommandHandlerTest {
         // Then - Verify the failure reply is received
         replyConsumer.assertHasReplyTo(commandId);
         verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
+    }
+
+    @Test
+    void shouldHandleValidateLocationCommand() {
+        // Given
+        Long locationId = 100L;
+        String locationName = "Main Office";
+        Long customerId = 1L;
+
+        ValidateLocationCommand command = new ValidateLocationCommand(locationId);
+
+        Location location = new Location(locationName, customerId);
+        setId(location, locationId);
+
+        when(customerService.findLocationById(locationId)).thenReturn(location);
+
+        // Create a test message consumer to receive the reply
+        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
+
+        // When - Send the command
+        var commandId = commandProducer.send("customer-service", command, replyConsumer.getReplyChannel(),
+            Collections.emptyMap());
+
+        // Then - Verify the reply is received
+        replyConsumer.assertHasReplyTo(commandId);
+        verify(customerService).findLocationById(locationId);
+    }
+
+    @Test
+    void shouldHandleValidateLocationCommandWhenLocationNotFound() {
+        // Given
+        Long locationId = 999L;
+
+        ValidateLocationCommand command = new ValidateLocationCommand(locationId);
+
+        when(customerService.findLocationById(locationId)).thenReturn(null);
+
+        // Create a test message consumer to receive the reply
+        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
+
+        // When - Send the command
+        var commandId = commandProducer.send("customer-service", command, replyConsumer.getReplyChannel(),
+            Collections.emptyMap());
+
+        // Then - Verify the failure reply is received
+        replyConsumer.assertHasReplyTo(commandId);
+        verify(customerService).findLocationById(locationId);
+    }
+
+    private static <T> void setId(T entity, Long id) {
+        try {
+            java.lang.reflect.Field idField = entity.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(entity, id);
+        } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

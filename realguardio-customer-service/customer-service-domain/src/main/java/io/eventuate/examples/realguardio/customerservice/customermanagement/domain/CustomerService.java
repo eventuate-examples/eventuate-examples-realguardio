@@ -196,6 +196,16 @@ public class CustomerService {
             new SecuritySystemAssignedToLocation(locationId, securitySystemId));
 
     }
+
+    /**
+     * Find a location by its ID.
+     *
+     * @param locationId the ID of the location to find
+     * @return the location if found, null otherwise
+     */
+    public Location findLocationById(Long locationId) {
+        return locationRepository.findById(locationId).orElse(null);
+    }
     
     /**
      * Create or update a location with a security system.
