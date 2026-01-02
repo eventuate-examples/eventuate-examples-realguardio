@@ -38,7 +38,7 @@ public class SecuritySystemController {
         }
 
         logger.info("Creating security system with locationId: {}", request.locationId());
-        CompletableFuture<Long> sagaFuture = securitySystemSagaService.createSecuritySystemWithLocationId(request.locationId());
+        CompletableFuture<Long> sagaFuture = securitySystemSagaService.createSecuritySystem(request.locationId());
 
         return sagaFuture
                 .orTimeout(30, TimeUnit.SECONDS)

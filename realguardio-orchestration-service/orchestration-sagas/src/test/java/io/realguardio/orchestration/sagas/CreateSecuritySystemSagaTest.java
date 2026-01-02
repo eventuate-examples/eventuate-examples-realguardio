@@ -3,7 +3,7 @@ package io.realguardio.orchestration.sagas;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.ValidateLocationCommand;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationNotFound;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationValidated;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationAlreadyHasSecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
 import io.realguardio.orchestration.sagas.proxies.CustomerServiceProxy;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static io.eventuate.tram.sagas.testing.SagaUnitTestSupport.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CreateSecuritySystemWithLocationIdSagaTest {
+public class CreateSecuritySystemSagaTest {
 
     private SecuritySystemServiceProxy securitySystemServiceProxy;
     private CustomerServiceProxy customerServiceProxy;
@@ -25,8 +25,8 @@ public class CreateSecuritySystemWithLocationIdSagaTest {
     private String locationName = "Warehouse";
     private Long securitySystemId = 300L;
 
-    private CreateSecuritySystemWithLocationIdSaga makeCreateSecuritySystemWithLocationIdSaga() {
-        return new CreateSecuritySystemWithLocationIdSaga(customerServiceProxy, securitySystemServiceProxy, pendingResponses);
+    private CreateSecuritySystemSaga makeCreateSecuritySystemSaga() {
+        return new CreateSecuritySystemSaga(customerServiceProxy, securitySystemServiceProxy, pendingResponses);
     }
 
     @BeforeEach
@@ -37,18 +37,18 @@ public class CreateSecuritySystemWithLocationIdSagaTest {
     }
 
     @Test
-    public void shouldCreateSecuritySystemWithLocationIdSuccessfully() {
-        CreateSecuritySystemWithLocationIdSagaData sagaData = new CreateSecuritySystemWithLocationIdSagaData(locationId);
+    public void shouldCreateSecuritySystemSuccessfully() {
+        CreateSecuritySystemSagaData sagaData = new CreateSecuritySystemSagaData(locationId);
 
         given()
-            .saga(makeCreateSecuritySystemWithLocationIdSaga(), sagaData)
+            .saga(makeCreateSecuritySystemSaga(), sagaData)
             .expect()
             .command(new ValidateLocationCommand(locationId))
             .to("customer-service")
             .andGiven()
             .successReply(new LocationValidated(locationId, locationName, customerId))
             .expect()
-            .command(new CreateSecuritySystemWithLocationIdCommand(locationId, locationName))
+            .command(new CreateSecuritySystemCommand(locationId, locationName))
             .to("security-system-service")
             .andGiven()
             .successReply(new SecuritySystemCreated(securitySystemId))
@@ -64,10 +64,10 @@ public class CreateSecuritySystemWithLocationIdSagaTest {
 
     @Test
     public void shouldRejectWhenLocationNotFound() {
-        CreateSecuritySystemWithLocationIdSagaData sagaData = new CreateSecuritySystemWithLocationIdSagaData(locationId);
+        CreateSecuritySystemSagaData sagaData = new CreateSecuritySystemSagaData(locationId);
 
         given()
-            .saga(makeCreateSecuritySystemWithLocationIdSaga(), sagaData)
+            .saga(makeCreateSecuritySystemSaga(), sagaData)
             .expect()
             .command(new ValidateLocationCommand(locationId))
             .to("customer-service")
@@ -81,17 +81,17 @@ public class CreateSecuritySystemWithLocationIdSagaTest {
 
     @Test
     public void shouldRejectWhenLocationAlreadyHasSecuritySystem() {
-        CreateSecuritySystemWithLocationIdSagaData sagaData = new CreateSecuritySystemWithLocationIdSagaData(locationId);
+        CreateSecuritySystemSagaData sagaData = new CreateSecuritySystemSagaData(locationId);
 
         given()
-            .saga(makeCreateSecuritySystemWithLocationIdSaga(), sagaData)
+            .saga(makeCreateSecuritySystemSaga(), sagaData)
             .expect()
             .command(new ValidateLocationCommand(locationId))
             .to("customer-service")
             .andGiven()
             .successReply(new LocationValidated(locationId, locationName, customerId))
             .expect()
-            .command(new CreateSecuritySystemWithLocationIdCommand(locationId, locationName))
+            .command(new CreateSecuritySystemCommand(locationId, locationName))
             .to("security-system-service")
             .andGiven()
             .failureReply(new LocationAlreadyHasSecuritySystem(locationId))

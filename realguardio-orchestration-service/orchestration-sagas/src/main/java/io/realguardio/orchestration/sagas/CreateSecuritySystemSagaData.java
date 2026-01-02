@@ -1,6 +1,6 @@
 package io.realguardio.orchestration.sagas;
 
-public class CreateSecuritySystemWithLocationIdSagaData {
+public class CreateSecuritySystemSagaData {
 
     private String sagaId;
     private Long locationId;
@@ -9,10 +9,10 @@ public class CreateSecuritySystemWithLocationIdSagaData {
     private Long securitySystemId;
     private String rejectionReason;
 
-    public CreateSecuritySystemWithLocationIdSagaData() {
+    public CreateSecuritySystemSagaData() {
     }
 
-    public CreateSecuritySystemWithLocationIdSagaData(Long locationId) {
+    public CreateSecuritySystemSagaData(Long locationId) {
         this.locationId = locationId;
     }
 

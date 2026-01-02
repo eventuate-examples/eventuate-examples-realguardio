@@ -3,7 +3,7 @@ package io.eventuate.examples.realguardio.securitysystemservice;
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaConfiguration;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
@@ -205,17 +205,17 @@ public class SecuritySystemServiceComponentTest {
 	}
 
 	@Test
-	void shouldHandleCreateSecuritySystemWithLocationIdCommand() throws Exception {
+	void shouldHandleCreateSecuritySystemCommand() throws Exception {
 		Long locationId = System.currentTimeMillis();
 		String locationName = "Main Office Entrance";
 
-		CreateSecuritySystemWithLocationIdCommand command = new CreateSecuritySystemWithLocationIdCommand(locationId, locationName);
+		CreateSecuritySystemCommand command = new CreateSecuritySystemCommand(locationId, locationName);
 
-		logger.info("Sending CreateSecuritySystemWithLocationIdCommand: {}", command);
+		logger.info("Sending CreateSecuritySystemCommand: {}", command);
 		String commandId = commandProducer.send("security-system-service",
 				command,
 				replyTo, Collections.emptyMap());
-		logger.info("Sent CreateSecuritySystemWithLocationIdCommand with id: {}.. waiting for reply", commandId);
+		logger.info("Sent CreateSecuritySystemCommand with id: {}.. waiting for reply", commandId);
 
 		// Wait for and verify reply
 		eventually(30, 500, TimeUnit.MILLISECONDS, () -> {

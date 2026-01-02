@@ -9,21 +9,21 @@ import java.util.concurrent.CompletableFuture;
 public class SecuritySystemSagaService {
 
     private final SagaInstanceFactory sagaInstanceFactory;
-    private final CreateSecuritySystemWithLocationIdSaga createSecuritySystemWithLocationIdSaga;
+    private final CreateSecuritySystemSaga createSecuritySystemSaga;
     private final PendingSecuritySystemResponses pendingResponses;
 
     public SecuritySystemSagaService(SagaInstanceFactory sagaInstanceFactory,
-                                    CreateSecuritySystemWithLocationIdSaga createSecuritySystemWithLocationIdSaga,
+                                    CreateSecuritySystemSaga createSecuritySystemSaga,
                                     PendingSecuritySystemResponses pendingResponses) {
         this.sagaInstanceFactory = sagaInstanceFactory;
-        this.createSecuritySystemWithLocationIdSaga = createSecuritySystemWithLocationIdSaga;
+        this.createSecuritySystemSaga = createSecuritySystemSaga;
         this.pendingResponses = pendingResponses;
     }
 
-    public CompletableFuture<Long> createSecuritySystemWithLocationId(Long locationId) {
-        CreateSecuritySystemWithLocationIdSagaData sagaData = new CreateSecuritySystemWithLocationIdSagaData(locationId);
+    public CompletableFuture<Long> createSecuritySystem(Long locationId) {
+        CreateSecuritySystemSagaData sagaData = new CreateSecuritySystemSagaData(locationId);
 
-        var sagaInstance = sagaInstanceFactory.create(createSecuritySystemWithLocationIdSaga, sagaData);
+        var sagaInstance = sagaInstanceFactory.create(createSecuritySystemSaga, sagaData);
         CompletableFuture<Long> future = pendingResponses.createPendingResponse(sagaInstance.getId());
 
         return future;

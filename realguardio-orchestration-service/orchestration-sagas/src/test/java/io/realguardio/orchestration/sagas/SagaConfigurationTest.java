@@ -18,7 +18,7 @@ class SagaConfigurationTest {
     }
 
     @Autowired
-    private CreateSecuritySystemWithLocationIdSaga saga;
+    private CreateSecuritySystemSaga saga;
 
     @Test
     void contextLoads() {

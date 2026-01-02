@@ -36,12 +36,12 @@ class SecuritySystemControllerTest {
     private SecuritySystemSagaService securitySystemSagaService;
 
     @Test
-    void shouldCreateSecuritySystemWithLocationId() throws Exception {
+    void shouldCreateSecuritySystem() throws Exception {
         Long locationId = 100L;
         Long securitySystemId = 200L;
         CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(locationId);
 
-        when(securitySystemSagaService.createSecuritySystemWithLocationId(locationId))
+        when(securitySystemSagaService.createSecuritySystem(locationId))
                 .thenReturn(CompletableFuture.completedFuture(securitySystemId));
 
         var result = mockMvc.perform(post("/securitysystems")
@@ -75,7 +75,7 @@ class SecuritySystemControllerTest {
         CompletableFuture<Long> future = new CompletableFuture<>();
         future.completeExceptionally(new TimeoutException("Request timed out"));
 
-        when(securitySystemSagaService.createSecuritySystemWithLocationId(anyLong()))
+        when(securitySystemSagaService.createSecuritySystem(anyLong()))
                 .thenReturn(future);
 
         var result = mockMvc.perform(post("/securitysystems")
@@ -97,7 +97,7 @@ class SecuritySystemControllerTest {
         CompletableFuture<Long> future = new CompletableFuture<>();
         future.completeExceptionally(new LocationAlreadyHasSecuritySystemException(locationId));
 
-        when(securitySystemSagaService.createSecuritySystemWithLocationId(locationId))
+        when(securitySystemSagaService.createSecuritySystem(locationId))
                 .thenReturn(future);
 
         var result = mockMvc.perform(post("/securitysystems")

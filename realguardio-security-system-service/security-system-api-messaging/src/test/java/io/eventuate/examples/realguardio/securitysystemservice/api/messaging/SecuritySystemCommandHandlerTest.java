@@ -1,6 +1,6 @@
 package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.tram.commands.producer.CommandProducer;
 import io.eventuate.tram.sagas.spring.inmemory.TramSagaInMemoryConfiguration;
@@ -46,12 +46,12 @@ class SecuritySystemCommandHandlerTest {
     private TestMessageConsumerFactory testMessageConsumerFactory;
 
     @Test
-    void shouldHandleCreateSecuritySystemWithLocationIdCommand() {
+    void shouldHandleCreateSecuritySystemCommand() {
         // Given
         Long locationId = 100L;
         String locationName = "Main Office";
         Long expectedSecuritySystemId = 42L;
-        CreateSecuritySystemWithLocationIdCommand command = new CreateSecuritySystemWithLocationIdCommand(locationId, locationName);
+        CreateSecuritySystemCommand command = new CreateSecuritySystemCommand(locationId, locationName);
 
         when(securitySystemService.createSecuritySystemWithLocation(locationId, locationName)).thenReturn(expectedSecuritySystemId);
 
@@ -72,7 +72,7 @@ class SecuritySystemCommandHandlerTest {
         // Given
         Long locationId = 100L;
         String locationName = "Main Office";
-        CreateSecuritySystemWithLocationIdCommand command = new CreateSecuritySystemWithLocationIdCommand(locationId, locationName);
+        CreateSecuritySystemCommand command = new CreateSecuritySystemCommand(locationId, locationName);
 
         when(securitySystemService.createSecuritySystemWithLocation(locationId, locationName))
             .thenThrow(new LocationAlreadyHasSecuritySystemException(locationId));

@@ -14,16 +14,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CreateSecuritySystemWithLocationIdSaga implements SimpleSaga<CreateSecuritySystemWithLocationIdSagaData> {
+public class CreateSecuritySystemSaga implements SimpleSaga<CreateSecuritySystemSagaData> {
 
-    private static final Logger logger = LoggerFactory.getLogger(CreateSecuritySystemWithLocationIdSaga.class);
+    private static final Logger logger = LoggerFactory.getLogger(CreateSecuritySystemSaga.class);
 
     private final CustomerServiceProxy customerServiceProxy;
     private final SecuritySystemServiceProxy securitySystemServiceProxy;
     private final PendingSecuritySystemResponses pendingResponses;
-    private final SagaDefinition<CreateSecuritySystemWithLocationIdSagaData> sagaDefinition;
+    private final SagaDefinition<CreateSecuritySystemSagaData> sagaDefinition;
 
-    public CreateSecuritySystemWithLocationIdSaga(CustomerServiceProxy customerServiceProxy,
+    public CreateSecuritySystemSaga(CustomerServiceProxy customerServiceProxy,
                                                    SecuritySystemServiceProxy securitySystemServiceProxy,
                                                    PendingSecuritySystemResponses pendingResponses) {
         this.customerServiceProxy = customerServiceProxy;
@@ -32,61 +32,61 @@ public class CreateSecuritySystemWithLocationIdSaga implements SimpleSaga<Create
         this.sagaDefinition = buildSagaDefinition();
     }
 
-    private SagaDefinition<CreateSecuritySystemWithLocationIdSagaData> buildSagaDefinition() {
+    private SagaDefinition<CreateSecuritySystemSagaData> buildSagaDefinition() {
         return step()
                 .invokeParticipant(this::makeValidateLocationCommand)
                 .onReply(LocationValidated.class, this::handleLocationValidated)
                 .onReply(LocationNotFound.class, this::handleLocationNotFound)
             .step()
-                .invokeParticipant(this::makeCreateSecuritySystemWithLocationIdCommand)
+                .invokeParticipant(this::makeCreateSecuritySystemCommand)
                 .onReply(SecuritySystemCreated.class, this::handleSecuritySystemCreated)
                 .onReply(LocationAlreadyHasSecuritySystem.class, this::handleLocationAlreadyHasSecuritySystem)
             .build();
     }
 
     @Override
-    public SagaDefinition<CreateSecuritySystemWithLocationIdSagaData> getSagaDefinition() {
+    public SagaDefinition<CreateSecuritySystemSagaData> getSagaDefinition() {
         return sagaDefinition;
     }
 
     @Override
-    public void onStarting(String sagaId, CreateSecuritySystemWithLocationIdSagaData data) {
-        logger.info("Starting CreateSecuritySystemWithLocationIdSaga with id: {}", sagaId);
+    public void onStarting(String sagaId, CreateSecuritySystemSagaData data) {
+        logger.info("Starting CreateSecuritySystemSaga with id: {}", sagaId);
         data.setSagaId(sagaId);
     }
 
     // Step 1: Validate Location
-    private CommandWithDestination makeValidateLocationCommand(CreateSecuritySystemWithLocationIdSagaData data) {
+    private CommandWithDestination makeValidateLocationCommand(CreateSecuritySystemSagaData data) {
         return customerServiceProxy.validateLocation(data.getLocationId());
     }
 
-    private void handleLocationValidated(CreateSecuritySystemWithLocationIdSagaData data, LocationValidated reply) {
+    private void handleLocationValidated(CreateSecuritySystemSagaData data, LocationValidated reply) {
         logger.info("LocationValidated received: locationId={}, locationName={}, customerId={}",
                 reply.locationId(), reply.locationName(), reply.customerId());
         data.setLocationName(reply.locationName());
         data.setCustomerId(reply.customerId());
     }
 
-    private void handleLocationNotFound(CreateSecuritySystemWithLocationIdSagaData data, LocationNotFound reply) {
+    private void handleLocationNotFound(CreateSecuritySystemSagaData data, LocationNotFound reply) {
         logger.info("LocationNotFound received for locationId: {}", data.getLocationId());
         data.setRejectionReason("Location not found");
         pendingResponses.completeExceptionally(data.getSagaId(), new LocationNotFoundException(data.getLocationId()));
     }
 
     // Step 2: Create Security System with Location Id
-    private CommandWithDestination makeCreateSecuritySystemWithLocationIdCommand(CreateSecuritySystemWithLocationIdSagaData data) {
-        return securitySystemServiceProxy.createSecuritySystemWithLocationId(
+    private CommandWithDestination makeCreateSecuritySystemCommand(CreateSecuritySystemSagaData data) {
+        return securitySystemServiceProxy.createSecuritySystem(
                 data.getLocationId(),
                 data.getLocationName());
     }
 
-    private void handleSecuritySystemCreated(CreateSecuritySystemWithLocationIdSagaData data, SecuritySystemCreated reply) {
+    private void handleSecuritySystemCreated(CreateSecuritySystemSagaData data, SecuritySystemCreated reply) {
         logger.info("SecuritySystemCreated received with id: {}", reply.securitySystemId());
         data.setSecuritySystemId(reply.securitySystemId());
         pendingResponses.completeSecuritySystemCreation(data.getSagaId(), reply.securitySystemId());
     }
 
-    private void handleLocationAlreadyHasSecuritySystem(CreateSecuritySystemWithLocationIdSagaData data,
+    private void handleLocationAlreadyHasSecuritySystem(CreateSecuritySystemSagaData data,
                                                          LocationAlreadyHasSecuritySystem reply) {
         logger.info("LocationAlreadyHasSecuritySystem received for locationId: {}", reply.locationId());
         data.setRejectionReason("Location already has a security system");

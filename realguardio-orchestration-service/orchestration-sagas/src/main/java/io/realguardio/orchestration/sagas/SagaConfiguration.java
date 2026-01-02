@@ -24,18 +24,18 @@ public class SagaConfiguration {
 
     @Bean
     public SecuritySystemSagaService securitySystemSagaService(SagaInstanceFactory sagaInstanceFactory,
-                                                                 CreateSecuritySystemWithLocationIdSaga createSecuritySystemWithLocationIdSaga,
+                                                                 CreateSecuritySystemSaga createSecuritySystemSaga,
                                                                  PendingSecuritySystemResponses pendingResponses) {
         return new SecuritySystemSagaService(sagaInstanceFactory,
-                createSecuritySystemWithLocationIdSaga, pendingResponses);
+                createSecuritySystemSaga, pendingResponses);
     }
 
     @Bean
-    public CreateSecuritySystemWithLocationIdSaga createSecuritySystemWithLocationIdSaga(
+    public CreateSecuritySystemSaga createSecuritySystemSaga(
             CustomerServiceProxy customerServiceProxy,
             SecuritySystemServiceProxy securitySystemServiceProxy,
             PendingSecuritySystemResponses pendingResponses) {
-        return new CreateSecuritySystemWithLocationIdSaga(customerServiceProxy, securitySystemServiceProxy, pendingResponses);
+        return new CreateSecuritySystemSaga(customerServiceProxy, securitySystemServiceProxy, pendingResponses);
     }
 
     @Value("${securitysystemservice.channel:security-system-service}")

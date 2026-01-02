@@ -349,13 +349,13 @@ Now that all old code is removed, simplify the names by removing the "WithLocati
 
 ### Task 16.1: Rename classes and methods
 
-- [ ] Rename `CreateSecuritySystemWithLocationIdSaga` → `CreateSecuritySystemSaga`
-- [ ] Rename `CreateSecuritySystemWithLocationIdSagaData` → `CreateSecuritySystemSagaData`
-- [ ] Rename `CreateSecuritySystemWithLocationIdCommand` → `CreateSecuritySystemCommand`
-- [ ] Rename `SecuritySystemCreatedWithLocationId` → `SecuritySystemCreated` (if separate from existing)
-- [ ] Rename `createSecuritySystemWithLocationId()` method → `createSecuritySystem()`
-- [ ] Update all references in configuration, tests, and other classes
-- [ ] Run tests and verify
+- [x] Rename `CreateSecuritySystemWithLocationIdSaga` → `CreateSecuritySystemSaga`
+- [x] Rename `CreateSecuritySystemWithLocationIdSagaData` → `CreateSecuritySystemSagaData`
+- [x] Rename `CreateSecuritySystemWithLocationIdCommand` → `CreateSecuritySystemCommand`
+- [x] Rename `SecuritySystemCreatedWithLocationId` → `SecuritySystemCreated` (if separate from existing)
+- [x] Rename `createSecuritySystemWithLocationId()` method → `createSecuritySystem()`
+- [x] Update all references in configuration, tests, and other classes
+- [x] Run tests and verify
 
 ---
 

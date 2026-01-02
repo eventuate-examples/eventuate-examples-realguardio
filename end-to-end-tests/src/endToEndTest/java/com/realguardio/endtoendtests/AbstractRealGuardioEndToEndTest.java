@@ -78,7 +78,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
         Long locationId = createLocationViaCustomerService(customerId, adminAuthToken);
 
         // Step 3: Create SecuritySystem with locationId via Orchestration Service (new flow)
-        Long securitySystemId = createSecuritySystemWithLocationId(locationId);
+        Long securitySystemId = createSecuritySystem(locationId);
 
         // Step 4: Verify SecuritySystem has correct locationId
         verifySecuritySystemLocation(securitySystemId, locationId, authTokenForRealGuardIoAdmin);
@@ -118,7 +118,7 @@ public abstract class AbstractRealGuardioEndToEndTest {
         return locationId;
     }
 
-    private Long createSecuritySystemWithLocationId(Long locationId) {
+    private Long createSecuritySystem(Long locationId) {
         String sagaRequestJson = """
         {
             "locationId": %d

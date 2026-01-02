@@ -23,11 +23,11 @@ public class SecuritySystemServiceProxy {
     }
 
     @SagaParticipantOperation(
-        commandClass = CreateSecuritySystemWithLocationIdCommand.class,
+        commandClass = CreateSecuritySystemCommand.class,
         replyClasses = SecuritySystemCreated.class
     )
-    public CommandWithDestination createSecuritySystemWithLocationId(Long locationId, String locationName) {
-        return CommandWithDestinationBuilder.send(new CreateSecuritySystemWithLocationIdCommand(locationId, locationName))
+    public CommandWithDestination createSecuritySystem(Long locationId, String locationName) {
+        return CommandWithDestinationBuilder.send(new CreateSecuritySystemCommand(locationId, locationName))
                 .to(CHANNEL)
                 .build();
     }

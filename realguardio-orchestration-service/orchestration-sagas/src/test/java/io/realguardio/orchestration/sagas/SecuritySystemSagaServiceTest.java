@@ -16,17 +16,17 @@ import static org.mockito.Mockito.*;
 class SecuritySystemSagaServiceTest {
 
     private SagaInstanceFactory sagaInstanceFactory;
-    private CreateSecuritySystemWithLocationIdSaga createSecuritySystemWithLocationIdSaga;
+    private CreateSecuritySystemSaga createSecuritySystemSaga;
     private PendingSecuritySystemResponses pendingResponses;
     private SecuritySystemSagaService service;
 
     @BeforeEach
     void setUp() {
         sagaInstanceFactory = mock(SagaInstanceFactory.class);
-        createSecuritySystemWithLocationIdSaga = mock(CreateSecuritySystemWithLocationIdSaga.class);
+        createSecuritySystemSaga = mock(CreateSecuritySystemSaga.class);
         pendingResponses = new PendingSecuritySystemResponses();
         service = new SecuritySystemSagaService(sagaInstanceFactory,
-                createSecuritySystemWithLocationIdSaga, pendingResponses);
+                createSecuritySystemSaga, pendingResponses);
     }
 
     @Test
@@ -36,16 +36,16 @@ class SecuritySystemSagaServiceTest {
 
         SagaInstance sagaInstance = mock(SagaInstance.class);
         when(sagaInstance.getId()).thenReturn(sagaId);
-        when(sagaInstanceFactory.create(eq(createSecuritySystemWithLocationIdSaga), any(CreateSecuritySystemWithLocationIdSagaData.class)))
+        when(sagaInstanceFactory.create(eq(createSecuritySystemSaga), any(CreateSecuritySystemSagaData.class)))
                 .thenReturn(sagaInstance);
 
-        CompletableFuture<Long> future = service.createSecuritySystemWithLocationId(locationId);
+        CompletableFuture<Long> future = service.createSecuritySystem(locationId);
 
-        ArgumentCaptor<CreateSecuritySystemWithLocationIdSagaData> dataCaptor =
-                ArgumentCaptor.forClass(CreateSecuritySystemWithLocationIdSagaData.class);
-        verify(sagaInstanceFactory).create(eq(createSecuritySystemWithLocationIdSaga), dataCaptor.capture());
+        ArgumentCaptor<CreateSecuritySystemSagaData> dataCaptor =
+                ArgumentCaptor.forClass(CreateSecuritySystemSagaData.class);
+        verify(sagaInstanceFactory).create(eq(createSecuritySystemSaga), dataCaptor.capture());
 
-        CreateSecuritySystemWithLocationIdSagaData capturedData = dataCaptor.getValue();
+        CreateSecuritySystemSagaData capturedData = dataCaptor.getValue();
         assertThat(capturedData.getLocationId()).isEqualTo(locationId);
 
         assertThat(service.hasPendingResponse(sagaId)).isTrue();
@@ -60,10 +60,10 @@ class SecuritySystemSagaServiceTest {
 
         SagaInstance sagaInstance = mock(SagaInstance.class);
         when(sagaInstance.getId()).thenReturn(sagaId);
-        when(sagaInstanceFactory.create(eq(createSecuritySystemWithLocationIdSaga), any(CreateSecuritySystemWithLocationIdSagaData.class)))
+        when(sagaInstanceFactory.create(eq(createSecuritySystemSaga), any(CreateSecuritySystemSagaData.class)))
                 .thenReturn(sagaInstance);
 
-        CompletableFuture<Long> future = service.createSecuritySystemWithLocationId(locationId);
+        CompletableFuture<Long> future = service.createSecuritySystem(locationId);
 
         service.completeSecuritySystemCreation(sagaId, securitySystemId);
 

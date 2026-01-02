@@ -2,7 +2,7 @@ package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaCluster;
 import io.eventuate.tram.commands.producer.CommandProducer;
@@ -68,7 +68,7 @@ public class SecuritySystemCommandHandlerIntegrationTest {
     private CommandOutboxTestSupport commandOutboxTestSupport;
 
     @Test
-    public void shouldHandleCreateSecuritySystemWithLocationIdCommand() {
+    public void shouldHandleCreateSecuritySystemCommand() {
         // Given
         String replyTo = "my-reply-to-channel-" + System.currentTimeMillis();
         Long locationId = System.currentTimeMillis();
@@ -80,7 +80,7 @@ public class SecuritySystemCommandHandlerIntegrationTest {
 
         // When
         commandProducer.send("security-system-service",
-            new CreateSecuritySystemWithLocationIdCommand(locationId, locationName),
+            new CreateSecuritySystemCommand(locationId, locationName),
             replyTo,
             Collections.emptyMap());
 
