@@ -190,4 +190,41 @@ public class OsoIntegrationServiceComponentTest {
         }
     }
 
+	@Test
+	void shouldAuthorizeWhenSecuritySystemAssignedToLocationEventFromSecuritySystemService() throws Exception {
+		String customerId = "customer-ss-" + System.currentTimeMillis();
+		String userName = "user-" + System.currentTimeMillis();
+		Long locationId = System.currentTimeMillis();
+		Long securitySystemId = System.currentTimeMillis() + 1000;
+
+		createLocationForCustomer(customerId, locationId);
+		assignDisarmerRoleToUserAtLocation(customerId, userName, locationId);
+		publishSecuritySystemAssignedToLocationFromSecuritySystemService(securitySystemId, locationId);
+
+		eventually(() -> {
+			assertThat(isAuthorized(userName, "disarm", securitySystemId.toString())).isTrue();
+		});
+	}
+
+	private void createLocationForCustomer(String customerId, Long locationId) {
+		domainEventPublisher.publish(
+				"io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer",
+				customerId,
+				new LocationCreatedForCustomer(locationId));
+	}
+
+	private void assignDisarmerRoleToUserAtLocation(String customerId, String userName, Long locationId) {
+		domainEventPublisher.publish(
+				"io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer",
+				customerId,
+				new CustomerEmployeeAssignedLocationRole(userName, locationId, "SECURITY_SYSTEM_DISARMER"));
+	}
+
+	private void publishSecuritySystemAssignedToLocationFromSecuritySystemService(Long securitySystemId, Long locationId) {
+		domainEventPublisher.publish(
+				"io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem",
+				securitySystemId.toString(),
+				new io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemAssignedToLocation(securitySystemId, locationId));
+	}
+
 }

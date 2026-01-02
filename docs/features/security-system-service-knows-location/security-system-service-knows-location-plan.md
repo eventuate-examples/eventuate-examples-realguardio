@@ -104,8 +104,8 @@ Implements: OSO Integration Service listens for `SecuritySystemAssignedToLocatio
 
 ### Task 4.2: Integration test for Oso fact creation from Security System Service event
 
-- [ ] Test: When `SecuritySystemAssignedToLocation` event is published by Security System Service, Oso fact is created
-- [ ] Verify fact exists in Oso Cloud
+- [x] Test: When `SecuritySystemAssignedToLocation` event is published by Security System Service, Oso fact is created
+- [x] Verify fact exists in Oso Cloud
 
 ---
 
