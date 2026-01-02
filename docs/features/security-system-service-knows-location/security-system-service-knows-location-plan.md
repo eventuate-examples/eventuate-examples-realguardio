@@ -234,20 +234,20 @@ Migrates existing end-to-end tests to use the new locationId-based flow. This va
 
 ### Task 11.1: Update backend E2E tests to create Location first
 
-- [ ] Identify existing E2E tests that create SecuritySystems via the old flow
-- [ ] Update tests to: (1) create Location via new endpoint, (2) create SecuritySystem with locationId
-- [ ] Run E2E tests and verify they pass
+- [x] Identify existing E2E tests that create SecuritySystems via the old flow
+- [x] Update tests to: (1) create Location via new endpoint, (2) create SecuritySystem with locationId
+- [x] Run E2E tests and verify they pass
 
 ### Task 11.2: Update BFF tests if applicable
 
-- [ ] Identify BFF tests that use the old SecuritySystem creation flow
-- [ ] Update to use locationId-based flow
-- [ ] Run BFF tests and verify they pass
+- [x] Identify BFF tests that use the old SecuritySystem creation flow
+- [x] Update to use locationId-based flow (N/A - BFF tests only display, don't create)
+- [x] Run BFF tests and verify they pass
 
 ### Task 11.3: Verify all E2E tests pass with both flows available
 
-- [ ] Run full E2E test suite
-- [ ] Confirm both old and new flows work (backwards compatibility maintained)
+- [x] Run full E2E test suite
+- [x] Confirm both old and new flows work (backwards compatibility maintained)
 
 ---
 

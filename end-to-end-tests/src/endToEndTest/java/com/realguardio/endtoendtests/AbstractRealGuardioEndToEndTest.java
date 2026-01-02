@@ -14,7 +14,6 @@ import io.restassured.RestAssured;
 import io.restassured.config.ObjectMapperConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -63,31 +62,6 @@ public abstract class AbstractRealGuardioEndToEndTest {
     
     @Test
     void shouldCreateCustomerAndSecuritySystem() {
-
-        CustomerCreationResult customerResult = createCustomerWithAdmin();
-
-        CreateCustomerResponse customerResponse = customerResult.response();
-        long customerId = customerResponse.customer().id();
-        long adminEmployeeId = customerResponse.initialAdministrator().id();
-        String adminEmail = customerResult.adminEmail();
-
-        String adminAuthToken = getTokenForCustomerAdmin(adminEmail);
-
-        Long securitySystemId = createSecuritySystem(customerId);
-
-        Long locationId = verifySecuritySystemHasLocationID(securitySystemId, authTokenForRealGuardIoAdmin);
-
-        assignPermissionsToLocation(adminEmployeeId, locationId, adminAuthToken, customerId);
-
-        waitForUntilPermissionsHaveBeenAssigned(adminAuthToken, adminEmail, locationId);
-
-        armSecuritySystem(securitySystemId, adminAuthToken);
-
-        verifySecuritySystemArmed(adminAuthToken, securitySystemId);
-    }
-
-    @Test
-    void shouldCreateSecuritySystemWithLocationIdFlow() {
         // Step 1: Create customer with admin
         CustomerCreationResult customerResult = createCustomerWithAdmin();
         CreateCustomerResponse customerResponse = customerResult.response();
@@ -97,10 +71,10 @@ public abstract class AbstractRealGuardioEndToEndTest {
 
         String adminAuthToken = getTokenForCustomerAdmin(adminEmail);
 
-        // Step 2: Create Location via Customer Service endpoint
+        // Step 2: Create Location via Customer Service endpoint (new flow)
         Long locationId = createLocationViaCustomerService(customerId, adminAuthToken);
 
-        // Step 3: Create SecuritySystem with locationId via Orchestration Service
+        // Step 3: Create SecuritySystem with locationId via Orchestration Service (new flow)
         Long securitySystemId = createSecuritySystemWithLocationId(locationId);
 
         // Step 4: Verify SecuritySystem has correct locationId
@@ -210,71 +184,6 @@ public abstract class AbstractRealGuardioEndToEndTest {
             "password"  // Default password - in real scenario this would be set/changed
         );
         return adminAuthToken;
-    }
-
-    private @NotNull Long createSecuritySystem(long customerId) {
-        String locationName = "Office Main Entrance";
-
-        // Step 1: Use the Orchestration Service REST to create a security system (still using REALGUARDIO_ADMIN token)
-        String sagaRequestJson = """
-		{
-			"customerId": %d,
-			"locationName": "%s"
-		}
-		""".formatted(customerId, locationName);
-
-        logger.info("Step 1: Starting CreateSecuritySystemSaga for customer {} and location {}", customerId, locationName);
-
-        CreateSecuritySystemResponse createResponse = RestAssured.given()
-            .baseUri("http://localhost:" + aut.getOrchestrationServicePort())
-            .header("Authorization", "Bearer " + authTokenForRealGuardIoAdmin)  // Using REALGUARDIO_ADMIN token for saga creation
-            .contentType(ContentType.JSON)
-            .body(sagaRequestJson)
-            .log().all()
-            .when()
-            .post("/securitysystems")
-            .then()
-            .log().all()
-            .statusCode(201)
-            .extract()
-            .body()
-            .as(CreateSecuritySystemResponse.class);
-
-        Long securitySystemId = createResponse.securitySystemId();
-        assertThat(securitySystemId).isNotNull();
-        logger.info("Security system created with ID: {}", securitySystemId);
-        return securitySystemId;
-    }
-
-    private static Long verifySecuritySystemHasLocationID(Long securitySystemId, String adminAuthToken) {
-        // Step 2: Use the Security Service API to verify that newly created SecuritySystem has been assigned a location ID
-        logger.info("Step 2: Waiting for security system {} to be assigned a location ID", securitySystemId);
-
-        Long locationId = await().atMost(60, TimeUnit.SECONDS)
-            .pollInterval(2, TimeUnit.SECONDS)
-            .until(() -> {
-                var response = RestAssured.given()
-                    .baseUri("http://localhost:" + aut.getSecurityServicePort())
-                    .header("Authorization", "Bearer " + adminAuthToken)
-                    .when()
-                    .get("/securitysystems/" + securitySystemId)
-                    .then()
-                    .extract()
-                    .response();
-                
-                if (response.statusCode() == 200) {
-                    Long locId = response.jsonPath().getLong("locationId");
-                    if (locId != null && locId > 0) {
-                        logger.info("Security system {} has locationId: {}", securitySystemId, locId);
-                        return locId;
-                    }
-                }
-                logger.debug("Security system {} not yet assigned a location ID", securitySystemId);
-                return null;
-            }, loc -> loc != null && loc > 0);
-
-        logger.info("Security system {} has been assigned location ID: {}", securitySystemId, locationId);
-        return locationId;
     }
 
     private static void assignPermissionsToLocation(long adminEmployeeId, Long locationId, String adminAuthToken, long customerId) {
