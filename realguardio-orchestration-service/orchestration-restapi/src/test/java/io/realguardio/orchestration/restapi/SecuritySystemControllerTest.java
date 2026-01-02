@@ -3,6 +3,7 @@ package io.realguardio.orchestration.restapi;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemRequest;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemResponse;
+import io.realguardio.orchestration.sagas.LocationAlreadyHasSecuritySystemException;
 import io.realguardio.orchestration.sagas.SecuritySystemSagaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,5 +120,27 @@ class SecuritySystemControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.securitySystemId").value(200));
+    }
+
+    @Test
+    void shouldReturn409WhenLocationAlreadyHasSecuritySystem() throws Exception {
+        Long locationId = 100L;
+        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(null, null, locationId);
+
+        CompletableFuture<Long> future = new CompletableFuture<>();
+        future.completeExceptionally(new LocationAlreadyHasSecuritySystemException(locationId));
+
+        when(securitySystemSagaService.createSecuritySystemWithLocationId(locationId))
+                .thenReturn(future);
+
+        var result = mockMvc.perform(post("/securitysystems")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(result))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Location already has a SecuritySystem"));
     }
 }

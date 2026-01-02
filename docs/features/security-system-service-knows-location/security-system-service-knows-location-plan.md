@@ -215,16 +215,16 @@ Implements: "Prevent Duplicate SecuritySystem Assignment" scenario.
 
 ### Task 10.1: Handle constraint violation error in saga and REST endpoint
 
-- [ ] When `CreateSecuritySystemWithLocationIdCommand` returns constraint error, saga fails
-- [ ] Saga state reflects failure reason
-- [ ] Return 409 Conflict with error message "Location already has a SecuritySystem"
+- [x] When `CreateSecuritySystemWithLocationIdCommand` returns constraint error, saga fails
+- [x] Saga state reflects failure reason
+- [x] Return 409 Conflict with error message "Location already has a SecuritySystem"
 
 ### Task 10.2: Integration test for duplicate SecuritySystem
 
-- [ ] Test: Create Location and SecuritySystem successfully
-- [ ] Test: Attempt to create second SecuritySystem for same Location
-- [ ] Verify: Returns 409 Conflict
-- [ ] Verify: First SecuritySystem remains unaffected
+- [x] Test: Create Location and SecuritySystem successfully
+- [x] Test: Attempt to create second SecuritySystem for same Location
+- [x] Verify: Returns 409 Conflict
+- [x] Verify: First SecuritySystem remains unaffected
 
 ---
 

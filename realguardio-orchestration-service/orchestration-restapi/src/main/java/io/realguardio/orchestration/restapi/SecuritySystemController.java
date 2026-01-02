@@ -2,6 +2,7 @@ package io.realguardio.orchestration.restapi;
 
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemRequest;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemResponse;
+import io.realguardio.orchestration.sagas.LocationAlreadyHasSecuritySystemException;
 import io.realguardio.orchestration.sagas.LocationNotFoundException;
 import io.realguardio.orchestration.sagas.SecuritySystemSagaService;
 import org.slf4j.Logger;
@@ -58,6 +59,9 @@ public class SecuritySystemController {
                     Throwable cause = ex.getCause();
                     if (cause instanceof LocationNotFoundException) {
                         throw new ResponseStatusException(HttpStatus.NOT_FOUND, cause.getMessage());
+                    }
+                    if (cause instanceof LocationAlreadyHasSecuritySystemException) {
+                        throw (LocationAlreadyHasSecuritySystemException) cause;
                     }
                     if (cause instanceof TimeoutException) {
                         throw new ServiceUnavailableException("Service temporarily unavailable");

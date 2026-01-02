@@ -1,5 +1,6 @@
 package io.realguardio.orchestration.restapi;
 
+import io.realguardio.orchestration.sagas.LocationAlreadyHasSecuritySystemException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -33,9 +34,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ServiceUnavailableException.class)
     public ResponseEntity<Map<String, String>> handleServiceUnavailable(
             ServiceUnavailableException ex) {
-        
+        return errorResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
+    @ExceptionHandler(LocationAlreadyHasSecuritySystemException.class)
+    public ResponseEntity<Map<String, String>> handleLocationAlreadyHasSecuritySystem(
+            LocationAlreadyHasSecuritySystemException ex) {
+        return errorResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    private ResponseEntity<Map<String, String>> errorResponse(HttpStatus status, String message) {
         Map<String, String> response = new HashMap<>();
-        response.put("error", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+        response.put("error", message);
+        return ResponseEntity.status(status).body(response);
     }
 }

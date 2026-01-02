@@ -14,6 +14,7 @@ import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.L
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationValidated;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationAlreadyHasSecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -274,6 +275,57 @@ public class OrchestrationServiceComponentTest {
 
 		// Verify response is 404 Not Found
 		assertThat(statusCodeFuture.get()).isEqualTo(404);
+	}
+
+	@Test
+	void shouldReturn409WhenLocationAlreadyHasSecuritySystem() throws Exception {
+		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
+		String baseUri = String.format("http://localhost:%d", service.getFirstMappedPort());
+
+		long locationId = System.currentTimeMillis();
+		String locationName = "Office Location";
+		long customerId = 54321L;
+
+		// Start the saga via REST API with locationId
+		String sagaRequestJson = """
+		{
+			"locationId": %d
+		}
+		""".formatted(locationId);
+
+		logger.info("Starting CreateSecuritySystemWithLocationIdSaga for locationId {} (already has security system)", locationId);
+
+		CompletableFuture<Integer> statusCodeFuture = CompletableFuture.supplyAsync(() ->
+			RestAssured.given()
+				.baseUri(baseUri)
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(ContentType.JSON)
+				.body(sagaRequestJson)
+				.when()
+				.post("/securitysystems")
+				.then()
+				.extract()
+				.statusCode()
+		);
+
+		// Step 1: Intercept ValidateLocationCommand with matching locationId
+		Message validateCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+				ValidateLocationCommand.class, customerServiceChannel,
+				cmd -> cmd.locationId().equals(locationId));
+
+		// Reply with LocationValidated (location exists)
+		componentTestSupport.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationValidated(locationId, locationName, customerId));
+
+		// Step 2: Intercept CreateSecuritySystemWithLocationIdCommand with matching locationId
+		Message createCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+				CreateSecuritySystemWithLocationIdCommand.class, securitySystemServiceChannel,
+				cmd -> cmd.locationId().equals(locationId));
+
+		// Reply with LocationAlreadyHasSecuritySystem (failure - constraint violation)
+		componentTestSupport.sendReply(createCommandMessage, CreateSecuritySystemWithLocationIdCommand.class, new LocationAlreadyHasSecuritySystem(locationId));
+
+		// Verify response is 409 Conflict
+		assertThat(statusCodeFuture.get()).isEqualTo(409);
 	}
 
 }

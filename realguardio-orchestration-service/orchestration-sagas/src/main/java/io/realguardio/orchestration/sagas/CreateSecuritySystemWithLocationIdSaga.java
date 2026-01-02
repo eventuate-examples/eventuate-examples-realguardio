@@ -90,5 +90,7 @@ public class CreateSecuritySystemWithLocationIdSaga implements SimpleSaga<Create
                                                          LocationAlreadyHasSecuritySystem reply) {
         logger.info("LocationAlreadyHasSecuritySystem received for locationId: {}", reply.locationId());
         data.setRejectionReason("Location already has a security system");
+        pendingResponses.completeExceptionally(data.getSagaId(),
+                new LocationAlreadyHasSecuritySystemException(reply.locationId()));
     }
 }
