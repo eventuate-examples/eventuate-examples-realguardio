@@ -1,13 +1,11 @@
 package io.eventuate.examples.realguardio.customerservice;
 
-import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
 import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
 import io.eventuate.examples.realguardio.customerservice.restapi.RolesResponse;
 import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
 import io.eventuate.testcontainers.service.BuildArgsResolver;
 import io.eventuate.testcontainers.service.ServiceContainer;
-import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +20,6 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.lifecycle.Startables;
 
 import java.nio.file.Paths;
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,15 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CustomerServiceComponentTest extends AbstractCustomerServiceComponentTest {
 
 
-	@Override
-	protected String sendCommand(CreateLocationWithSecuritySystemCommand command, String replyTo) {
-		return commandProducer.send("customer-service",
-				command,
-				replyTo, Collections.emptyMap());
-	}
-
 	@Configuration
-	@Import({AbstractConfig.class, EventuateKafkaTestCommandProducerConfiguration.class})
+	@Import({AbstractConfig.class})
 	static class Config {
 	}
 
@@ -115,7 +105,7 @@ public class CustomerServiceComponentTest extends AbstractCustomerServiceCompone
 				.then()
 				.statusCode(401);
 	}
-	
+
 	@Test
 	void shouldReturn200WithValidJwtToken() {
 		String accessToken = getAccessTokenForRealGuardIoAdmin();
@@ -130,15 +120,16 @@ public class CustomerServiceComponentTest extends AbstractCustomerServiceCompone
 	}
 
 	@Test
-	void shouldHandleCreateLocationWithSecuritySystemCommand() throws Exception {
+	void shouldCreateLocationViaRestApi() throws Exception {
 		String realGuardIOAdminAccessToken = getAccessTokenForRealGuardIoAdmin();
 
 		EmailAddress adminUser = Uniquifier.uniquify(new EmailAddress("admin@example.com"));
 
 		CustomerSummary customerSummary = createCustomer(adminUser, realGuardIOAdminAccessToken);
 
-		long securitySystemId = System.currentTimeMillis();
-		var locationId = createLocationForSecuritySystem(customerSummary.customerId(), securitySystemId);
+		String companyAdminAccessToken = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, adminUser.email(), "password");
+
+		var locationId = createLocation(customerSummary.customerId(), companyAdminAccessToken);
 
 		RolesResponse rolesResponse = getRolesForLocation(realGuardIOAdminAccessToken, locationId);
 

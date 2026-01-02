@@ -1,16 +1,12 @@
 package io.eventuate.examples.realguardio.customerservice;
 
-import io.eventuate.common.json.mapper.JSonMapper;
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
-import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
-import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationCreatedWithSecuritySystem;
 import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
 import io.eventuate.examples.realguardio.customerservice.restapi.RolesResponse;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainer;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
-import io.eventuate.tram.commands.producer.CommandProducer;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
 import io.restassured.RestAssured;
@@ -21,11 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import static io.eventuate.util.test.async.Eventually.eventually;
 
 public abstract class AbstractCustomerServiceComponentTest {
 
@@ -65,9 +56,6 @@ public abstract class AbstractCustomerServiceComponentTest {
 
 
   @Autowired
-  protected CommandProducer commandProducer;
-
-  @Autowired
   protected CommandOutboxTestSupport commandOutboxTestSupport;
 
   @Autowired
@@ -88,33 +76,29 @@ public abstract class AbstractCustomerServiceComponentTest {
         .as(RolesResponse.class);
   }
 
-  protected Long createLocationForSecuritySystem(long customerId, long securitySystemId) {
-    logger.info("Creating location for customerId: {}, securitySystemId: {}", customerId, securitySystemId);
+  protected Long createLocation(long customerId, String accessToken) {
+    logger.info("Creating location for customerId: {}", customerId);
 
     String locationName = "Office Front Door";
-    String replyTo = UUID.randomUUID().toString();
+    String requestBody = """
+        {"name": "%s"}
+        """.formatted(locationName);
 
-    CreateLocationWithSecuritySystemCommand command = new CreateLocationWithSecuritySystemCommand(
-        customerId, locationName, securitySystemId);
+    var response = RestAssured.given()
+        .baseUri(baseUri)
+        .header("Authorization", "Bearer " + accessToken)
+        .contentType(ContentType.JSON)
+        .body(requestBody)
+        .when()
+        .post("/customers/" + customerId + "/locations")
+        .then()
+        .statusCode(200)
+        .extract()
+        .body();
 
-    logger.info("Sending CreateLocationWithSecuritySystemCommand: {}", command);
-    String commandId = sendCommand(command, replyTo);
-    logger.info("Sent CreateLocationWithSecuritySystemCommand with id: {}.. waiting for reply", commandId);
-
-    // Wait for and verify reply
-    eventually(30, 500, TimeUnit.MILLISECONDS, () -> {
-      commandOutboxTestSupport.assertCommandReplyMessageSent(replyTo);
-    });
-
-    var locationCreatedReply = componentTestSupport.findMessagesSentToChannel(replyTo).get(0);
-    LocationCreatedWithSecuritySystem reply = JSonMapper.fromJson(locationCreatedReply.getPayload(), LocationCreatedWithSecuritySystem.class);
-    var locationId = reply.locationId();
-
-    System.out.println("Received reply: " + reply);
-    return locationId;
+    Integer locationIdAsInteger = response.path("locationId");
+    return Long.valueOf(locationIdAsInteger);
   }
-
-  protected abstract String sendCommand(CreateLocationWithSecuritySystemCommand command, String replyTo);
 
   protected CustomerSummary createCustomer(EmailAddress adminUser, String realGuardIOAdminAccessToken) {
 

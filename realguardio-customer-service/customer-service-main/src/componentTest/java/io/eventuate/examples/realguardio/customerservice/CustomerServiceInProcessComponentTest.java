@@ -1,12 +1,11 @@
 package io.eventuate.examples.realguardio.customerservice;
 
-import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
 import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.RolesAndPermissions;
 import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
+import io.realguardio.osointegration.ososervice.RealGuardOsoFactManager;
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
-import io.eventuate.tram.testing.producer.kafka.commands.DirectToKafkaCommandProducer;
-import io.eventuate.tram.testing.producer.kafka.commands.EnableDirectToKafkaCommandProducer;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,8 +20,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.lifecycle.Startables;
 
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = CustomerServiceInProcessComponentTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,15 +30,14 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 	@TestConfiguration
 	@Import({AbstractConfig.class})
 	@EnableAutoConfiguration
-	@EnableDirectToKafkaCommandProducer
 	static class Config {
 	}
 
 	@Autowired
-	private DirectToKafkaCommandProducer directToKafkaCommandProducer;
+	private ComponentTestSupport componentTestSupport;
 
 	@Autowired
-	private ComponentTestSupport componentTestSupport;
+	private RealGuardOsoFactManager realGuardOsoFactManager;
 
 	@LocalServerPort
 	private int port;
@@ -78,28 +74,25 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 		baseUri = String.format("http://localhost:%d", port);
 	}
 
-	@Override
-	protected String sendCommand(CreateLocationWithSecuritySystemCommand command, String replyTo) {
-		return directToKafkaCommandProducer.send("customer-service",
-				command,
-				replyTo, Collections.emptyMap());
-	}
-
-
 	@Test
-	void shouldHandleCreateLocationWithSecuritySystemCommand() throws Exception {
+	void shouldCreateLocationAndAssignRoles() throws Exception {
 		String realGuardIOAdminAccessToken = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort());
 
 		EmailAddress adminUser = Uniquifier.uniquify(new EmailAddress("admin@example.com"));
 
 		CustomerSummary customerSummary = createCustomer(adminUser, realGuardIOAdminAccessToken);
 
-		long securitySystemId = System.currentTimeMillis();
-		var locationId = createLocationForSecuritySystem(customerSummary.customerId(), securitySystemId);
-
-        assertThat(getRolesForLocation(realGuardIOAdminAccessToken, locationId).getRoles()).isEmpty();
+		// Sync the admin role to Oso (normally done by Oso integration service consuming domain events)
+		realGuardOsoFactManager.createRoleInCustomer(
+				adminUser.email(),
+				String.valueOf(customerSummary.customerId()),
+				RolesAndPermissions.COMPANY_ROLE_ADMIN);
 
 		String companyAdminAccessToken = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, adminUser.email(), "password");
+
+		var locationId = createLocation(customerSummary.customerId(), companyAdminAccessToken);
+
+        assertThat(getRolesForLocation(realGuardIOAdminAccessToken, locationId).getRoles()).isEmpty();
 
 		assertThat(getRolesForLocation(companyAdminAccessToken, locationId).getRoles()).isEmpty();
 

@@ -269,8 +269,8 @@ Removes the old `CreateSecuritySystemSaga` that creates Location during Security
 
 ### Task 12.3: Run E2E tests after Orchestration Service changes
 
-- [ ] Run full E2E test suite
-- [ ] Verify all tests pass
+- [x] Run full E2E test suite
+- [x] Verify all tests pass
 
 ---
 
@@ -280,25 +280,25 @@ Removes `securitySystemId` field from Location and related code.
 
 ### Task 13.1: Remove securitySystemId from Location entity
 
-- [ ] Remove `securitySystemId` field from `Location` entity
-- [ ] Remove `addSecuritySystem(Long securitySystemId)` method
-- [ ] Remove `LocationAlreadyHasSecuritySystemException` (if it exists in Customer Service)
+- [x] Remove `securitySystemId` field from `Location` entity
+- [x] Remove `addSecuritySystem(Long securitySystemId)` method
+- [x] Remove `LocationAlreadyHasSecuritySystemException` (if it exists in Customer Service)
 
 ### Task 13.2: Remove CreateLocationWithSecuritySystemCommand handler
 
-- [ ] Remove `CreateLocationWithSecuritySystemCommand` class
-- [ ] Remove `LocationCreatedWithSecuritySystem` reply class
-- [ ] Remove handler from `CustomerCommandHandler`
+- [x] Remove `CreateLocationWithSecuritySystemCommand` class
+- [x] Remove `LocationCreatedWithSecuritySystem` reply class
+- [x] Remove handler from `CustomerCommandHandler`
 
 ### Task 13.3: Stop publishing SecuritySystemAssignedToLocation from Customer Service
 
-- [ ] Remove `SecuritySystemAssignedToLocation` event class from Customer Service (if it exists there)
-- [ ] Remove any code that publishes this event from Customer Service
+- [x] Remove `SecuritySystemAssignedToLocation` event class from Customer Service (if it exists there)
+- [x] Remove any code that publishes this event from Customer Service
 
 ### Task 13.4: Run E2E tests after Customer Service changes
 
-- [ ] Run full E2E test suite
-- [ ] Verify all tests pass
+- [x] Run full E2E test suite
+- [x] Verify all tests pass
 
 ---
 
@@ -343,24 +343,40 @@ Removes the listener for `SecuritySystemAssignedToLocation` from Customer Servic
 
 ---
 
-## Steel Thread 16 – Final Verification
+## Steel Thread 16 – Rename "WithLocationId" Classes and Methods
+
+Now that all old code is removed, simplify the names by removing the "WithLocationId" suffix.
+
+### Task 16.1: Rename classes and methods
+
+- [ ] Rename `CreateSecuritySystemWithLocationIdSaga` → `CreateSecuritySystemSaga`
+- [ ] Rename `CreateSecuritySystemWithLocationIdSagaData` → `CreateSecuritySystemSagaData`
+- [ ] Rename `CreateSecuritySystemWithLocationIdCommand` → `CreateSecuritySystemCommand`
+- [ ] Rename `SecuritySystemCreatedWithLocationId` → `SecuritySystemCreated` (if separate from existing)
+- [ ] Rename `createSecuritySystemWithLocationId()` method → `createSecuritySystem()`
+- [ ] Update all references in configuration, tests, and other classes
+- [ ] Run tests and verify
+
+---
+
+## Steel Thread 17 – Final Verification
 
 Comprehensive verification that all old code is removed and new flow works correctly.
 
-### Task 16.1: Verify no references to old code remain
+### Task 17.1: Verify no references to old code remain
 
 - [ ] Search codebase for `securitySystemId` in Location-related code
 - [ ] Search for `CREATION_PENDING` references
 - [ ] Search for `CreateLocationWithSecuritySystemCommand` references
 - [ ] Search for `noteLocationCreated` references
 
-### Task 16.2: Run full test suite
+### Task 17.2: Run full test suite
 
 - [ ] Run `./gradlew check` across all modules
 - [ ] Run E2E tests
 - [ ] Run BFF tests
 
-### Task 16.3: Document migration complete
+### Task 17.3: Document migration complete
 
 - [ ] Update specification to reflect current state
 - [ ] Note that old flow has been fully removed

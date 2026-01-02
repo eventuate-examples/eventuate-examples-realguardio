@@ -1,12 +1,9 @@
 package io.eventuate.examples.realguardio.customerservice.api.messaging;
 
-import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.CreateLocationWithSecuritySystemCommand;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.ValidateLocationCommand;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Location;
-import io.eventuate.tram.commands.consumer.CommandDispatcher;
 import io.eventuate.tram.commands.producer.CommandProducer;
-import io.eventuate.tram.sagas.participant.SagaCommandDispatcherFactory;
 import io.eventuate.tram.sagas.spring.inmemory.TramSagaInMemoryConfiguration;
 import io.eventuate.tram.testutil.TestMessageConsumer;
 import io.eventuate.tram.testutil.TestMessageConsumerFactory;
@@ -42,60 +39,9 @@ class CustomerCommandHandlerTest {
 
     @Autowired
     private CommandProducer commandProducer;
-    
+
     @Autowired
     private TestMessageConsumerFactory testMessageConsumerFactory;
-
-    @Test
-    void shouldHandleCreateLocationWithSecuritySystemCommand() {
-        // Given
-        Long customerId = 123L;
-        String locationName = "Office Front Door";
-        Long securitySystemId = 456L;
-        Long expectedLocationId = 789L;
-        
-        CreateLocationWithSecuritySystemCommand command = new CreateLocationWithSecuritySystemCommand(
-            customerId, locationName, securitySystemId);
-        
-        when(customerService.createLocationWithSecuritySystem(customerId, locationName, securitySystemId))
-            .thenReturn(expectedLocationId);
-        
-        // Create a test message consumer to receive the reply
-        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
-
-        // When - Send the command
-        var commandId = commandProducer.send("customer-service", command, replyConsumer.getReplyChannel(),
-            Collections.emptyMap());
-        
-        // Then - Verify the reply is received
-        replyConsumer.assertHasReplyTo(commandId);
-        verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
-    }
-    
-    @Test
-    void shouldHandleCustomerNotFound() {
-        // Given
-        Long customerId = 123L;
-        String locationName = "Office Front Door";
-        Long securitySystemId = 456L;
-        
-        CreateLocationWithSecuritySystemCommand command = new CreateLocationWithSecuritySystemCommand(
-            customerId, locationName, securitySystemId);
-        
-        when(customerService.createLocationWithSecuritySystem(customerId, locationName, securitySystemId))
-            .thenThrow(new io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerNotFoundException("Customer not found: " + customerId));
-        
-        // Create a test message consumer to receive the reply
-        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
-
-        // When - Send the command
-        var commandId = commandProducer.send("customer-service", command, replyConsumer.getReplyChannel(),
-            Collections.emptyMap());
-        
-        // Then - Verify the failure reply is received
-        replyConsumer.assertHasReplyTo(commandId);
-        verify(customerService).createLocationWithSecuritySystem(customerId, locationName, securitySystemId);
-    }
 
     @Test
     void shouldHandleValidateLocationCommand() {

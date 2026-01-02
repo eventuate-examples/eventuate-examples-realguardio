@@ -187,19 +187,6 @@ public class CustomerService {
         return savedLocation;
     }
 
-    public void addSecuritySystemToLocation(Long locationId, Long securitySystemId) {
-        // Security-todo Verify that caller has COMPANY_ROLE_ADMIN
-
-        Location location = locationRepository.findRequiredById(locationId);
-        location.addSecuritySystem(securitySystemId);
-
-        Customer customer = customerRepository.findRequiredById(location.getCustomerId());
-
-        customerEventPublisher.publish(customer,
-            new SecuritySystemAssignedToLocation(locationId, securitySystemId));
-
-    }
-
     /**
      * Find a location by its ID.
      *
@@ -208,65 +195,6 @@ public class CustomerService {
      */
     public Location findLocationById(Long locationId) {
         return locationRepository.findById(locationId).orElse(null);
-    }
-    
-    /**
-     * Create or update a location with a security system.
-     * If the location doesn't exist, create it.
-     * If it exists without a security system, add the security system.
-     * If it already has a security system, throw an exception.
-     *
-     * @param customerId the ID of the customer
-     * @param locationName the name of the location
-     * @param securitySystemId the ID of the security system
-     * @return the ID of the location
-     * @throws CustomerNotFoundException if customer doesn't exist
-     * @throws LocationAlreadyHasSecuritySystemException if location already has a security system
-     */
-    public Long createLocationWithSecuritySystem(Long customerId, String locationName, Long securitySystemId) {
-        // Verify customer exists
-        Customer customer = customerRepository.findById(customerId)
-            .orElseThrow(() -> new CustomerNotFoundException("Customer not found: " + customerId));
-        
-        // Find or create location
-        Location location = locationRepository.findByCustomerIdAndName(customerId, locationName)
-            .orElseGet(() -> {
-                Location newLocation = new Location(locationName, customerId);
-                return locationRepository.save(newLocation);
-            });
-        
-        // Add security system to location
-        location.addSecuritySystem(securitySystemId);
-        locationRepository.save(location);
-
-        customerEventPublisher.publish(customer,
-            new SecuritySystemAssignedToLocation(location.getId(), securitySystemId));
-
-        return location.getId();
-    }
-
-    /**
-     * Verify if an employee is authorized to disarm a security system.
-     * An employee is authorized if they have the required role at the customer level,
-     * if they have the required role for the specific location where the security system is installed,
-     * or if they are a member of a team that has the required role for the location.
-     * Throws NotAuthorizedException if the employee is not authorized.
-     *
-     * @param securitySystemId the ID of the security system
-     * @param employeeId the ID of the employee
-     * @param role the role required for authorization
-     * @throws NotAuthorizedException if the employee is not authorized to disarm the security system
-     */
-    public void verifyEmployeeHasSecuritySystemRole(long securitySystemId, long employeeId, String role) {
-        Long customerRoleCount = customerEmployeeRepository.countEmployeeWithSecuritySystemRole(securitySystemId, employeeId, role);
-
-        Long locationRoleCount = customerEmployeeLocationRoleRepository.countEmployeeWithSecuritySystemLocationRole(securitySystemId, employeeId, role);
-
-        Long teamRoleCount = teamRepository.countEmployeeWithTeamSecuritySystemRole(securitySystemId, employeeId, role);
-
-        if (customerRoleCount == 0 && locationRoleCount == 0 && teamRoleCount == 0) {
-            throw new NotAuthorizedException("Employee is not authorized to perform this action on the security system");
-        }
     }
 
     /**

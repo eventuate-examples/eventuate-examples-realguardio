@@ -4,7 +4,6 @@ import io.eventuate.examples.realguardio.customerservice.customermanagement.doma
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeAssignedCustomerRole;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEventPublisher;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationCreatedForCustomer;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.SecuritySystemAssignedToLocation;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamAssignedLocationRole;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.TeamMemberAdded;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
@@ -47,10 +46,6 @@ public abstract class BaseClass {
 
     public void customerEmployeeAssignedLocationRole() {
         customerEventPublisher.publish(createCustomerWithId(123L), new CustomerEmployeeAssignedLocationRole("john.doe", 101L, "Manager"));
-    }
-
-    public void securitySystemAssignedToLocation() {
-        customerEventPublisher.publish(createCustomerWithId(123L), new SecuritySystemAssignedToLocation(101L, 401L));
     }
 
     public void customerEmployeeAssignedCustomerRole() {

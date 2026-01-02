@@ -6,7 +6,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationAlreadyHasSecuritySystemException;
 
 @Entity
 @Table(name = "locations")
@@ -22,8 +21,6 @@ public class Location {
     // Reference to the Customer ID
     @Column(nullable = false)
     private Long customerId;
-
-    private Long securitySystemId;
 
     // Default constructor required by JPA
     protected Location() {
@@ -53,16 +50,5 @@ public class Location {
 
     public void setCustomerId(Long customerId) {
         this.customerId = customerId;
-    }
-
-    public void addSecuritySystem(Long securitySystemId) {
-        if (this.securitySystemId != null) {
-            throw new LocationAlreadyHasSecuritySystemException();
-        }
-        this.securitySystemId = securitySystemId;
-    }
-
-    public Long getSecuritySystemId() {
-        return securitySystemId;
     }
 }
