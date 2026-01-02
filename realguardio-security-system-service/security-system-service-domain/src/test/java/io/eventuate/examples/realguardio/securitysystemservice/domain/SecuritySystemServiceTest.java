@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -339,6 +340,21 @@ class SecuritySystemServiceTest {
                 event.locationId().equals(locationId)
             )
         );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCreatingSecuritySystemForLocationThatAlreadyHasOne() {
+        Long locationId = 100L;
+        String locationName = "Main Office";
+
+        when(securitySystemRepository.save(any(SecuritySystem.class)))
+            .thenThrow(new DataIntegrityViolationException("Duplicate entry for location_id"));
+
+        assertThatThrownBy(() -> securitySystemService.createSecuritySystemWithLocation(locationId, locationName))
+            .isInstanceOf(LocationAlreadyHasSecuritySystemException.class);
+
+        verify(securitySystemRepository).save(any(SecuritySystem.class));
+        verify(securitySystemEventPublisher, never()).publish(any(SecuritySystem.class), any(SecuritySystemEvent.class));
     }
 
 }

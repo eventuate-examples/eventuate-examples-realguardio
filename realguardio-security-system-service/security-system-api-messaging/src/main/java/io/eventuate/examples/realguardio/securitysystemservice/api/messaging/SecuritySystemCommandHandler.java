@@ -3,8 +3,10 @@ package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationAlreadyHasSecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationNoted;
+import io.eventuate.examples.realguardio.securitysystemservice.domain.LocationAlreadyHasSecuritySystemException;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.tram.commands.consumer.CommandMessage;
 import io.eventuate.tram.commands.consumer.annotations.EventuateCommandHandler;
@@ -39,11 +41,16 @@ public class SecuritySystemCommandHandler {
     }
 
     @EventuateCommandHandler(subscriberId = "securitySystemCommandDispatcher", channel = "security-system-service")
-    public SecuritySystemCreated handleCreateSecuritySystemWithLocationId(CommandMessage<CreateSecuritySystemWithLocationIdCommand> cm) {
+    public Object handleCreateSecuritySystemWithLocationId(CommandMessage<CreateSecuritySystemWithLocationIdCommand> cm) {
         logger.info("Handling CreateSecuritySystemWithLocationIdCommand: " + cm);
         CreateSecuritySystemWithLocationIdCommand command = cm.getCommand();
-        Long securitySystemId = securitySystemService.createSecuritySystemWithLocation(command.locationId(), command.locationName());
-        logger.info("Created SecuritySystem with locationId: " + command.locationId());
-        return new SecuritySystemCreated(securitySystemId);
+        try {
+            Long securitySystemId = securitySystemService.createSecuritySystemWithLocation(command.locationId(), command.locationName());
+            logger.info("Created SecuritySystem with locationId: " + command.locationId());
+            return new SecuritySystemCreated(securitySystemId);
+        } catch (LocationAlreadyHasSecuritySystemException e) {
+            logger.info("Location {} already has a SecuritySystem", command.locationId());
+            return new LocationAlreadyHasSecuritySystem(command.locationId());
+        }
     }
 }

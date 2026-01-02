@@ -2,6 +2,7 @@ package io.eventuate.examples.realguardio.securitysystemservice.domain;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,9 +106,13 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     public Long createSecuritySystemWithLocation(Long locationId, String locationName) {
         SecuritySystem securitySystem = new SecuritySystem(locationName, SecuritySystemState.DISARMED);
         securitySystem.setLocationId(locationId);
-        SecuritySystem savedSystem = securitySystemRepository.save(securitySystem);
-        securitySystemEventPublisher.publish(savedSystem, new SecuritySystemAssignedToLocation(savedSystem.getId(), locationId));
-        return savedSystem.getId();
+        try {
+            SecuritySystem savedSystem = securitySystemRepository.save(securitySystem);
+            securitySystemEventPublisher.publish(savedSystem, new SecuritySystemAssignedToLocation(savedSystem.getId(), locationId));
+            return savedSystem.getId();
+        } catch (DataIntegrityViolationException e) {
+            throw new LocationAlreadyHasSecuritySystemException(locationId);
+        }
     }
 
     @Override

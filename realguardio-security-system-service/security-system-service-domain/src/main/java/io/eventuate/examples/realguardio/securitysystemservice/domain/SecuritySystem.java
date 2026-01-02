@@ -2,6 +2,7 @@ package io.eventuate.examples.realguardio.securitysystemservice.domain;
 
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -25,6 +26,7 @@ public class SecuritySystem {
     @Enumerated(EnumType.STRING)
     private SecuritySystemState state;
 
+    @Column(unique = true)
     private Long locationId;
     
     private String rejectionReason;

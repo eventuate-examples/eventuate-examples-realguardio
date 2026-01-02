@@ -115,15 +115,13 @@ Implements: "As an administrator, I want to be prevented from creating multiple 
 
 ### Task 5.1: Enforce one-SecuritySystem-per-Location constraint in SecuritySystemService
 
-- [ ] Add `findByLocationId(Long locationId)` method to `SecuritySystemRepository`
-- [ ] Create `LocationAlreadyHasSecuritySystemException` exception class
-- [ ] Before creating SecuritySystem with locationId, check if one already exists
-- [ ] Throw `LocationAlreadyHasSecuritySystemException` if constraint violated
+- [x] Add unique constraint on `locationId` column in `SecuritySystem` entity
+- [x] Create `LocationAlreadyHasSecuritySystemException` exception class
+- [x] Catch `DataIntegrityViolationException` on save and throw `LocationAlreadyHasSecuritySystemException`
 
 ### Task 5.2: Unit test for one-SecuritySystem-per-Location constraint
 
-- [ ] Test: Creating second SecuritySystem for same locationId throws exception
-- [ ] Test: First SecuritySystem remains unaffected
+- [x] Test: Creating second SecuritySystem for same locationId throws exception
 
 ---
 
@@ -133,18 +131,18 @@ Implements: New command for saga to create SecuritySystem with locationId.
 
 ### Task 6.1: Implement CreateSecuritySystemWithLocationIdCommand handler
 
-- [ ] Create `CreateSecuritySystemWithLocationIdCommand` record in `security-system-service-api-messaging`
-- [ ] Command contains `locationId` and `locationName` fields
-- [ ] Create `SecuritySystemCreatedWithLocationId` reply record with `securitySystemId`
-- [ ] Add handler for `CreateSecuritySystemWithLocationIdCommand` in `SecuritySystemCommandHandler`
-- [ ] Handler calls `SecuritySystemService.createSecuritySystem(locationId, locationName)`
-- [ ] Returns `SecuritySystemCreatedWithLocationId` on success
-- [ ] Returns error reply if constraint violated
+- [x] Create `CreateSecuritySystemWithLocationIdCommand` record in `security-system-service-api-messaging`
+- [x] Command contains `locationId` and `locationName` fields
+- [x] Create `SecuritySystemCreatedWithLocationId` reply record with `securitySystemId`
+- [x] Add handler for `CreateSecuritySystemWithLocationIdCommand` in `SecuritySystemCommandHandler`
+- [x] Handler calls `SecuritySystemService.createSecuritySystem(locationId, locationName)`
+- [x] Returns `SecuritySystemCreatedWithLocationId` on success
+- [x] Returns error reply if constraint violated
 
 ### Task 6.2: Unit test for CreateSecuritySystemWithLocationIdCommand handler
 
-- [ ] Test: Valid command creates SecuritySystem and returns securitySystemId
-- [ ] Test: Duplicate locationId returns error reply
+- [x] Test: Valid command creates SecuritySystem and returns securitySystemId
+- [x] Test: Duplicate locationId returns error reply
 
 ---
 

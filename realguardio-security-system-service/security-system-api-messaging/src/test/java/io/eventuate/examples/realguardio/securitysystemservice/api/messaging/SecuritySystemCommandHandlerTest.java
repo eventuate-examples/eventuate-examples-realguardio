@@ -19,6 +19,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Collections;
 
+import io.eventuate.examples.realguardio.securitysystemservice.domain.LocationAlreadyHasSecuritySystemException;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -106,6 +108,28 @@ class SecuritySystemCommandHandlerTest {
             Collections.emptyMap());
 
         // Then - Verify the reply is received
+        replyConsumer.assertHasReplyTo(commandId);
+        verify(securitySystemService).createSecuritySystemWithLocation(locationId, locationName);
+    }
+
+    @Test
+    void shouldReturnErrorReplyWhenLocationAlreadyHasSecuritySystem() {
+        // Given
+        Long locationId = 100L;
+        String locationName = "Main Office";
+        CreateSecuritySystemWithLocationIdCommand command = new CreateSecuritySystemWithLocationIdCommand(locationId, locationName);
+
+        when(securitySystemService.createSecuritySystemWithLocation(locationId, locationName))
+            .thenThrow(new LocationAlreadyHasSecuritySystemException(locationId));
+
+        // Create a test message consumer to receive the reply
+        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
+
+        // When - Send the command
+        var commandId = commandProducer.send("security-system-service", command, replyConsumer.getReplyChannel(),
+            Collections.emptyMap());
+
+        // Then - Verify an error reply is received (handler caught exception and returned error reply)
         replyConsumer.assertHasReplyTo(commandId);
         verify(securitySystemService).createSecuritySystemWithLocation(locationId, locationName);
     }
