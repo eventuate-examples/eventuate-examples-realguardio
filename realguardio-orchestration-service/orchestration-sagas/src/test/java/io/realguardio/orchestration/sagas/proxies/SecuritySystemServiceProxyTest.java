@@ -10,19 +10,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SecuritySystemServiceProxyTest {
 
     @Test
-    void shouldCreateSecuritySystemCommand() {
-        SecuritySystemServiceProxy proxy = new SecuritySystemServiceProxy();
-        
-        CommandWithDestination cmd = proxy.createSecuritySystem("Main Office");
-        
-        assertThat(cmd).isNotNull();
-        assertThat(cmd.getDestinationChannel()).isEqualTo("security-system-service");
-        assertThat(cmd.getCommand()).isInstanceOf(CreateSecuritySystemCommand.class);
-        CreateSecuritySystemCommand command = (CreateSecuritySystemCommand) cmd.getCommand();
-        assertThat(command.locationName()).isEqualTo("Main Office");
-    }
-    
-    @Test
     void shouldCreateUpdateCreationFailedCommand() {
         SecuritySystemServiceProxy proxy = new SecuritySystemServiceProxy();
         

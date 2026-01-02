@@ -2,7 +2,7 @@ package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaCluster;
@@ -69,41 +69,42 @@ public class SecuritySystemCommandHandlerIntegrationTest {
     private CommandOutboxTestSupport commandOutboxTestSupport;
 
     @Test
-    public void shouldHandleCreateSecuritySystemCommand() {
+    public void shouldHandleCreateSecuritySystemWithLocationIdCommand() {
         // Given
         String replyTo = "my-reply-to-channel-" + System.currentTimeMillis();
-        String locationName = "Office Front Door";
-        Long expectedSecuritySystemId = System.currentTimeMillis();
-        
-        when(securitySystemService.createSecuritySystem(locationName))
+        Long locationId = System.currentTimeMillis();
+        String locationName = "Main Office";
+        Long expectedSecuritySystemId = System.currentTimeMillis() + 1000;
+
+        when(securitySystemService.createSecuritySystemWithLocation(locationId, locationName))
             .thenReturn(expectedSecuritySystemId);
-        
+
         // When
-        commandProducer.send("security-system-service", 
-            new CreateSecuritySystemCommand(locationName), 
-            replyTo, 
+        commandProducer.send("security-system-service",
+            new CreateSecuritySystemWithLocationIdCommand(locationId, locationName),
+            replyTo,
             Collections.emptyMap());
-        
+
         // Then
         Eventually.eventually(() -> {
-            verify(securitySystemService).createSecuritySystem(locationName);
+            verify(securitySystemService).createSecuritySystemWithLocation(locationId, locationName);
             commandOutboxTestSupport.assertCommandReplyMessageSent(replyTo);
         });
     }
-    
+
     @Test
     public void shouldHandleNoteLocationCreatedCommand() {
         // Given
         String replyTo = "my-reply-to-channel-" + System.currentTimeMillis();
         Long securitySystemId = System.currentTimeMillis();
         Long locationId = System.currentTimeMillis() + 1000;
-        
+
         // When
-        commandProducer.send("security-system-service", 
-            new NoteLocationCreatedCommand(securitySystemId, locationId), 
-            replyTo, 
+        commandProducer.send("security-system-service",
+            new NoteLocationCreatedCommand(securitySystemId, locationId),
+            replyTo,
             Collections.emptyMap());
-        
+
         // Then
         Eventually.eventually(() -> {
             verify(securitySystemService).noteLocationCreated(securitySystemId, locationId);

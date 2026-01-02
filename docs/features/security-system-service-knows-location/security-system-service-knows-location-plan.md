@@ -308,9 +308,9 @@ Removes `CREATION_PENDING` state and `noteLocationCreated` method.
 
 ### Task 14.1: Remove CREATION_PENDING state
 
-- [ ] Remove `CREATION_PENDING` from `SecuritySystemState` enum
-- [ ] Update any code that references this state
-- [ ] SecuritySystem now only has: `DISARMED`, `ARMED`, `ALARMED`, `CREATION_FAILED`
+- [x] Remove `CREATION_PENDING` from `SecuritySystemState` enum
+- [x] Update any code that references this state
+- [x] SecuritySystem now only has: `DISARMED`, `ARMED`, `ALARMED`, `CREATION_FAILED`
 
 ### Task 14.2: Remove noteLocationCreated method
 

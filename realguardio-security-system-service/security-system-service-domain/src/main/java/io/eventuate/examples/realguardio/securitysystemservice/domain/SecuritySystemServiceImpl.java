@@ -76,14 +76,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         }
         return securitySystem;
     }
-    
-    @Override
-    public Long createSecuritySystem(String locationName) {
-        SecuritySystem securitySystem = new SecuritySystem(locationName, SecuritySystemState.CREATION_PENDING);
-        SecuritySystem savedSystem = securitySystemRepository.save(securitySystem);
-        return savedSystem.getId();
-    }
-    
+
     @Override
     public void noteLocationCreated(Long securitySystemId, Long locationId) {
         SecuritySystem securitySystem = securitySystemRepository.findById(securitySystemId)

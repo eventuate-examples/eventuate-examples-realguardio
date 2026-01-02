@@ -5,18 +5,16 @@ import java.util.Optional;
 
 public interface SecuritySystemService {
     List<SecuritySystemWithActions> findAll();
-    
+
     Optional<SecuritySystem> findById(Long id);
-    
-    Long createSecuritySystem(String locationName);
-    
+
     void noteLocationCreated(Long securitySystemId, Long locationId);
-    
+
     void updateCreationFailed(Long securitySystemId, String rejectionReason);
 
     Long createSecuritySystemWithLocation(Long locationId, String locationName);
 
     SecuritySystem arm(Long id);
-    
+
     SecuritySystem disarm(Long id);
 }

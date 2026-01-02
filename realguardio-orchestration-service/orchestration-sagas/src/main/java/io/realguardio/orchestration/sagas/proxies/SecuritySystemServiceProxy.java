@@ -13,16 +13,6 @@ public class SecuritySystemServiceProxy {
     public static final String CHANNEL = "security-system-service";
 
     @SagaParticipantOperation(
-        commandClass = CreateSecuritySystemCommand.class,
-        replyClasses = SecuritySystemCreated.class
-    )
-    public CommandWithDestination createSecuritySystem(String locationName) {
-        return CommandWithDestinationBuilder.send(new CreateSecuritySystemCommand(locationName))
-                .to(CHANNEL)
-                .build();
-    }
-
-    @SagaParticipantOperation(
         commandClass = UpdateCreationFailedCommand.class,
         replyClasses = Void.class
     )

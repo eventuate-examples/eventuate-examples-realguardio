@@ -3,7 +3,7 @@ package io.eventuate.examples.realguardio.securitysystemservice;
 import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaConfiguration;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
@@ -205,22 +205,21 @@ public class SecuritySystemServiceComponentTest {
 	}
 
 	@Test
-	void shouldHandleCreateSecuritySystemCommand() throws Exception {
+	void shouldHandleCreateSecuritySystemWithLocationIdCommand() throws Exception {
+		Long locationId = System.currentTimeMillis();
 		String locationName = "Main Office Entrance";
 
-		CreateSecuritySystemCommand command = new CreateSecuritySystemCommand(locationName);
+		CreateSecuritySystemWithLocationIdCommand command = new CreateSecuritySystemWithLocationIdCommand(locationId, locationName);
 
-		logger.info("Sending CreateSecuritySystemCommand: {}", command);
+		logger.info("Sending CreateSecuritySystemWithLocationIdCommand: {}", command);
 		String commandId = commandProducer.send("security-system-service",
 				command,
 				replyTo, Collections.emptyMap());
-		logger.info("Sent CreateSecuritySystemCommand with id: {}.. waiting for reply", commandId);
+		logger.info("Sent CreateSecuritySystemWithLocationIdCommand with id: {}.. waiting for reply", commandId);
 
 		// Wait for and verify reply
 		eventually(30, 500, TimeUnit.MILLISECONDS, () -> {
 			commandOutboxTestSupport.assertCommandReplyMessageSent(replyTo);
-			// Note: Further verification of reply content would require access to the actual reply,
-			// which is not directly available through CommandOutboxTestSupport
 			logger.info("SecuritySystemCreated reply received");
 		});
 	}

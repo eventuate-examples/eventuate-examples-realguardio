@@ -1,6 +1,5 @@
 package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationAlreadyHasSecuritySystem;
@@ -22,15 +21,6 @@ public class SecuritySystemCommandHandler {
 
     public SecuritySystemCommandHandler(SecuritySystemService securitySystemService) {
         this.securitySystemService = securitySystemService;
-    }
-
-    @EventuateCommandHandler(subscriberId = "securitySystemCommandDispatcher", channel = "security-system-service")
-    public SecuritySystemCreated handleCreateSecuritySystem(CommandMessage<CreateSecuritySystemCommand> cm) {
-        logger.info("Handling CreateSecuritySystemCommand: " + cm);
-        CreateSecuritySystemCommand command = cm.getCommand();
-        Long securitySystemId = securitySystemService.createSecuritySystem(command.locationName());
-        logger.info("Created CreateSecuritySystemCommand: " + cm);
-        return new SecuritySystemCreated(securitySystemId);
     }
 
     @EventuateCommandHandler(subscriberId = "securitySystemCommandDispatcher", channel = "security-system-service")

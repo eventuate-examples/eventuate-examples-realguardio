@@ -109,7 +109,7 @@ abstract class AbstractSecuritySystemRepositoryIntegrationTest {
     @Test
     void shouldSaveAndRetrieveLocationId() {
         SecuritySystem securitySystem = new SecuritySystem("Oakland office",
-            SecuritySystemState.CREATION_PENDING);
+            SecuritySystemState.DISARMED);
         securitySystem.setLocationId(123L);
 
         SecuritySystem saved = repository.save(securitySystem);

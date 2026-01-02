@@ -1,7 +1,7 @@
 package io.realguardio.orchestration;
 
 import io.eventuate.common.json.mapper.JSonMapper;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
 import io.eventuate.tram.commands.common.Command;
 import io.eventuate.tram.commands.consumer.CommandHandlerParams;
@@ -94,7 +94,7 @@ public class ComponentTestSupport {
   }
 
   public void sendReply(Message createCommandMessage, SecuritySystemCreated reply) {
-    sendReply(createCommandMessage, CreateSecuritySystemCommand.class, reply);
+    sendReply(createCommandMessage, CreateSecuritySystemWithLocationIdCommand.class, reply);
   }
 
   public <C extends Command> void sendReply(Message commandMessage, Class<C> commandClass, Object reply) {
