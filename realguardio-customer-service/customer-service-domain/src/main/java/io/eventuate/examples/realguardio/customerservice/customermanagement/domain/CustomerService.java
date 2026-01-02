@@ -155,6 +155,18 @@ public class CustomerService {
      * @param name the name of the location
      * @return the created location
      */
+    @PreAuthorize("hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
+    public Location createLocationForCustomer(Long customerId, String name) {
+        throw new UnsupportedOperationException("implement me");
+    }
+
+    /**
+     * Create a new location for a customer (internal method).
+     *
+     * @param customerId the ID of the customer
+     * @param name the name of the location
+     * @return the created location
+     */
     public Location createLocation(Long customerId, String name) {
         Customer customer = customerRepository.findRequiredById(customerId);
 

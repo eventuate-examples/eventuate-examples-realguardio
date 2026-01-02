@@ -31,12 +31,12 @@ Implements: "As an administrator, I want to create a Location for a Customer wit
 
 ### Task 1.1: Add LocationController REST endpoint
 
-- [ ] Create `LocationController` class in `customer-service-restapi`
-- [ ] Create `CreateLocationRequest` record with `name` field
-- [ ] Create `CreateLocationResponse` record with `locationId` field
-- [ ] Add `POST /customers/{customerId}/locations` endpoint
-- [ ] Endpoint accepts `CreateLocationRequest`, returns `CreateLocationResponse`
-- [ ] Endpoint calls `CustomerService.createLocationForCustomer(customerId, name)`
+- [x] Create `LocationController` class in `customer-service-restapi`
+- [x] Create `CreateLocationRequest` record with `name` field
+- [x] Create `CreateLocationResponse` record with `locationId` field
+- [x] Add `POST /customers/{customerId}/locations` endpoint
+- [x] Endpoint accepts `CreateLocationRequest`, returns `CreateLocationResponse`
+- [x] Endpoint calls `CustomerService.createLocationForCustomer(customerId, name)`
 
 ### Task 1.2: Add CustomerService.createLocationForCustomer method
 

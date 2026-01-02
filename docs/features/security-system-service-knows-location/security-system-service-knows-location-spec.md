@@ -71,6 +71,7 @@ The current design couples Location and SecuritySystem creation, preventing the 
 | FR-1.3 | The endpoint SHALL return the created `locationId` |
 | FR-1.4 | The endpoint SHALL publish `LocationCreatedForCustomer` event |
 | FR-1.5 | A Location SHALL be created in `ACTIVE` state (no pending state needed) |
+| FR-1.6 | Only a Customer Administrator (employee with admin role in their customer) SHALL be authorized to create Locations |
 
 ### FR-2: SecuritySystem Creation
 
@@ -300,3 +301,11 @@ The implementation MUST follow this sequencing:
    - Remove `securitySystemId` from Location
    - Remove old event listeners
    - Remove `CREATION_PENDING` state
+
+## Change History
+
+### 2026-01-02: Added authorization requirement for Location creation
+
+Added FR-1.6: Only a Customer Administrator (employee with admin role in their customer) SHALL be authorized to create Locations.
+
+**Rationale:** The original specification omitted security requirements. Authorization should be defined in terms of user roles/personas, not technical implementation details.
