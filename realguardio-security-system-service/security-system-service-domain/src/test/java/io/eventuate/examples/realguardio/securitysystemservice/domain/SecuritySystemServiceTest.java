@@ -13,6 +13,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +31,9 @@ class SecuritySystemServiceTest {
     @Mock
     private SecuritySystemActionAuthorizer securitySystemActionAuthorizer;
 
+    @Mock
+    private SecuritySystemEventPublisher securitySystemEventPublisher;
+
     private SecuritySystemService securitySystemService;
 
     @Mock
@@ -37,7 +41,7 @@ class SecuritySystemServiceTest {
 
     @BeforeEach
     void setUp() {
-        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient, userNameSupplier, securitySystemActionAuthorizer, securitySystemFinder);
+        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient, userNameSupplier, securitySystemActionAuthorizer, securitySystemFinder, securitySystemEventPublisher);
     }
 
     @Test
@@ -300,5 +304,41 @@ class SecuritySystemServiceTest {
         verify(securitySystemActionAuthorizer).verifyCanDo(systemId, RolesAndPermissions.ARM);
         verify(securitySystemRepository, never()).save(any());
     }
-    
+
+    @Test
+    void shouldCreateSecuritySystemWithLocationAndPublishEvent() throws Exception {
+        // Given
+        Long locationId = 100L;
+        String locationName = "Main Office";
+        Long expectedSecuritySystemId = 1L;
+
+        SecuritySystem savedSecuritySystem = new SecuritySystem(locationName, SecuritySystemState.DISARMED);
+        setId(savedSecuritySystem, expectedSecuritySystemId);
+        savedSecuritySystem.setLocationId(locationId);
+
+        when(securitySystemRepository.save(any(SecuritySystem.class))).thenReturn(savedSecuritySystem);
+
+        // When
+        Long securitySystemId = securitySystemService.createSecuritySystemWithLocation(locationId, locationName);
+
+        // Then
+        assertThat(securitySystemId).isEqualTo(expectedSecuritySystemId);
+
+        // Verify the security system was saved with correct state and locationId
+        verify(securitySystemRepository).save(argThat(ss ->
+            ss.getLocationName().equals(locationName) &&
+            ss.getState() == SecuritySystemState.DISARMED &&
+            ss.getLocationId().equals(locationId)
+        ));
+
+        // Verify the event was published
+        verify(securitySystemEventPublisher).publish(
+            argThat((SecuritySystem ss) -> ss.getId().equals(expectedSecuritySystemId)),
+            argThat((SecuritySystemAssignedToLocation event) ->
+                event.securitySystemId().equals(expectedSecuritySystemId) &&
+                event.locationId().equals(locationId)
+            )
+        );
+    }
+
 }

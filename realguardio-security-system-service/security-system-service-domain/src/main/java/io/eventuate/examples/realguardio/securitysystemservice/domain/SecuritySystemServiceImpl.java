@@ -20,11 +20,14 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     private final UserNameSupplier userNameSupplier;
     private final SecuritySystemActionAuthorizer securitySystemActionAuthorizer;
     private final SecuritySystemFinder securitySystemFinder;
+    private final SecuritySystemEventPublisher securitySystemEventPublisher;
 
     public SecuritySystemServiceImpl(SecuritySystemRepository securitySystemRepository,
                                     CustomerServiceClient customerServiceClient,
-                                    UserNameSupplier userNameSupplier, SecuritySystemActionAuthorizer securitySystemActionAuthorizer, SecuritySystemFinder securitySystemFinder) {
-    this.securitySystemActionAuthorizer = securitySystemActionAuthorizer;
+                                    UserNameSupplier userNameSupplier,
+                                    SecuritySystemActionAuthorizer securitySystemActionAuthorizer,
+                                    SecuritySystemFinder securitySystemFinder,
+                                    SecuritySystemEventPublisher securitySystemEventPublisher) {
         if (securitySystemRepository == null) {
             throw new IllegalArgumentException("securitySystemRepository cannot be null");
         }
@@ -37,7 +40,9 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         this.securitySystemRepository = securitySystemRepository;
         this.customerServiceClient = customerServiceClient;
         this.userNameSupplier = userNameSupplier;
+        this.securitySystemActionAuthorizer = securitySystemActionAuthorizer;
         this.securitySystemFinder = securitySystemFinder;
+        this.securitySystemEventPublisher = securitySystemEventPublisher;
     }
     
     @Override
@@ -95,7 +100,16 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         securitySystem.setRejectionReason(rejectionReason);
         securitySystemRepository.save(securitySystem);
     }
-    
+
+    @Override
+    public Long createSecuritySystemWithLocation(Long locationId, String locationName) {
+        SecuritySystem securitySystem = new SecuritySystem(locationName, SecuritySystemState.DISARMED);
+        securitySystem.setLocationId(locationId);
+        SecuritySystem savedSystem = securitySystemRepository.save(securitySystem);
+        securitySystemEventPublisher.publish(savedSystem, new SecuritySystemAssignedToLocation(savedSystem.getId(), locationId));
+        return savedSystem.getId();
+    }
+
     @Override
     public SecuritySystem arm(Long id) {
         SecuritySystem securitySystem = securitySystemRepository.findById(id)

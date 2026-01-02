@@ -1,0 +1,5 @@
+dependencies {
+    implementation project(':security-system-service-domain')
+
+    implementation 'io.eventuate.tram.core:eventuate-tram-spring-events-publisher-starter'
+}

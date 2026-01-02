@@ -80,13 +80,13 @@ Implements: Security System Service becomes the source of the SecuritySystem-Loc
 
 ### Task 3.1: Publish SecuritySystemAssignedToLocation event when SecuritySystem is created with locationId
 
-- [ ] Create `SecuritySystemAssignedToLocation` event record in `security-system-service-domain`
-- [ ] Event contains `securitySystemId` and `locationId` fields
-- [ ] Create `SecuritySystemEventPublisher` class in `security-system-service-domain`
-- [ ] Use Eventuate Tram domain events framework
-- [ ] Modify `SecuritySystemService.createSecuritySystem` to accept optional `locationId` and `locationName` parameters
-- [ ] When locationId is provided, publish `SecuritySystemAssignedToLocation` event
-- [ ] SecuritySystem starts in `DISARMED` state when created with locationId
+- [x] Create `SecuritySystemAssignedToLocation` event record in `security-system-service-domain`
+- [x] Event contains `securitySystemId` and `locationId` fields
+- [x] Create `SecuritySystemEventPublisher` class in `security-system-service-domain`
+- [x] Use Eventuate Tram domain events framework
+- [x] Modify `SecuritySystemService.createSecuritySystem` to accept optional `locationId` and `locationName` parameters
+- [x] When locationId is provided, publish `SecuritySystemAssignedToLocation` event
+- [x] SecuritySystem starts in `DISARMED` state when created with locationId
 
 ---
 

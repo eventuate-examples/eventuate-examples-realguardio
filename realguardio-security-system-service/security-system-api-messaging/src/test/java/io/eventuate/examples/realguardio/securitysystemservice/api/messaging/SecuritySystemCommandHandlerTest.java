@@ -1,6 +1,7 @@
 package io.eventuate.examples.realguardio.securitysystemservice.api.messaging;
 
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.tram.commands.producer.CommandProducer;
@@ -85,5 +86,27 @@ class SecuritySystemCommandHandlerTest {
         replyConsumer.assertHasReplyTo(commandId);
 
         verify(securitySystemService).noteLocationCreated(securitySystemId, locationId);
+    }
+
+    @Test
+    void shouldHandleCreateSecuritySystemWithLocationIdCommand() {
+        // Given
+        Long locationId = 100L;
+        String locationName = "Main Office";
+        Long expectedSecuritySystemId = 42L;
+        CreateSecuritySystemWithLocationIdCommand command = new CreateSecuritySystemWithLocationIdCommand(locationId, locationName);
+
+        when(securitySystemService.createSecuritySystemWithLocation(locationId, locationName)).thenReturn(expectedSecuritySystemId);
+
+        // Create a test message consumer to receive the reply
+        TestMessageConsumer replyConsumer = testMessageConsumerFactory.make();
+
+        // When - Send the command
+        var commandId = commandProducer.send("security-system-service", command, replyConsumer.getReplyChannel(),
+            Collections.emptyMap());
+
+        // Then - Verify the reply is received
+        replyConsumer.assertHasReplyTo(commandId);
+        verify(securitySystemService).createSecuritySystemWithLocation(locationId, locationName);
     }
 }

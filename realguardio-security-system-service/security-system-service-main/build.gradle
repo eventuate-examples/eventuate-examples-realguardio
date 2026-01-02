@@ -12,6 +12,7 @@ integrationTest {
 
 dependencies {
     implementation project(':security-system-service-domain')
+    implementation project(':security-system-service-event-publishing')
     implementation project(':security-system-service-persistence')
     implementation project(':security-system-service-restapi')
     implementation project(':security-system-api-messaging')

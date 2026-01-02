@@ -12,6 +12,7 @@ pluginManagement {
 rootProject.name = 'realguardio-security-system-service'
 
 include 'security-system-service-domain'
+include 'security-system-service-event-publishing'
 include 'security-system-service-oso-integration'
 include 'security-system-service-persistence'
 include 'security-system-service-restapi'
