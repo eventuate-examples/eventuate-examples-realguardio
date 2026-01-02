@@ -257,15 +257,15 @@ Removes the old `CreateSecuritySystemSaga` that creates Location during Security
 
 ### Task 12.1: Remove old CreateSecuritySystemSaga
 
-- [ ] Delete `CreateSecuritySystemSaga` class (the one that takes locationName)
-- [ ] Delete `CreateSecuritySystemSagaData` class
-- [ ] Remove `customerId` and `locationName` fields from `CreateSecuritySystemRequest` (keep only `locationId`)
+- [x] Delete `CreateSecuritySystemSaga` class (the one that takes locationName)
+- [x] Delete `CreateSecuritySystemSagaData` class
+- [x] Remove `customerId` and `locationName` fields from `CreateSecuritySystemRequest` (keep only `locationId`)
 
 ### Task 12.2: Update SecuritySystemController to only accept locationId
 
-- [ ] Remove routing logic that chose between old and new saga
-- [ ] Controller now only starts `CreateSecuritySystemWithLocationIdSaga`
-- [ ] Return 400 Bad Request if `locationId` is not provided
+- [x] Remove routing logic that chose between old and new saga
+- [x] Controller now only starts `CreateSecuritySystemWithLocationIdSaga`
+- [x] Return 400 Bad Request if `locationId` is not provided
 
 ### Task 12.3: Run E2E tests after Orchestration Service changes
 

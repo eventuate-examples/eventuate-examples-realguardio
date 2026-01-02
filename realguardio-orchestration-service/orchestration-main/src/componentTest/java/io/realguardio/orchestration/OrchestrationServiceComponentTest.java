@@ -12,7 +12,6 @@ import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemResponse;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.ValidateLocationCommand;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationNotFound;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationValidated;
-import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.LocationAlreadyHasSecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
@@ -138,48 +137,6 @@ public class OrchestrationServiceComponentTest {
 				.get("/actuator/info")
 				.then()
 				.statusCode(200);
-	}
-
-	@Test
-	void shouldOrchestrateCreateSecuritySystemSaga() throws Exception {
-		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
-		String baseUri = String.format("http://localhost:%d", service.getFirstMappedPort());
-
-		long customerId = 12345L;
-		String locationName = "Office Main Entrance";
-		
-		// Start the saga via REST API
-		String sagaRequestJson = """
-		{
-			"customerId": %d,
-			"locationName": "%s"
-		}
-		""".formatted(customerId, locationName);
-
-		logger.info("Starting CreateSecuritySystemSaga for customer {} and location {}", customerId, locationName);
-		
-		CompletableFuture<CreateSecuritySystemResponse> createResponse = CompletableFuture.supplyAsync(() ->
-			RestAssured.given()
-				.baseUri(baseUri)
-				.header("Authorization", "Bearer " + accessToken)
-				.contentType(ContentType.JSON)
-				.body(sagaRequestJson)
-				.when()
-				.post("/securitysystems")
-				.then()
-				.statusCode(201) // Created - based on controller implementation
-				.extract()
-				.body()
-				.as(CreateSecuritySystemResponse.class)
-		);
-
-		Message createCommandMessage = componentTestSupport.assertThatCommandMessageSent(CreateSecuritySystemCommand.class, securitySystemServiceChannel);
-
-		long securitySystemId = System.currentTimeMillis();
-
-		componentTestSupport.sendReply(createCommandMessage, new SecuritySystemCreated(securitySystemId));
-
-		assertThat(createResponse.get().securitySystemId()).isEqualTo(securitySystemId);
 	}
 
 	@Test

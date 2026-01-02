@@ -19,19 +19,8 @@ class CreateSecuritySystemDTOTest {
     }
 
     @Test
-    void shouldSerializeCreateSecuritySystemRequestWithLegacyFlow() throws Exception {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, "Warehouse", null);
-
-        String json = objectMapper.writeValueAsString(request);
-        DocumentContext jsonContext = JsonPath.parse(json);
-
-        assertThat(jsonContext.read("$.customerId", Long.class)).isEqualTo(100L);
-        assertThat(jsonContext.read("$.locationName", String.class)).isEqualTo("Warehouse");
-    }
-
-    @Test
-    void shouldSerializeCreateSecuritySystemRequestWithLocationIdFlow() throws Exception {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(null, null, 100L);
+    void shouldSerializeCreateSecuritySystemRequest() throws Exception {
+        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L);
 
         String json = objectMapper.writeValueAsString(request);
         DocumentContext jsonContext = JsonPath.parse(json);
@@ -42,59 +31,23 @@ class CreateSecuritySystemDTOTest {
     @Test
     void shouldDeserializeCreateSecuritySystemRequest() throws Exception {
         ObjectNode jsonNode = objectMapper.createObjectNode();
-        jsonNode.put("customerId", 100L);
-        jsonNode.put("locationName", "Warehouse");
-        String json = objectMapper.writeValueAsString(jsonNode);
-
-        CreateSecuritySystemRequest request = objectMapper.readValue(json, CreateSecuritySystemRequest.class);
-
-        assertThat(request.customerId()).isEqualTo(100L);
-        assertThat(request.locationName()).isEqualTo("Warehouse");
-    }
-
-    @Test
-    void shouldDeserializeCreateSecuritySystemRequestWithLocationId() throws Exception {
-        ObjectNode jsonNode = objectMapper.createObjectNode();
         jsonNode.put("locationId", 100L);
         String json = objectMapper.writeValueAsString(jsonNode);
 
         CreateSecuritySystemRequest request = objectMapper.readValue(json, CreateSecuritySystemRequest.class);
 
         assertThat(request.locationId()).isEqualTo(100L);
-        assertThat(request.usesLocationIdFlow()).isTrue();
     }
 
     @Test
-    void shouldBeValidWithLegacyFlow() {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, "Warehouse", null);
+    void shouldBeValidWithLocationId() {
+        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L);
         assertThat(request.isValid()).isTrue();
-        assertThat(request.usesLegacyFlow()).isTrue();
-        assertThat(request.usesLocationIdFlow()).isFalse();
     }
 
     @Test
-    void shouldBeValidWithLocationIdFlow() {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(null, null, 100L);
-        assertThat(request.isValid()).isTrue();
-        assertThat(request.usesLocationIdFlow()).isTrue();
-        assertThat(request.usesLegacyFlow()).isFalse();
-    }
-
-    @Test
-    void shouldBeInvalidWithNoData() {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(null, null, null);
-        assertThat(request.isValid()).isFalse();
-    }
-
-    @Test
-    void shouldBeInvalidWithOnlyCustomerId() {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, null, null);
-        assertThat(request.isValid()).isFalse();
-    }
-
-    @Test
-    void shouldBeInvalidWithBlankLocationName() {
-        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L, "", null);
+    void shouldBeInvalidWithNullLocationId() {
+        CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(null);
         assertThat(request.isValid()).isFalse();
     }
 

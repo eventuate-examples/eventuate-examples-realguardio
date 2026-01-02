@@ -34,18 +34,11 @@ public class SecuritySystemController {
 
         if (!request.isValid()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Either locationId or (customerId + locationName) must be provided");
+                    "locationId must be provided");
         }
 
-        CompletableFuture<Long> sagaFuture;
-        if (request.usesLocationIdFlow()) {
-            logger.info("Creating security system with locationId: {}", request.locationId());
-            sagaFuture = securitySystemSagaService.createSecuritySystemWithLocationId(request.locationId());
-        } else {
-            logger.info("Creating security system with customerId: {} and locationName: {}",
-                    request.customerId(), request.locationName());
-            sagaFuture = securitySystemSagaService.createSecuritySystem(request.customerId(), request.locationName());
-        }
+        logger.info("Creating security system with locationId: {}", request.locationId());
+        CompletableFuture<Long> sagaFuture = securitySystemSagaService.createSecuritySystemWithLocationId(request.locationId());
 
         return sagaFuture
                 .orTimeout(30, TimeUnit.SECONDS)
