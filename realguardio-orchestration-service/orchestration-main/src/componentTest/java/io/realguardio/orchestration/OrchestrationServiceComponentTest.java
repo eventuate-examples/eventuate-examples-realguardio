@@ -9,7 +9,10 @@ import io.eventuate.testcontainers.service.ServiceContainer;
 import io.eventuate.tram.messaging.common.Message;
 import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemResponse;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.ValidateLocationCommand;
+import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationValidated;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
+import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemWithLocationIdCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.replies.SecuritySystemCreated;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -68,6 +71,7 @@ public class OrchestrationServiceComponentTest {
 			;
 
 	private static String securitySystemServiceChannel = "security-system-service-" + System.currentTimeMillis();
+	private static String customerServiceChannel = "customer-service-" + System.currentTimeMillis();
 
 	// Orchestration Service under test
 	public static GenericContainer<?> service =
@@ -79,6 +83,7 @@ public class OrchestrationServiceComponentTest {
 			.withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
 			.withEnv("SPRING_PROFILES_ACTIVE", "test,postgres")
 			.withEnv("SECURITYSYSTEMSERVICE_CHANNEL", securitySystemServiceChannel) // use unique channel name for each test run
+			.withEnv("CUSTOMERSERVICE_CHANNEL", customerServiceChannel)
 			.withReuse(true)
 			.withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC orchestration-service:"));
 		;
@@ -175,6 +180,54 @@ public class OrchestrationServiceComponentTest {
 		assertThat(createResponse.get().securitySystemId()).isEqualTo(securitySystemId);
 	}
 
+	@Test
+	void shouldOrchestrateCreateSecuritySystemWithLocationIdSaga() throws Exception {
+		String accessToken = JwtTokenHelper.getJwtTokenForUserWithHostHeader(iamService.getFirstMappedPort());
+		String baseUri = String.format("http://localhost:%d", service.getFirstMappedPort());
 
+		long locationId = System.currentTimeMillis();
+		String locationName = "Office Location";
+		long customerId = 54321L;
+		long securitySystemId = System.currentTimeMillis() + 1;
+
+		// Start the saga via REST API with locationId
+		String sagaRequestJson = """
+		{
+			"locationId": %d
+		}
+		""".formatted(locationId);
+
+		logger.info("Starting CreateSecuritySystemWithLocationIdSaga for locationId {}", locationId);
+
+		CompletableFuture<CreateSecuritySystemResponse> createResponse = CompletableFuture.supplyAsync(() ->
+			RestAssured.given()
+				.baseUri(baseUri)
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(ContentType.JSON)
+				.body(sagaRequestJson)
+				.when()
+				.post("/securitysystems")
+				.then()
+				.statusCode(201)
+				.extract()
+				.body()
+				.as(CreateSecuritySystemResponse.class)
+		);
+
+		// Step 1: Intercept ValidateLocationCommand sent to customer-service
+		Message validateCommandMessage = componentTestSupport.assertThatCommandMessageSent(ValidateLocationCommand.class, customerServiceChannel);
+
+		// Reply with LocationValidated
+		componentTestSupport.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationValidated(locationId, locationName, customerId));
+
+		// Step 2: Intercept CreateSecuritySystemWithLocationIdCommand sent to security-system-service
+		Message createCommandMessage = componentTestSupport.assertThatCommandMessageSent(CreateSecuritySystemWithLocationIdCommand.class, securitySystemServiceChannel);
+
+		// Reply with SecuritySystemCreated
+		componentTestSupport.sendReply(createCommandMessage, CreateSecuritySystemWithLocationIdCommand.class, new SecuritySystemCreated(securitySystemId));
+
+		// Verify response
+		assertThat(createResponse.get().securitySystemId()).isEqualTo(securitySystemId);
+	}
 
 }

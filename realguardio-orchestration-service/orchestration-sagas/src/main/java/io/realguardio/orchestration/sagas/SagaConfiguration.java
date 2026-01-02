@@ -50,13 +50,18 @@ public class SagaConfiguration {
     @Value("${securitysystemservice.channel:security-system-service}")
     private String securitySystemServiceChannel;
 
+    @Value("${customerservice.channel:customer-service}")
+    private String customerServiceChannel;
+
     @Bean
     public ChannelMapping channelMapping() {
         var outMappings = Map.of(
-                "security-system-service", securitySystemServiceChannel
+                "security-system-service", securitySystemServiceChannel,
+                "customer-service", customerServiceChannel
         );
         var inMappings = Map.of(
-                securitySystemServiceChannel, "security-system-service"
+                securitySystemServiceChannel, "security-system-service",
+                customerServiceChannel, "customer-service"
         );
         return logicalChannel -> {
             if (outMappings.containsKey(logicalChannel))

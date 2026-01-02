@@ -45,20 +45,41 @@ public class ComponentTestSupport {
     }, channel);
   }
 
-  public <T extends Command> Message assertThatCommandMessageSent(Class<T> commandMessageType, String securitySystemServiceChannel) {
+  public <T extends Command> Message assertThatCommandMessageSent(Class<T> commandMessageType, String channel) {
+    // Wait for the message to appear in the outbox
     eventually(10, 500, TimeUnit.MILLISECONDS, () -> {
-      commandOutboxTestSupport.assertCommandMessageSent(securitySystemServiceChannel, commandMessageType);
+      List<Message> messages = findMessagesOfType(channel, commandMessageType);
+      assertThat(messages).withFailMessage("Expected to find %s in channel %s", commandMessageType.getSimpleName(), channel).isNotEmpty();
     });
 
-    logger.info("Verified CreateSecuritySystemCommand was sent to {}", securitySystemServiceChannel);
+    logger.info("Verified {} was sent to {}", commandMessageType.getSimpleName(), channel);
 
-    List<Message> messages = findMessagesSentToChannel(securitySystemServiceChannel);
-    assertThat(messages).hasSize(1);
-    return messages.get(0);
+    // Find the most recently sent message of this type
+    List<Message> messages = findMessagesOfType(channel, commandMessageType);
+    // Return the last (most recent) message
+    return messages.get(messages.size() - 1);
+  }
+
+  public <T extends Command> List<Message> findMessagesOfType(String channel, Class<T> commandType) {
+    String commandTypeName = commandType.getName();
+    return jdbcTemplate.query(
+            "SELECT headers, payload FROM message WHERE destination = ? AND headers LIKE ?",
+            (rs, rowNum) -> {
+              String headers = rs.getString("headers");
+              String payload = rs.getString("payload");
+              return MessageBuilder.withPayload(payload).withExtraHeaders("", JSonMapper.fromJson(headers, Map.class)).build();
+            },
+            channel,
+            "%" + commandTypeName + "%"
+    );
   }
 
   public void sendReply(Message createCommandMessage, SecuritySystemCreated reply) {
-    CommandHandlerParams commandHandlerParams = new CommandHandlerParams(createCommandMessage, CreateSecuritySystemCommand.class, Optional.empty());
+    sendReply(createCommandMessage, CreateSecuritySystemCommand.class, reply);
+  }
+
+  public <C extends Command> void sendReply(Message commandMessage, Class<C> commandClass, Object reply) {
+    CommandHandlerParams commandHandlerParams = new CommandHandlerParams(commandMessage, commandClass, Optional.empty());
     CommandReplyToken commandReplyToken = new CommandReplyToken(commandHandlerParams.getCorrelationHeaders(), commandHandlerParams.getDefaultReplyChannel().orElse(null));
 
     commandReplyProducer.sendReplies(commandReplyToken, withSuccess(reply));

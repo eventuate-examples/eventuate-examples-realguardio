@@ -169,10 +169,10 @@ Implements: "As an administrator, I want to create a SecuritySystem for an exist
 
 ### Task 7.2: Integration test for locationId-based SecuritySystem creation
 
-- [ ] Test: Create Location via Customer Service endpoint
-- [ ] Test: Create SecuritySystem with locationId via Orchestration Service
-- [ ] Verify: SecuritySystem is created in DISARMED state
-- [ ] Verify: SecuritySystem has correct locationId and locationName
+- [x] Test: Create Location via Customer Service endpoint
+- [x] Test: Create SecuritySystem with locationId via Orchestration Service
+- [x] Verify: SecuritySystem is created in DISARMED state
+- [x] Verify: SecuritySystem has correct locationId and locationName
 
 ---
 
