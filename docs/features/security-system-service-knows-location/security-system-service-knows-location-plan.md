@@ -96,11 +96,11 @@ Implements: OSO Integration Service listens for `SecuritySystemAssignedToLocatio
 
 ### Task 4.1: Consume SecuritySystemAssignedToLocation event and create Oso fact
 
-- [ ] Create `SecuritySystemEventConsumer` class in `oso-event-subscribers`
-- [ ] Subscribe to Security System Service's domain event channel
-- [ ] Handle `SecuritySystemAssignedToLocation` event
-- [ ] Call `RealGuardOsoFactManager.assignSecuritySystemToLocation(securitySystemId, locationId)` when event received
-- [ ] This creates `has_relation(SecuritySystem, "location", Location)` fact in Oso Cloud
+- [x] Create `SecuritySystemEventConsumer` class in `oso-event-subscribers`
+- [x] Subscribe to Security System Service's domain event channel
+- [x] Handle `SecuritySystemAssignedToLocation` event
+- [x] Call `RealGuardOsoFactManager.assignSecuritySystemToLocation(securitySystemId, locationId)` when event received
+- [x] This creates `has_relation(SecuritySystem, "location", Location)` fact in Oso Cloud
 
 ### Task 4.2: Integration test for Oso fact creation from Security System Service event
 
