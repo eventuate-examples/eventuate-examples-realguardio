@@ -86,21 +86,21 @@ This plan implements the `OsoLocalSecuritySystemLocation` profile for demonstrat
 
 ### Task 2.3: Create OsoLocalSecuritySystemActionAuthorizer
 
-- [ ] Create new class `OsoLocalSecuritySystemActionAuthorizer` implementing `SecuritySystemActionAuthorizer`
-- [ ] Inject `RealGuardOsoAuthorizer` and `JdbcTemplate` (or appropriate repository)
-- [ ] In `verifyCanDo(securitySystemId, permission)`:
+- [x] Create new class `OsoLocalSecuritySystemActionAuthorizer` implementing `SecuritySystemActionAuthorizer`
+- [x] Inject `RealGuardOsoAuthorizer` and `JdbcTemplate` (or appropriate repository)
+- [x] In `verifyCanDo(securitySystemId, permission)`:
   - Call `realGuardOsoAuthorizer.authorizeLocal(user, permission, "SecuritySystem", securitySystemId)`
   - Execute the returned SQL query against the local database
   - If query returns the securitySystemId, authorization passes
   - If query returns empty, throw `ForbiddenException`
-- [ ] Annotate with `@Profile("OsoLocalSecuritySystemLocation")`
+- [x] Annotate with `@Profile("OsoLocalSecuritySystemLocation")`
 
 **Location:** `realguardio-security-system-service/security-system-service-oso-integration/src/main/java/io/eventuate/examples/realguardio/securitysystemservice/osointegration/`
 
 ### Task 2.4: Update OsoSecuritySystemActionAuthorizer with profile annotation
 
-- [ ] Add `@Profile("!OsoLocalSecuritySystemLocation")` to the existing `OsoSecuritySystemActionAuthorizer` bean definition
-- [ ] This ensures the cloud-based authorizer is used when the new profile is NOT active
+- [x] Add `@Profile("!OsoLocalSecuritySystemLocation")` to the existing `OsoSecuritySystemActionAuthorizer` bean definition
+- [x] This ensures the cloud-based authorizer is used when the new profile is NOT active
 
 **File to modify:** `realguardio-security-system-service/security-system-service-oso-integration/src/main/java/io/eventuate/examples/realguardio/securitysystemservice/osointegration/OsoSecuritySystemActionAuthorizerConfiguration.java`
 

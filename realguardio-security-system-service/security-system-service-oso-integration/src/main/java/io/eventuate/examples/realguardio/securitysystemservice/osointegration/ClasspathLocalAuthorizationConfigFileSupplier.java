@@ -47,7 +47,11 @@ public class ClasspathLocalAuthorizationConfigFileSupplier implements LocalAutho
                     return Paths.get(uri);
                 }
                 case "jar" -> {
-                    fs = FileSystems.newFileSystem(uri, Map.of());
+                    try {
+                        fs = FileSystems.newFileSystem(uri, Map.of());
+                    } catch (FileSystemAlreadyExistsException e) {
+                        fs = FileSystems.getFileSystem(uri);
+                    }
                     return Path.of(uri);
                 }
                 default -> {

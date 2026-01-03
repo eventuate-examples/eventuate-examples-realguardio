@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation (project(":security-system-service-domain"))
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 
     implementation 'io.realguardio.osointegration:oso-service:0.1.0-SNAPSHOT'
 
@@ -12,7 +13,12 @@ dependencies {
     testImplementation 'org.mockito:mockito-junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
 
-    integrationTestImplementation 'io.realguardio.osointegration:oso-service-test-container:0.1.0-SNAPSHOT'
-    integrationTestImplementation 'org.testcontainers:junit-jupiter'
+    integrationTestImplementation project(':security-system-service-persistence')
 
+    integrationTestImplementation 'io.realguardio.osointegration:oso-service-test-container:0.1.0-SNAPSHOT'
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    integrationTestImplementation 'org.postgresql:postgresql'
+    integrationTestImplementation 'org.testcontainers:postgresql'
+    integrationTestImplementation 'org.testcontainers:junit-jupiter'
 }

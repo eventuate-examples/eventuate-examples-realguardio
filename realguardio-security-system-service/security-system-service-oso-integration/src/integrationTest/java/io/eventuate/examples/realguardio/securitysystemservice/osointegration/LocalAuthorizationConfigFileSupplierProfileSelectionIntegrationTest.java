@@ -3,6 +3,7 @@ package io.eventuate.examples.realguardio.securitysystemservice.osointegration;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.UserNameSupplier;
 import io.realguardio.osointegration.ososervice.LocalAuthorizationConfigFileSupplier;
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,9 @@ public class LocalAuthorizationConfigFileSupplierProfileSelectionIntegrationTest
 
     @MockitoBean
     private UserNameSupplier userNameSupplier;
+
+    @MockitoBean
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     void shouldLoadConfigFileWithSecuritySystemLocation() {

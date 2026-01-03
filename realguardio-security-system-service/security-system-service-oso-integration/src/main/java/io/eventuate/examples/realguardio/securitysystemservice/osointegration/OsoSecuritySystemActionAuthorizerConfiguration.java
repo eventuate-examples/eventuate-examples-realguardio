@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 @Profile("UseOsoService")
@@ -16,9 +17,18 @@ import org.springframework.context.annotation.Profile;
 public class OsoSecuritySystemActionAuthorizerConfiguration {
 
   @Bean
-  public SecuritySystemActionAuthorizer securitySystemActionAuthorizer(UserNameSupplier userNameSupplier,
-                                                                       RealGuardOsoAuthorizer realGuardOsoAuthorizer) {
+  @Profile("!OsoLocalSecuritySystemLocation")
+  public SecuritySystemActionAuthorizer cloudSecuritySystemActionAuthorizer(UserNameSupplier userNameSupplier,
+                                                                            RealGuardOsoAuthorizer realGuardOsoAuthorizer) {
     return new OsoSecuritySystemActionAuthorizer(userNameSupplier, realGuardOsoAuthorizer);
+  }
+
+  @Bean
+  @Profile("OsoLocalSecuritySystemLocation")
+  public SecuritySystemActionAuthorizer localSecuritySystemActionAuthorizer(UserNameSupplier userNameSupplier,
+                                                                            RealGuardOsoAuthorizer realGuardOsoAuthorizer,
+                                                                            JdbcTemplate jdbcTemplate) {
+    return new OsoLocalSecuritySystemActionAuthorizer(userNameSupplier, realGuardOsoAuthorizer, jdbcTemplate);
   }
 
   @Bean
