@@ -297,5 +297,51 @@ Create a security/security.adoc file that describes:
 * Authorization approach (RBAC via Spring Security + policy-based via Oso Cloud)
 * Where security decisions are made (which services check which permissions)
 * How user accounts are managed (IAM Service user creation API)
+* Spring Profiles that control authorization behavior (see below)
 
 Cross-reference the OAuth2 login scenario and other authentication-related scenarios.
+
+=== Documenting Spring Profiles
+
+When the application uses Spring Profiles to switch between different implementations or behaviors, document them in the appropriate section of the architecture documentation. Security-related profiles (authorization strategies, authentication modes) belong in security.adoc. Other profiles should be documented in the relevant service or component documentation.
+
+For each Spring Profile:
+
+1. **Search the codebase** for `@Profile` annotations to identify all profiles in use
+2. **Group related profiles** by functionality (e.g., authorization strategy, data source selection)
+3. **Document each profile** with:
+   * Profile name (e.g., `UseOsoService`, `OsoLocalSecuritySystemLocation`)
+   * What it enables/disables
+   * Use case (when to use this profile)
+4. **Document profile combinations** that represent common deployment configurations
+5. **Create implementation tables** showing which classes are activated by each profile
+
+Example structure:
+
+====
+==== Authorization Strategy Profiles
+
+|===
+|Profile |Description |Use Case
+
+|`UseOsoService`
+|Enables Oso Cloud integration for policy-based authorization
+|Production deployments with centralized policy management
+
+|`!UseOsoService` (default)
+|Uses local authorization that permits all actions
+|Development and testing without Oso Cloud dependency
+|===
+
+==== Implementation Classes by Profile
+
+|===
+|Component |`ProfileName` Active |`ProfileName` Inactive
+
+|SomeAuthorizer
+|`CloudAuthorizer` (calls external service)
+|`LocalAuthorizer` (permits all)
+|===
+====
+
+IMPORTANT: Profile documentation must reflect the actual `@Profile` annotations in the codebase. If a profile is added or removed in the code, update the documentation accordingly.

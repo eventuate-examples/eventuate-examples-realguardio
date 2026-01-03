@@ -105,7 +105,134 @@ See link:../scenarios/create-customer-employee.adoc[Create Customer Employee Sce
 
 === Authorization Approach
 
-The application uses a two-layer authorization model:
+The application uses a two-layer authorization model.
+
+==== Spring Profiles for Authorization
+
+The application uses Spring Profiles to switch between different authorization strategies. This enables flexible deployment configurations.
+
+===== Authorization Strategy Profiles
+
+[cols="1,1,2a"]
+|===
+|Profiles |Services Affected |Authorization Strategy
+
+|_(none)_
+|Customer Service, Security System Service
+|
+* Application-implemented
+* Security System Service calls Customer Service via HTTP for role lookups
+
+|`UseRolesReplica`
+|Security System Service
+|
+* Application-implemented
+* Security System Service queries local CQRS replica for role lookups
+
+|`UseOsoService`
+|Customer Service, Security System Service, Oso Integration Service
+|
+* Delegates to Oso Cloud
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|Customer Service, Security System Service
+|
+* Delegates to Oso Cloud
+* Local data bindings for SecuritySystem-Location resolution
+|===
+
+NOTE: When `UseOsoService` is active without `OsoLocalSecuritySystemLocation`, Security System Service publishes `SecuritySystemAssignedToLocation` events which Oso Integration Service consumes to sync SecuritySystem-Location relationships to Oso Cloud. With `OsoLocalSecuritySystemLocation`, this event is suppressed because location relationships are resolved locally.
+
+===== Implementation Classes by Profile
+
+====== Security System Service
+
+[cols="2a,1,1"]
+|===
+|Class |Profiles |Implementation
+
+.4+|*SecuritySystemActionAuthorizer*
+
+Verifies user has permission to arm/disarm a security system.
+|_(none)_
+|`LocalSecuritySystemActionAuthorizer`
+
+|`UseRolesReplica`
+|`LocalSecuritySystemActionAuthorizer`
+
+|`UseOsoService`
+|`OsoSecuritySystemActionAuthorizer`
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|`OsoLocalSecuritySystemActionAuthorizer`
+
+.4+|*SecuritySystemFinder*
+
+Finds security systems accessible to the current user.
+|_(none)_
+|`SecuritySystemFinderUsingRepository`
+
+|`UseRolesReplica`
+|`SecuritySystemFinderUsingRepository`
+
+|`UseOsoService`
+|`SecuritySystemFinderUsingRepositoryWithOso`
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|`SecuritySystemFinderUsingRepositoryWithOso`
+
+.4+|*CustomerServiceClient*
+
+Retrieves user role assignments at a location. Used by `LocalSecuritySystemActionAuthorizer` for authorization checks.
+|_(none)_
+|`CustomerServiceClientImpl`
+
+|`UseRolesReplica`
+|`CustomerServiceClientReplicaImpl`
+
+|`UseOsoService`
+|N/A (Oso Cloud has authorization data)
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|N/A (Oso Cloud has authorization data)
+
+.4+|*SecuritySystemLocationEventPublishingPolicy*
+
+Determines whether to publish `SecuritySystemAssignedToLocation` events for Oso Cloud synchronization.
+|_(none)_
+|`DefaultSecuritySystemLocationEventPublishingPolicy`
+
+|`UseRolesReplica`
+|`DefaultSecuritySystemLocationEventPublishingPolicy`
+
+|`UseOsoService`
+|`DefaultSecuritySystemLocationEventPublishingPolicy`
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|`LocalSecuritySystemLocationEventPublishingPolicy`
+|===
+
+====== Customer Service
+
+[cols="2a,1,1"]
+|===
+|Class |Profiles |Implementation
+
+.4+|*CustomerActionAuthorizer*
+
+Verifies user has permission to perform actions on a customer (e.g., create employees, manage locations).
+|_(none)_
+|`LocalCustomerActionAuthorizer`
+
+|`UseRolesReplica`
+|`LocalCustomerActionAuthorizer`
+
+|`UseOsoService`
+|`OsoCustomerActionAuthorizer`
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|`OsoCustomerActionAuthorizer`
+|===
 
 ==== Layer 1: Role-Based Access Control (RBAC) via Spring Security
 
