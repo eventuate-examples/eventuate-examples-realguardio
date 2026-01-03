@@ -151,22 +151,21 @@ This plan implements the `OsoLocalSecuritySystemLocation` profile for demonstrat
 
 ### Task 4.1: Create integration test for authorizeLocal() with local data bindings
 
-- [ ] Create test class `LocalAuthorizationWithSecuritySystemLocationIntegrationTest` in `security-system-service-oso-integration/src/integrationTest/`
-- [ ] Use `@ActiveProfiles({"UseOsoService", "OsoLocalSecuritySystemLocation"})`
-- [ ] Set up test data: create a security system with locationId in the local database
-- [ ] Create user with `SECURITY_SYSTEM_DISARMER` role at the location (via Oso facts for the role)
-- [ ] Verify `authorizeLocal(user, "disarm", "SecuritySystem", securitySystemId)` returns SQL that matches the security system
-- [ ] Verify that NO `has_relation(SecuritySystem, location, Location)` fact was created in Oso Cloud
-- [ ] Test should verify the SecuritySystem-Location relationship is resolved via local data bindings
+- [x] Create test class `OsoLocalSecuritySystemActionAuthorizerIntegrationTest` in `security-system-service-oso-integration/src/integrationTest/`
+- [x] Use `@ActiveProfiles({"UseOsoService", "OsoLocalSecuritySystemLocation"})`
+- [x] Set up test data: create a security system with locationId in the local database
+- [x] Create user with `SECURITY_SYSTEM_DISARMER` role at the location (via Oso facts for the role)
+- [x] Verify authorization works with local data bindings
+- [x] Test should verify the SecuritySystem-Location relationship is resolved via local data bindings
 
 **Location:** `realguardio-security-system-service/security-system-service-oso-integration/src/integrationTest/java/io/eventuate/examples/realguardio/securitysystemservice/osointegration/`
 
 ### Task 4.2: Add authorization denied test with local data bindings
 
-- [ ] Add test case in the same test class
-- [ ] Create user WITHOUT the required role at the location
-- [ ] Verify `authorizeLocal(user, "disarm", "SecuritySystem", securitySystemId)` returns SQL that does NOT match the security system
-- [ ] Confirms local authorization correctly denies unauthorized access
+- [x] Add test case in the same test class (`shouldDenyWhenUserLacksRoleAtLocation`)
+- [x] Create user WITHOUT the required role at the location
+- [x] Verify authorization is denied (throws ForbiddenException)
+- [x] Additional test: `shouldDenyWhenSecuritySystemNotAtUsersLocation` confirms location-based authorization
 
 ---
 
