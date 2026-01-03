@@ -33,4 +33,6 @@ public interface ApplicationUnderTest {
 
   default void useOsoService() {};
 
+  default void useOsoLocalSecuritySystemLocation() {};
+
 }

@@ -169,6 +169,12 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
   }
 
   @Override
+  public void useOsoLocalSecuritySystemLocation() {
+    securitySystemService.withEnv("SPRING_PROFILES_ACTIVE", "UseOsoService,OsoLocalSecuritySystemLocation");
+    customerService.withEnv("SPRING_PROFILES_ACTIVE", "UseOsoService");
+  }
+
+  @Override
   public int getCustomerServicePort() {
     return customerService.getFirstMappedPort();
   }

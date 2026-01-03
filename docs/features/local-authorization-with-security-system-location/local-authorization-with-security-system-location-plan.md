@@ -191,8 +191,8 @@ This plan implements the `OsoLocalSecuritySystemLocation` profile for demonstrat
 
 ### Task 6.1: Add useOsoLocalSecuritySystemLocation() method to ApplicationUnderTest interface
 
-- [ ] Add method `void useOsoLocalSecuritySystemLocation()` to `ApplicationUnderTest` interface
-- [ ] Implement in `ApplicationUnderTestUsingTestContainers`:
+- [x] Add method `void useOsoLocalSecuritySystemLocation()` to `ApplicationUnderTest` interface
+- [x] Implement in `ApplicationUnderTestUsingTestContainers`:
   - Set `SPRING_PROFILES_ACTIVE=UseOsoService,OsoLocalSecuritySystemLocation` on securitySystemService
   - Set `SPRING_PROFILES_ACTIVE=UseOsoService` on customerService (unchanged)
 
@@ -202,12 +202,12 @@ This plan implements the `OsoLocalSecuritySystemLocation` profile for demonstrat
 
 ### Task 6.2: Create RealGuardioLocalAuthorizationEndToEndTest
 
-- [ ] Create new test class extending `AbstractRealGuardioEndToEndTest`
-- [ ] In `@BeforeAll`, call `aut.useOsoLocalSecuritySystemLocation()` before starting
-- [ ] Use a unique network name (e.g., `"e2e-local-auth"`)
-- [ ] Override `waitForUntilPermissionsHaveBeenAssigned()` - may need shorter/no wait since no cloud fact propagation needed for SecuritySystem-Location
-- [ ] Override `waitForCustomerAdminPermission()` - still needs Oso propagation for customer roles
-- [ ] Inherits `shouldCreateCustomerAndSecuritySystem()` test which will verify:
+- [x] Create new test class extending `AbstractRealGuardioEndToEndTest`
+- [x] In `@BeforeAll`, call `aut.useOsoLocalSecuritySystemLocation()` before starting
+- [x] Use a unique network name (e.g., `"e2e-local-auth"`)
+- [x] Override `waitForUntilPermissionsHaveBeenAssigned()` - may need shorter/no wait since no cloud fact propagation needed for SecuritySystem-Location
+- [x] Override `waitForCustomerAdminPermission()` - still needs Oso propagation for customer roles
+- [x] Inherits `shouldCreateCustomerAndSecuritySystem()` test which will verify:
   - Customer and location created
   - Security system created with locationId
   - Arm/disarm roles assigned
