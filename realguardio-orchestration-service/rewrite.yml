@@ -6,16 +6,8 @@ recipeList:
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: io.realguardio.securitysystem.api.CreateSecuritySystemCommand
       newFullyQualifiedTypeName: io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand
-  - org.openrewrite.java.ChangeType:
-      oldFullyQualifiedTypeName: io.realguardio.securitysystem.api.NoteLocationCreatedCommand
-      newFullyQualifiedTypeName: io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand
-  - org.openrewrite.java.ChangeType:
-      oldFullyQualifiedTypeName: io.realguardio.securitysystem.api.UpdateCreationFailedCommand
-      newFullyQualifiedTypeName: io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.UpdateCreationFailedCommand
   - net.chrisrichardson.openrewrite.recipes.addimportsfrompackage.AddImportsFromPackageRecipe:
       classMapping:
         io.realguardio.securitysystem.api.CreateSecuritySystemCommand: io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand
-        io.realguardio.securitysystem.api.NoteLocationCreatedCommand: io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.NoteLocationCreatedCommand
-        io.realguardio.securitysystem.api.UpdateCreationFailedCommand: io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.UpdateCreationFailedCommand
   - org.openrewrite.java.ShortenFullyQualifiedTypeReferences
   - org.openrewrite.java.RemoveUnusedImports

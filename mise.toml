@@ -138,6 +138,11 @@ run = "java -version"
 dir = "./realguardio-bff"
 run = "npm install --legacy-peer-deps"
 
+[tasks."customer-service:clean"]
+description = "Clean realguardio-customer-service"
+dir = "./realguardio-customer-service"
+run = "./gradlew clean"
+
 [tasks."customer-service:build"]
 description = "Build realguardio-customer-service"
 dir = "./realguardio-customer-service"
@@ -151,20 +156,40 @@ description = "Publish customer-service contracts"
 dir = "./realguardio-customer-service"
 run = "./gradlew publishStubsPublicationToStubsRepository"
 
+[tasks."security-system-service:clean"]
+description = "Clean realguardio-security-system-service"
+dir = "./realguardio-security-system-service"
+run = "./gradlew clean"
+
 [tasks."security-system-service:build"]
 description = "Build realguardio-security-system-service"
 dir = "./realguardio-security-system-service"
 run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."orchestration-service:clean"]
+description = "Clean realguardio-orchestration-service"
+dir = "./realguardio-orchestration-service"
+run = "./gradlew clean"
 
 [tasks."orchestration-service:build"]
 description = "Build realguardio-orchestration-service"
 dir = "./realguardio-orchestration-service"
 run = "./gradlew build $GRADLE_BUILD_OPTIONS"
 
+[tasks."oso-integration-service:clean"]
+description = "Clean realguardio-oso-integration-service"
+dir = "./realguardio-oso-integration-service"
+run = "./gradlew clean"
+
 [tasks."oso-integration-service:build"]
 description = "Build realguardio-oso-integration-service"
 dir = "./realguardio-oso-integration-service"
 run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."end-to-end-tests:clean"]
+description = "Clean end-to-end-tests"
+dir = "./end-to-end-tests"
+run = "./gradlew clean"
 
 [tasks."end-to-end-tests:build"]
 description = "Build end-to-end-tests"
@@ -180,6 +205,16 @@ run = [
     "mise run orchestration-service:build",
     "mise run oso-integration-service:build",
     "mise run end-to-end-tests:build"
+]
+
+[tasks.clean]
+description = "Clean all realguardio services with Gradle"
+run = [
+    "mise run customer-service:clean",
+    "mise run security-system-service:clean",
+    "mise run orchestration-service:clean",
+    "mise run oso-integration-service:clean",
+    "mise run end-to-end-tests:clean"
 ]
 
 [tasks.reset-db]

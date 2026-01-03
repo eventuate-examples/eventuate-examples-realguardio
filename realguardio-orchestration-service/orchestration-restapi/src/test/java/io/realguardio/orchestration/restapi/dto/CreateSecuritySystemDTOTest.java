@@ -40,7 +40,7 @@ class CreateSecuritySystemDTOTest {
     }
 
     @Test
-    void shouldBeValidWithLocationId() {
+    void shouldBeValidWhenLocationIdIsProvided() {
         CreateSecuritySystemRequest request = new CreateSecuritySystemRequest(100L);
         assertThat(request.isValid()).isTrue();
     }

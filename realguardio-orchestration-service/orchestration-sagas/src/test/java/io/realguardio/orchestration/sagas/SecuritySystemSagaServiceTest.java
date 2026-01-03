@@ -30,7 +30,7 @@ class SecuritySystemSagaServiceTest {
     }
 
     @Test
-    void shouldStartLocationIdSagaWhenCreatingWithLocationId() {
+    void shouldStartSagaWhenCreatingSecuritySystem() {
         Long locationId = 100L;
         String sagaId = "saga-456";
 

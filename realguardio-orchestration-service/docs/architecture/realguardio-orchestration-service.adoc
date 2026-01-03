@@ -24,9 +24,9 @@ include::subdomains/orchestration.adoc[leveloffset=+1]
 ==== Synchronous (REST API)
 
 * `POST /securitysystems` - Initiate security system creation saga
-** Request Body: `{"customerId": Long, "name": String, "locationName": String}`
+** Request Body: `{"locationId": Long}`
 ** Returns: `CreateSecuritySystemResponse` with `securitySystemId`
-** Process: Asynchronously orchestrates creation across services
+** Process: Validates location exists, then creates security system for it
 
 === Outbound Dependencies
 
@@ -34,13 +34,11 @@ include::subdomains/orchestration.adoc[leveloffset=+1]
 
 Sends saga commands to:
 
-* *Security System Service*:
-** `CreateSecuritySystemCommand` - Create security system entity
-** `NoteLocationCreatedCommand` - Link location to security system
-** `UpdateCreationFailedCommand` - Mark creation as failed (compensation)
-
 * *Customer Service*:
-** `CreateLocationWithSecuritySystemCommand` - Create location linked to security system
+** `ValidateLocationCommand` - Validate location exists and retrieve details
+
+* *Security System Service*:
+** `CreateSecuritySystemCommand` - Create security system for validated location
 
 All commands follow request/reply pattern with 30-second timeout.
 
@@ -59,25 +57,20 @@ All commands follow request/reply pattern with 30-second timeout.
 
 ==== CreateSecuritySystemSaga
 
-*Purpose*: Coordinates creation of a security system and its associated location across two services.
+*Purpose*: Creates a security system for an existing location after validating the location exists.
 
 |===
 |Step |Participant |Transaction |Compensating Transaction
 
 |1
-|Security System Service
-|`CreateSecuritySystemCommand`
-|`UpdateCreationFailedCommand`
+|Customer Service
+|`ValidateLocationCommand`
+|— (read-only)
 
 |2
-|Customer Service
-|`CreateLocationWithSecuritySystemCommand`
-|—
-
-|3
 |Security System Service
-|`NoteLocationCreatedCommand`
-|—
+|`CreateSecuritySystemCommand`
+|— (no rollback needed)
 |===
 
 *Saga State*:
@@ -85,7 +78,7 @@ All commands follow request/reply pattern with 30-second timeout.
 Persisted in the orchestration service database to ensure reliability:
 
 * Current step
-* Saga data (customerId, locationName, securitySystemId, locationId)
+* Saga data (locationId, customerId, locationName, securitySystemId)
 * Completion status
 
 === Data Model

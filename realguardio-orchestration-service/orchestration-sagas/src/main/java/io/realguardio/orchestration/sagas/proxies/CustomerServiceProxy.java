@@ -11,20 +11,6 @@ import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.*
 public class CustomerServiceProxy {
 
     public static final String CHANNEL = "customer-service";
-    
-    public static final Class<CustomerNotFound> customerNotFoundReply = CustomerNotFound.class;
-    public static final Class<LocationAlreadyHasSecuritySystem> locationAlreadyHasSecuritySystemReply = LocationAlreadyHasSecuritySystem.class;
-
-    @SagaParticipantOperation(
-        commandClass = CreateLocationWithSecuritySystemCommand.class,
-        replyClasses = LocationCreatedWithSecuritySystem.class
-    )
-    public CommandWithDestination createLocationWithSecuritySystem(Long customerId, String locationName, Long securitySystemId) {
-        return CommandWithDestinationBuilder.send(
-                new CreateLocationWithSecuritySystemCommand(customerId, locationName, securitySystemId))
-                .to(CHANNEL)
-                .build();
-    }
 
     @SagaParticipantOperation(
         commandClass = ValidateLocationCommand.class,

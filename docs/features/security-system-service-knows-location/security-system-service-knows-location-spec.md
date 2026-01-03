@@ -304,6 +304,39 @@ The implementation MUST follow this sequencing:
 
 ## Change History
 
+### 2026-01-03: Migration Complete
+
+All phases of the backwards-compatible migration have been completed:
+
+**Phase 1 (Additive Changes) - COMPLETE:**
+- Location REST endpoint: `POST /customers/{customerId}/locations`
+- `ValidateLocationCommand` handler in Customer Service
+- `SecuritySystemAssignedToLocation` event publishing from Security System Service
+- OSO event listener for Security System Service events
+
+**Phase 2 (New Flow Support) - COMPLETE:**
+- `CreateSecuritySystemSaga` now validates locationId and creates SecuritySystem
+- SecuritySystem starts in `DISARMED` state when using locationId flow
+- One-SecuritySystem-per-Location constraint enforced via database unique constraint
+
+**Phase 3 (Client Migration) - COMPLETE:**
+- All E2E tests migrated to use new locationId-based flow
+- BFF tests verified to work with new flow
+
+**Phase 4 (Removal) - COMPLETE:**
+- Old `CreateSecuritySystemSaga` flow removed (no more locationName + customerId)
+- `securitySystemId` removed from Location entity
+- Old `CreateLocationWithSecuritySystemCommand` handler removed
+- Old event listener for Customer Service events removed
+- `CREATION_PENDING` state removed from SecuritySystem
+- `noteLocationCreated()` method removed
+
+The system now operates entirely on the new flow where:
+1. Locations are created independently via Customer Service
+2. SecuritySystems are created for existing locations by providing locationId
+3. Security System Service owns the SecuritySystem-Location relationship
+4. Authorization facts are populated from Security System Service events
+
 ### 2026-01-02: Added authorization requirement for Location creation
 
 Added FR-1.6: Only a Customer Administrator (employee with admin role in their customer) SHALL be authorized to create Locations.

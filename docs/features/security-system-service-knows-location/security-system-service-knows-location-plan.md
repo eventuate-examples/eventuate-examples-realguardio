@@ -365,21 +365,21 @@ Comprehensive verification that all old code is removed and new flow works corre
 
 ### Task 17.1: Verify no references to old code remain
 
-- [ ] Search codebase for `securitySystemId` in Location-related code
-- [ ] Search for `CREATION_PENDING` references
-- [ ] Search for `CreateLocationWithSecuritySystemCommand` references
-- [ ] Search for `noteLocationCreated` references
+- [x] Search codebase for `securitySystemId` in Location-related code
+- [x] Search for `CREATION_PENDING` references
+- [x] Search for `CreateLocationWithSecuritySystemCommand` references
+- [x] Search for `noteLocationCreated` references
 
 ### Task 17.2: Run full test suite
 
-- [ ] Run `./gradlew check` across all modules
-- [ ] Run E2E tests
-- [ ] Run BFF tests
+- [x] Run `./gradlew check` across all modules
+- [x] Run E2E tests
+- [x] Run BFF tests
 
 ### Task 17.3: Document migration complete
 
-- [ ] Update specification to reflect current state
-- [ ] Note that old flow has been fully removed
+- [x] Update specification to reflect current state
+- [x] Note that old flow has been fully removed
 
 ---
 
