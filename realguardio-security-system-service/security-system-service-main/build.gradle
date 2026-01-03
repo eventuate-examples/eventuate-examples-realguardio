@@ -65,6 +65,9 @@ dependencies {
     componentTestImplementation 'io.eventuate.tram.core:eventuate-tram-spring-events-publisher-starter'
     componentTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-producer"
 
+    componentTestImplementation 'io.realguardio.osointegration:oso-service:0.1.0-SNAPSHOT'
+    componentTestImplementation 'io.realguardio.osointegration:oso-service-test-container:0.1.0-SNAPSHOT'
+
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     integrationTestImplementation 'org.postgresql:postgresql'

@@ -175,11 +175,11 @@ This plan implements the `OsoLocalSecuritySystemLocation` profile for demonstrat
 
 ### Task 5.1: Create component test for local authorization profile
 
-- [ ] Create `SecuritySystemServiceWithLocalAuthorizationComponentTest` in `security-system-service-main/src/componentTest/`
-- [ ] Configure service container with `SPRING_PROFILES_ACTIVE=UseOsoService,OsoLocalSecuritySystemLocation`
-- [ ] Test that `CreateSecuritySystemCommand` creates a security system with correct locationId
-- [ ] Verify no `SecuritySystemAssignedToLocation` event is published (check Kafka topic or outbox)
-- [ ] Test that subsequent authorization works correctly
+- [x] Create `SecuritySystemServiceWithLocalAuthorizationComponentTest` in `security-system-service-main/src/componentTest/`
+- [x] Configure service container with `SPRING_PROFILES_ACTIVE=UseOsoService,OsoLocalSecuritySystemLocation`
+- [x] Test that `CreateSecuritySystemCommand` creates a security system with correct locationId
+- [x] Verify no `SecuritySystemAssignedToLocation` event is published (check Kafka topic or outbox)
+- [x] Test that subsequent authorization works correctly
 
 **Location:** `realguardio-security-system-service/security-system-service-main/src/componentTest/java/io/eventuate/examples/realguardio/securitysystemservice/`
 
