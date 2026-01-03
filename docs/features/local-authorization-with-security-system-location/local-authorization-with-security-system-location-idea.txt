@@ -1,0 +1,27 @@
+I want an optional profile OsoLocalSecuritySystemLocation that's used with UseOsoService.
+
+When active, the security service does not publish Security System Location information to Oso.
+
+Instead, it uses Oso Local authorization and queries its DB for SecuritySystem-Location information.
+
+## Refined Understanding
+
+**Profile:** `OsoLocalSecuritySystemLocation` (additive, used alongside `UseOsoService`)
+
+**Behavior when active:**
+1. The security-system-service does NOT publish `SecuritySystemAssignedToLocation` events
+2. The `isAuthorized()` calls use Oso local data bindings to query the `security_system` table for the SecuritySystem-Location relationship
+3. The `listLocal()` calls continue to work as before (already use local data bindings)
+
+**Technical approach:**
+- Add a fact definition to `local_authorization_config.yaml`:
+  ```yaml
+  "has_relation(SecuritySystem:_, String:location, Location:_)":
+    query: 'SELECT id, location_id FROM security_system WHERE location_id IS NOT NULL'
+  ```
+- Conditionally suppress `SecuritySystemAssignedToLocation` event publishing when profile is active
+- Configure Oso to use local data bindings for the SecuritySystem-Location relationship in `isAuthorized()` calls
+
+**Classification:** Educational/Example - demonstrating how to configure Oso local authorization for different use cases
+
+**Scope:** Changes contained within security-system-service only

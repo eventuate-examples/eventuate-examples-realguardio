@@ -17,11 +17,22 @@ import java.util.Map;
 public class ClasspathLocalAuthorizationConfigFileSupplier implements LocalAuthorizationConfigFileSupplier {
 
     private static final Logger logger = LoggerFactory.getLogger(ClasspathLocalAuthorizationConfigFileSupplier.class);
+    private static final String DEFAULT_CONFIG_PATH = "/local_authorization_config.yaml";
+
+    private final String configFilePath;
     private FileSystem fs;
+
+    public ClasspathLocalAuthorizationConfigFileSupplier() {
+        this(DEFAULT_CONFIG_PATH);
+    }
+
+    public ClasspathLocalAuthorizationConfigFileSupplier(String configFilePath) {
+        this.configFilePath = configFilePath;
+    }
 
     @Override
     public Path get() {
-        var resourceName = "/local_authorization_config.yaml";
+        var resourceName = configFilePath;
 
         URL url = ResourceUtils.class.getResource(resourceName);
         if (url == null) {

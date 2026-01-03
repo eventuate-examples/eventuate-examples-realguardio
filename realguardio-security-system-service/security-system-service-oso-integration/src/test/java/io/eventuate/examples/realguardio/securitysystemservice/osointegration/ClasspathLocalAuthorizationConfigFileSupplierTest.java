@@ -20,4 +20,13 @@ public class ClasspathLocalAuthorizationConfigFileSupplierTest {
         assertThat(path).isNotNull();
     }
 
+    @Test
+    void shouldLoadCustomConfigFile() {
+        var customProvider = new ClasspathLocalAuthorizationConfigFileSupplier(
+                "/local_authorization_config_with_security_system_location.yaml");
+        var path = customProvider.get();
+        assertThat(path).isNotNull();
+        assertThat(path.toString()).contains("local_authorization_config_with_security_system_location.yaml");
+    }
+
 }
