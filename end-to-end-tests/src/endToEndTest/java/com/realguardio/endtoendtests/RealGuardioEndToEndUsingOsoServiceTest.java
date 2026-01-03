@@ -8,6 +8,7 @@ public class RealGuardioEndToEndUsingOsoServiceTest extends AbstractRealGuardioE
 
     @BeforeAll
     static void startContainers() {
+        aut = makeAut("e2e-oso-service");
         aut.useOsoService();
         configureRestAssured();
         aut.start();

@@ -87,10 +87,10 @@ dependencies {
 task endToEndTest(type: Test) {
     description = 'Runs end-to-end tests'
     group = 'verification'
-    
+
     testClassesDirs = sourceSets.endToEndTest.output.classesDirs
     classpath = sourceSets.endToEndTest.runtimeClasspath
-    
+
     useJUnitPlatform()
 
     systemProperty "eventuate.servicecontainer.serviceimage.version", project.version
@@ -99,10 +99,13 @@ task endToEndTest(type: Test) {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
     }
-    
+
     // Increase heap size for Testcontainers
     maxHeapSize = '2g'
     jvmArgs '-XX:MaxMetaspaceSize=512m'
+
+    // Fork a new JVM for each test class
+    forkEvery = 1
 }
 
 test {

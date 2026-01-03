@@ -1,6 +1,12 @@
 package com.realguardio.endtoendtests;
 
 public class ApplicationUnderTestUsingDockerCompose implements ApplicationUnderTest {
+
+  @SuppressWarnings("unused")
+  public ApplicationUnderTestUsingDockerCompose(String networkName) {
+    // networkName is ignored for DockerCompose mode
+  }
+
   @Override
   public void start() {
 

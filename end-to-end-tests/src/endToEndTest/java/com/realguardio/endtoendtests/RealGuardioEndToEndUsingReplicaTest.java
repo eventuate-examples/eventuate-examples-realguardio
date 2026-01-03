@@ -10,6 +10,7 @@ public class RealGuardioEndToEndUsingReplicaTest extends AbstractRealGuardioEndT
 
     @BeforeAll
     static void startContainers() {
+        aut = makeAut("e2e-replica");
         aut.useLocationRolesReplica();
         configureRestAssured();
         aut.start();

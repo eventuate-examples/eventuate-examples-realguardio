@@ -8,6 +8,7 @@ public class RealGuardioEndToEndTest extends AbstractRealGuardioEndToEndTest{
 
     @BeforeAll
     static void startContainers() {
+        aut = makeAut("e2e-default");
         configureRestAssured();
         aut.start();
     }

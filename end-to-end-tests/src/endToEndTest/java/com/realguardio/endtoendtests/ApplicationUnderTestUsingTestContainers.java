@@ -22,113 +22,125 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
 
   private static final Logger logger = LoggerFactory.getLogger(ApplicationUnderTestUsingTestContainers.class);
 
-  public static EventuateKafkaNativeCluster eventuateKafkaCluster = new EventuateKafkaNativeCluster("e2e-tests");
+  private final EventuateKafkaNativeCluster eventuateKafkaCluster;
+  private final EventuateKafkaNativeContainer kafka;
+  private final EventuateDatabaseContainer<?> customerDatabase;
+  private final EventuateDatabaseContainer<?> securityDatabase;
+  private final EventuateDatabaseContainer<?> orchestrationDatabase;
+  private final AuthorizationServerContainerForServiceContainers iamService;
+  private final OsoTestContainer osoService;
+  private final GenericContainer<?> customerService;
+  private final GenericContainer<?> orchestrationService;
+  private final GenericContainer<?> securitySystemService;
+  private final GenericContainer<?> osoIntegrationService;
+  private final EventuateCdcContainer cdc;
 
-  public static EventuateKafkaNativeContainer kafka = eventuateKafkaCluster.kafka
-      .withNetworkAliases("kafka")
-      .withReuse(true)
-      ;
+  public ApplicationUnderTestUsingTestContainers(String networkName) {
+    eventuateKafkaCluster = new EventuateKafkaNativeCluster(networkName);
 
-  public static EventuateDatabaseContainer<?> customerDatabase = DatabaseContainerFactory.makeVanillaDatabaseContainer()
-      .withNetwork(eventuateKafkaCluster.network)
-      .withNetworkAliases("customer-service-db")
-      .withReuse(true);
-  public static EventuateDatabaseContainer<?> securityDatabase = DatabaseContainerFactory.makeVanillaDatabaseContainer()
-      .withNetwork(eventuateKafkaCluster.network)
-      .withNetworkAliases("security-system-service-db")
-      .withReuse(true);
-  public static EventuateDatabaseContainer<?> orchestrationDatabase = DatabaseContainerFactory.makeVanillaDatabaseContainer()
-      .withNetwork(eventuateKafkaCluster.network)
-      .withNetworkAliases("orchestration-service-db")
-      .withReuse(true);
+    kafka = eventuateKafkaCluster.kafka
+        .withNetworkAliases("kafka")
+        .withReuse(true);
 
-  public static AuthorizationServerContainerForServiceContainers iamService = new AuthorizationServerContainerForServiceContainers()
-      .withUserDb()
-      .withNetwork(eventuateKafkaCluster.network)
-      .withNetworkAliases("iam-service")
-      .withReuse(true);
+    customerDatabase = DatabaseContainerFactory.makeVanillaDatabaseContainer()
+        .withNetwork(eventuateKafkaCluster.network)
+        .withNetworkAliases("customer-service-db")
+        .withReuse(true);
 
-  public static OsoTestContainer osoService = new OsoTestContainer()
-      .withNetwork(eventuateKafkaCluster.network)
-      .withNetworkAliases("oso-service")
-      .withReuse(true)
-      .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC oso-service:"));
+    securityDatabase = DatabaseContainerFactory.makeVanillaDatabaseContainer()
+        .withNetwork(eventuateKafkaCluster.network)
+        .withNetworkAliases("security-system-service-db")
+        .withReuse(true);
 
-  public static GenericContainer<?> customerService =
-          new ServiceContainer(new ImageFromDockerfile()
-                  .withFileFromPath(".", Paths.get("..").toAbsolutePath())  // Context: parent directory
-                  .withDockerfilePath("realguardio-customer-service/Dockerfile-local")  // Dockerfile path
-                  .withBuildArgs(BuildArgsResolver.buildArgs()))
-          .withNetwork(eventuateKafkaCluster.network)
-          .withNetworkAliases("customer-service")
-          .withDatabase(customerDatabase)
-          .withKafka(kafka)
-          .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI", "http://iam-service:9000")
-          .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
-          .withEnv("SPRING_PROFILES_ACTIVE", "docker")
-          .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
-          .withEnv("OSO_URL", "http://oso-service:8080")
-          .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
-          .withReuse(false)
-          .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC customer-service:"))
-      ;
+    orchestrationDatabase = DatabaseContainerFactory.makeVanillaDatabaseContainer()
+        .withNetwork(eventuateKafkaCluster.network)
+        .withNetworkAliases("orchestration-service-db")
+        .withReuse(true);
 
-  public static GenericContainer<?> orchestrationService =
-      ServiceContainer.makeFromDockerfileInFileSystem("../realguardio-orchestration-service/Dockerfile-local")
-          .withNetwork(eventuateKafkaCluster.network)
-          .withNetworkAliases("orchestration-service")
-          .withDatabase(orchestrationDatabase)
-          .withKafka(kafka)
-          .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI", "http://iam-service:9000")
-          .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
-          .withEnv("SPRING_PROFILES_ACTIVE", "docker")
-          .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
-          .withReuse(false)
-          .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC orchestration-service:"));
+    iamService = new AuthorizationServerContainerForServiceContainers()
+        .withUserDb()
+        .withNetwork(eventuateKafkaCluster.network)
+        .withNetworkAliases("iam-service")
+        .withReuse(true);
 
-  public static final GenericContainer<?> securitySystemService =
-      new ServiceContainer(new ImageFromDockerfile()
-          .withFileFromPath(".", Paths.get("..").toAbsolutePath())  // Context: parent directory
-          .withDockerfilePath("realguardio-security-system-service/Dockerfile-local")  // Dockerfile path
-          .withBuildArgs(BuildArgsResolver.buildArgs()))
+    osoService = new OsoTestContainer()
+        .withNetwork(eventuateKafkaCluster.network)
+        .withNetworkAliases("oso-service")
+        .withReuse(true)
+        .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC oso-service:"));
 
-          .withNetwork(eventuateKafkaCluster.network)
-          .withNetworkAliases("security-system-service")
-          .withDatabase(securityDatabase)
-          .withKafka(kafka)
-          .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI", "http://iam-service:9000")
-          .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
-          .withEnv("SPRING_PROFILES_ACTIVE", "docker")
-          .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
-          .withEnv("CUSTOMER_SERVICE_URL", "http://customer-service:8080")
-          .withEnv("OSO_URL", "http://oso-service:8080")
-          .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
+    customerService =
+        new ServiceContainer(new ImageFromDockerfile()
+            .withFileFromPath(".", Paths.get("..").toAbsolutePath())
+            .withDockerfilePath("realguardio-customer-service/Dockerfile-local")
+            .withBuildArgs(BuildArgsResolver.buildArgs()))
+            .withNetwork(eventuateKafkaCluster.network)
+            .withNetworkAliases("customer-service")
+            .withDatabase(customerDatabase)
+            .withKafka(kafka)
+            .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI", "http://iam-service:9000")
+            .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
+            .withEnv("SPRING_PROFILES_ACTIVE", "docker")
+            .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
+            .withEnv("OSO_URL", "http://oso-service:8080")
+            .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
+            .withReuse(false)
+            .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC customer-service:"));
 
-          .withReuse(false)
-          .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC security-service:"));
+    orchestrationService =
+        ServiceContainer.makeFromDockerfileInFileSystem("../realguardio-orchestration-service/Dockerfile-local")
+            .withNetwork(eventuateKafkaCluster.network)
+            .withNetworkAliases("orchestration-service")
+            .withDatabase(orchestrationDatabase)
+            .withKafka(kafka)
+            .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI", "http://iam-service:9000")
+            .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
+            .withEnv("SPRING_PROFILES_ACTIVE", "docker")
+            .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
+            .withReuse(false)
+            .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC orchestration-service:"));
 
-  public static GenericContainer<?> osoIntegrationService =
-      ServiceContainer.makeFromDockerfileInFileSystem("../realguardio-oso-integration-service/Dockerfile-local")
-          .withNetwork(eventuateKafkaCluster.network)
-          .withNetworkAliases("oso-integration-service")
-          .withKafka(kafka)
-          .withEnv("OSO_URL", "http://oso-service:8080")
-          .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
-          .withEnv("SPRING_PROFILES_ACTIVE", "docker")
-          .withReuse(false)
-          .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC oso-integration-service:"));
+    securitySystemService =
+        new ServiceContainer(new ImageFromDockerfile()
+            .withFileFromPath(".", Paths.get("..").toAbsolutePath())
+            .withDockerfilePath("realguardio-security-system-service/Dockerfile-local")
+            .withBuildArgs(BuildArgsResolver.buildArgs()))
+            .withNetwork(eventuateKafkaCluster.network)
+            .withNetworkAliases("security-system-service")
+            .withDatabase(securityDatabase)
+            .withKafka(kafka)
+            .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI", "http://iam-service:9000")
+            .withEnv("SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI", "http://iam-service:9000/oauth2/jwks")
+            .withEnv("SPRING_PROFILES_ACTIVE", "docker")
+            .withEnv("SPRING_JPA_HIBERNATE_DDL_AUTO", "update")
+            .withEnv("CUSTOMER_SERVICE_URL", "http://customer-service:8080")
+            .withEnv("OSO_URL", "http://oso-service:8080")
+            .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
+            .withReuse(false)
+            .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC security-service:"));
 
-  private static final EventuateCdcContainer cdc = new EventuateCdcContainer()
-      .withKafka(kafka)
-      .withKafkaLeadership()
-      .withTramPipeline(customerDatabase)
-      .withTramPipeline(securityDatabase)
-      .withTramPipeline(orchestrationDatabase)
-      .withReuse(false)
-      .withExposedPorts(8080)
-      .dependsOn(customerService, securitySystemService, orchestrationService, osoIntegrationService)
-      .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC cdc:"));
+    osoIntegrationService =
+        ServiceContainer.makeFromDockerfileInFileSystem("../realguardio-oso-integration-service/Dockerfile-local")
+            .withNetwork(eventuateKafkaCluster.network)
+            .withNetworkAliases("oso-integration-service")
+            .withKafka(kafka)
+            .withEnv("OSO_URL", "http://oso-service:8080")
+            .withEnv("OSO_AUTH", "e_0123456789_12345_osotesttoken01xiIn")
+            .withEnv("SPRING_PROFILES_ACTIVE", "docker")
+            .withReuse(false)
+            .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC oso-integration-service:"));
 
+    cdc = new EventuateCdcContainer()
+        .withKafka(kafka)
+        .withKafkaLeadership()
+        .withTramPipeline(customerDatabase)
+        .withTramPipeline(securityDatabase)
+        .withTramPipeline(orchestrationDatabase)
+        .withReuse(false)
+        .withExposedPorts(8080)
+        .dependsOn(customerService, securitySystemService, orchestrationService, osoIntegrationService)
+        .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("SVC cdc:"));
+  }
 
   @Override
   public void start() {
@@ -143,7 +155,6 @@ public class ApplicationUnderTestUsingTestContainers implements ApplicationUnder
         osoIntegrationService,
         cdc
     ).join();
-
   }
 
   @Override

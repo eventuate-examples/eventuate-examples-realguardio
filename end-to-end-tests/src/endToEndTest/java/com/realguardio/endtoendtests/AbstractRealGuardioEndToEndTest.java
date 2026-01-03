@@ -29,7 +29,11 @@ public abstract class AbstractRealGuardioEndToEndTest {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractRealGuardioEndToEndTest.class);
 
-    protected static ApplicationUnderTest aut = ApplicationUnderTest.make();
+    protected static ApplicationUnderTest aut;
+
+    protected static ApplicationUnderTest makeAut(String networkName) {
+        return ApplicationUnderTest.make(networkName);
+    }
 
     private static final int MAX_ARM_RETRIES = 5;
     private static final int ARM_RETRY_POLL_INTERVAL_SECONDS = 2;
