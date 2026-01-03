@@ -53,10 +53,10 @@ This plan implements the `OsoLocalSecuritySystemLocation` profile for demonstrat
 
 ### Task 1.4: Create profile-based @Bean methods for LocalAuthorizationConfigFileSupplier
 
-- [ ] Modify `OsoSecuritySystemActionAuthorizerConfiguration` to have two `@Bean` methods:
+- [x] Modify `OsoSecuritySystemActionAuthorizerConfiguration` to have two `@Bean` methods:
   - `@Bean @Profile("!OsoLocalSecuritySystemLocation")` → `new ClasspathLocalAuthorizationConfigFileSupplier("/local_authorization_config.yaml")`
   - `@Bean @Profile("OsoLocalSecuritySystemLocation")` → `new ClasspathLocalAuthorizationConfigFileSupplier("/local_authorization_config_with_security_system_location.yaml")`
-- [ ] Remove any existing bean definition for `LocalAuthorizationConfigFileSupplier` that doesn't have profile annotation
+- [x] Remove any existing bean definition for `LocalAuthorizationConfigFileSupplier` that doesn't have profile annotation
 
 **File to modify:** `realguardio-security-system-service/security-system-service-oso-integration/src/main/java/io/eventuate/examples/realguardio/securitysystemservice/osointegration/OsoSecuritySystemActionAuthorizerConfiguration.java`
 

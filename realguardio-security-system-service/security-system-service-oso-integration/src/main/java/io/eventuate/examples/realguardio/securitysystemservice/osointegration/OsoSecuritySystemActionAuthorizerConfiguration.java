@@ -22,7 +22,15 @@ public class OsoSecuritySystemActionAuthorizerConfiguration {
   }
 
   @Bean
-  public LocalAuthorizationConfigFileSupplier localAuthorizationConfigFileSupplier() {
+  @Profile("!OsoLocalSecuritySystemLocation")
+  public LocalAuthorizationConfigFileSupplier defaultLocalAuthorizationConfigFileSupplier() {
       return new ClasspathLocalAuthorizationConfigFileSupplier();
+  }
+
+  @Bean
+  @Profile("OsoLocalSecuritySystemLocation")
+  public LocalAuthorizationConfigFileSupplier localSecuritySystemLocationConfigFileSupplier() {
+      return new ClasspathLocalAuthorizationConfigFileSupplier(
+              "/local_authorization_config_with_security_system_location.yaml");
   }
 }
