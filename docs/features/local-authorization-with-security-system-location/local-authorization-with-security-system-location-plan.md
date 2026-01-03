@@ -112,34 +112,34 @@ This plan implements the `OsoLocalSecuritySystemLocation` profile for demonstrat
 
 ### Task 3.1: Create SecuritySystemLocationEventPublishingPolicy interface
 
-- [ ] Create interface `SecuritySystemLocationEventPublishingPolicy` in `security-system-service-domain`
-- [ ] Define method `boolean shouldPublishSecuritySystemAssignedToLocation()`
-- [ ] This interface abstracts the decision of whether to publish the event
+- [x] Create interface `SecuritySystemLocationEventPublishingPolicy` in `security-system-service-domain`
+- [x] Define method `boolean shouldPublishSecuritySystemAssignedToLocation()`
+- [x] This interface abstracts the decision of whether to publish the event
 
 **Location:** `realguardio-security-system-service/security-system-service-domain/src/main/java/io/eventuate/examples/realguardio/securitysystemservice/domain/`
 
-### Task 2.2: Implement DefaultSecuritySystemLocationEventPublishingPolicy
+### Task 3.2: Implement DefaultSecuritySystemLocationEventPublishingPolicy
 
-- [ ] Create `DefaultSecuritySystemLocationEventPublishingPolicy` that returns `true` (publish event)
-- [ ] Annotate with `@Profile("!OsoLocalSecuritySystemLocation")` so it's active when profile is NOT set
-- [ ] Register as a Spring bean
+- [x] Create `DefaultSecuritySystemLocationEventPublishingPolicy` that returns `true` (publish event)
+- [x] Annotate with `@Profile("!OsoLocalSecuritySystemLocation")` so it's active when profile is NOT set
+- [x] Register as a Spring bean
 
 **Location:** `realguardio-security-system-service/security-system-service-domain/src/main/java/io/eventuate/examples/realguardio/securitysystemservice/domain/`
 
-### Task 2.3: Implement LocalSecuritySystemLocationEventPublishingPolicy
+### Task 3.3: Implement LocalSecuritySystemLocationEventPublishingPolicy
 
-- [ ] Create `LocalSecuritySystemLocationEventPublishingPolicy` that returns `false` (suppress event)
-- [ ] Annotate with `@Profile("OsoLocalSecuritySystemLocation")` so it's active when profile IS set
-- [ ] Register as a Spring bean in a configuration class in `security-system-service-oso-integration`
+- [x] Create `LocalSecuritySystemLocationEventPublishingPolicy` that returns `false` (suppress event)
+- [x] Annotate with `@Profile("OsoLocalSecuritySystemLocation")` so it's active when profile IS set
+- [x] Register as a Spring bean in a configuration class in `security-system-service-oso-integration`
 
 **Location:** `realguardio-security-system-service/security-system-service-oso-integration/src/main/java/io/eventuate/examples/realguardio/securitysystemservice/osointegration/`
 
-### Task 2.4: Modify SecuritySystemServiceImpl to use publishing policy
+### Task 3.4: Modify SecuritySystemServiceImpl to use publishing policy
 
-- [ ] Inject `SecuritySystemLocationEventPublishingPolicy` into `SecuritySystemServiceImpl`
-- [ ] Modify `createSecuritySystemWithLocation()` to check policy before publishing event
-- [ ] If `shouldPublishSecuritySystemAssignedToLocation()` returns false, skip the publish call
-- [ ] Update existing unit tests to verify both behaviors (with and without the policy)
+- [x] Inject `SecuritySystemLocationEventPublishingPolicy` into `SecuritySystemServiceImpl`
+- [x] Modify `createSecuritySystemWithLocation()` to check policy before publishing event
+- [x] If `shouldPublishSecuritySystemAssignedToLocation()` returns false, skip the publish call
+- [x] Update existing unit tests to verify both behaviors (with and without the policy)
 
 **File to modify:** `realguardio-security-system-service/security-system-service-domain/src/main/java/io/eventuate/examples/realguardio/securitysystemservice/domain/SecuritySystemServiceImpl.java`
 

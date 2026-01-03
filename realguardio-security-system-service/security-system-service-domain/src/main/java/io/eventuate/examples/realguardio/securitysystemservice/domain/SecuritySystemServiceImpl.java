@@ -22,13 +22,15 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     private final SecuritySystemActionAuthorizer securitySystemActionAuthorizer;
     private final SecuritySystemFinder securitySystemFinder;
     private final SecuritySystemEventPublisher securitySystemEventPublisher;
+    private final SecuritySystemLocationEventPublishingPolicy eventPublishingPolicy;
 
     public SecuritySystemServiceImpl(SecuritySystemRepository securitySystemRepository,
                                     CustomerServiceClient customerServiceClient,
                                     UserNameSupplier userNameSupplier,
                                     SecuritySystemActionAuthorizer securitySystemActionAuthorizer,
                                     SecuritySystemFinder securitySystemFinder,
-                                    SecuritySystemEventPublisher securitySystemEventPublisher) {
+                                    SecuritySystemEventPublisher securitySystemEventPublisher,
+                                    SecuritySystemLocationEventPublishingPolicy eventPublishingPolicy) {
         if (securitySystemRepository == null) {
             throw new IllegalArgumentException("securitySystemRepository cannot be null");
         }
@@ -44,6 +46,7 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         this.securitySystemActionAuthorizer = securitySystemActionAuthorizer;
         this.securitySystemFinder = securitySystemFinder;
         this.securitySystemEventPublisher = securitySystemEventPublisher;
+        this.eventPublishingPolicy = eventPublishingPolicy;
     }
     
     @Override
@@ -92,7 +95,9 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         securitySystem.setLocationId(locationId);
         try {
             SecuritySystem savedSystem = securitySystemRepository.save(securitySystem);
-            securitySystemEventPublisher.publish(savedSystem, new SecuritySystemAssignedToLocation(savedSystem.getId(), locationId));
+            if (eventPublishingPolicy.shouldPublishSecuritySystemAssignedToLocation()) {
+                securitySystemEventPublisher.publish(savedSystem, new SecuritySystemAssignedToLocation(savedSystem.getId(), locationId));
+            }
             return savedSystem.getId();
         } catch (DataIntegrityViolationException e) {
             throw new LocationAlreadyHasSecuritySystemException(locationId);

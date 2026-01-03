@@ -35,6 +35,9 @@ class SecuritySystemServiceTest {
     @Mock
     private SecuritySystemEventPublisher securitySystemEventPublisher;
 
+    @Mock
+    private SecuritySystemLocationEventPublishingPolicy eventPublishingPolicy;
+
     private SecuritySystemService securitySystemService;
 
     @Mock
@@ -42,7 +45,8 @@ class SecuritySystemServiceTest {
 
     @BeforeEach
     void setUp() {
-        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient, userNameSupplier, securitySystemActionAuthorizer, securitySystemFinder, securitySystemEventPublisher);
+        lenient().when(eventPublishingPolicy.shouldPublishSecuritySystemAssignedToLocation()).thenReturn(true);
+        securitySystemService = new SecuritySystemServiceImpl(securitySystemRepository, customerServiceClient, userNameSupplier, securitySystemActionAuthorizer, securitySystemFinder, securitySystemEventPublisher, eventPublishingPolicy);
     }
 
     @Test
@@ -354,6 +358,33 @@ class SecuritySystemServiceTest {
             .isInstanceOf(LocationAlreadyHasSecuritySystemException.class);
 
         verify(securitySystemRepository).save(any(SecuritySystem.class));
+        verify(securitySystemEventPublisher, never()).publish(any(SecuritySystem.class), any(SecuritySystemEvent.class));
+    }
+
+    @Test
+    void shouldNotPublishEventWhenPolicyReturnsFalse() throws Exception {
+        // Given
+        Long locationId = 100L;
+        String locationName = "Main Office";
+        Long expectedSecuritySystemId = 1L;
+
+        SecuritySystem savedSecuritySystem = new SecuritySystem(locationName, SecuritySystemState.DISARMED);
+        setId(savedSecuritySystem, expectedSecuritySystemId);
+        savedSecuritySystem.setLocationId(locationId);
+
+        when(securitySystemRepository.save(any(SecuritySystem.class))).thenReturn(savedSecuritySystem);
+        when(eventPublishingPolicy.shouldPublishSecuritySystemAssignedToLocation()).thenReturn(false);
+
+        // When
+        Long securitySystemId = securitySystemService.createSecuritySystemWithLocation(locationId, locationName);
+
+        // Then
+        assertThat(securitySystemId).isEqualTo(expectedSecuritySystemId);
+
+        // Verify the security system was saved
+        verify(securitySystemRepository).save(any(SecuritySystem.class));
+
+        // Verify the event was NOT published (policy returned false)
         verify(securitySystemEventPublisher, never()).publish(any(SecuritySystem.class), any(SecuritySystemEvent.class));
     }
 
