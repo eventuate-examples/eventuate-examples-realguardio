@@ -60,4 +60,16 @@ public class OsoService {
             throw new RuntimeException(e);
         }
     }
+
+    public String authorizeLocal(String actorType, String actorId, String action, String resourceType, String resourceId) {
+        try {
+            return oso.authorizeLocal(
+                    new Value(actorType, actorId),
+                    action,
+                    new Value(resourceType, resourceId)
+            );
+        } catch (IOException | ApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -34,4 +34,8 @@ public class RealGuardOsoAuthorizer {
   public String listLocal(String userId, String action, String resourceType, String column) {
       return osoService.listLocal("CustomerEmployee", userId, action, resourceType, column);
   }
+
+  public String authorizeLocal(String userId, String action, String resourceType, String resourceId) {
+      return osoService.authorizeLocal("CustomerEmployee", userId, action, resourceType, resourceId);
+  }
 }

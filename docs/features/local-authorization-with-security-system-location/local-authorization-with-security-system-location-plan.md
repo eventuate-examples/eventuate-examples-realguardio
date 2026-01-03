@@ -70,17 +70,17 @@ This plan implements the `OsoLocalSecuritySystemLocation` profile for demonstrat
 
 ### Task 2.1: Add authorizeLocal() method to OsoService
 
-- [ ] Add method `String authorizeLocal(String actorType, String actorId, String action, String resourceType, String resourceId)` to `OsoService`
-- [ ] Implementation calls `oso.authorizeLocal()` which returns a SQL WHERE clause
-- [ ] The SQL can be used to check if a specific resource is authorized
+- [x] Add method `String authorizeLocal(String actorType, String actorId, String action, String resourceType, String resourceId)` to `OsoService`
+- [x] Implementation calls `oso.authorizeLocal()` which returns a SQL WHERE clause
+- [x] The SQL can be used to check if a specific resource is authorized
 
 **File to modify:** `realguardio-oso-integration-service/oso-service/src/main/java/io/realguardio/osointegration/ososervice/OsoService.java`
 
 ### Task 2.2: Add authorizeLocal() method to RealGuardOsoAuthorizer
 
-- [ ] Add method `String authorizeLocal(String user, String action, String resourceType, String resourceId)` to `RealGuardOsoAuthorizer`
-- [ ] Calls `osoService.authorizeLocal()` with appropriate parameters
-- [ ] Consider resilience patterns (circuit breaker, retry) similar to `isAuthorized()`
+- [x] Add method `String authorizeLocal(String user, String action, String resourceType, String resourceId)` to `RealGuardOsoAuthorizer`
+- [x] Calls `osoService.authorizeLocal()` with appropriate parameters
+- [x] Consider resilience patterns (circuit breaker, retry) similar to `isAuthorized()`
 
 **File to modify:** `realguardio-oso-integration-service/oso-service/src/main/java/io/realguardio/osointegration/ososervice/RealGuardOsoAuthorizer.java`
 

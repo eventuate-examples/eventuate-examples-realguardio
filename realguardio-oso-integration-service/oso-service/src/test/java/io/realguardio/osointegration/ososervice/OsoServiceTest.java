@@ -7,8 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.ResourceUtils;
+
+import java.nio.file.Paths;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -29,6 +33,16 @@ public class OsoServiceTest {
   @EnableAutoConfiguration
   @ComponentScan
   static class Config {
+    @Bean
+    LocalAuthorizationConfigFileSupplier localAuthorizationConfigFileSupplier() {
+      return () -> {
+        try {
+          return Paths.get(ResourceUtils.getURL("classpath:local_authorization_config.yaml").toURI());
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      };
+    }
   }
 
   @Container
@@ -119,6 +133,18 @@ public class OsoServiceTest {
           throw new RuntimeException(e);
       }
       assertThat(result).isFalse();
+  }
+
+  @Test
+  public void shouldReturnSqlQueryForAuthorizeLocal() {
+    realGuardOsoFactManager.createRoleInCustomer("dave", "acme-corp", "SECURITY_SYSTEM_DISARMER");
+    realGuardOsoFactManager.createLocationForCustomer("loc-dave", "acme-corp");
+    realGuardOsoFactManager.assignSecuritySystemToLocation("ss-dave", "loc-dave");
+
+    String sqlQuery = realGuardOsoAuthorizer.authorizeLocal("dave", "disarm", "SecuritySystem", "ss-dave");
+
+    assertThat(sqlQuery).isNotNull();
+    assertThat(sqlQuery).isNotEmpty();
   }
 
 }
