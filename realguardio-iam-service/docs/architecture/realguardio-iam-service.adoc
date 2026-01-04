@@ -58,8 +58,8 @@ The IAM Service is the OAuth2 Authorization Server responsible for authenticatio
 ==== Token Configuration
 
 * *Access Token Format*: JWT
-* *Token Lifetime*: Configurable (default: 1 hour)
-* *Refresh Token Lifetime*: Configurable (default: 30 days)
+* *Token Lifetime*: Configurable (default: 2 minutes)
+* *Refresh Token Lifetime*: Configurable (default: 60 minutes)
 * *Token Claims*:
 ** `sub` - Subject (user identifier)
 ** `scope` - OAuth2 scopes

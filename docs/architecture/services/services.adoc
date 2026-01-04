@@ -113,7 +113,7 @@ User --> [BFF\n(Next.js)] : HTTPS
 ** Transforms events into Oso Cloud authorization facts (roles, relations, permissions)
 ** Maintains eventual consistency between domain state and authorization state
 ** Handles idempotency to prevent duplicate fact creation
-** Port: 8081
+** Port: 3004
 
 include::../../../realguardio-bff/docs/architecture/realguardio-bff.adoc[leveloffset=+1]
 
