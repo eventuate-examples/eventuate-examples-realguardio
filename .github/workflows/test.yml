@@ -2,7 +2,13 @@ name: Run Tests
 
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - '*/docs/**'
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*/docs/**'
 
 env:
   MISE_VERSION: 2025.8.7
