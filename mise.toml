@@ -369,3 +369,13 @@ else
   esac
 fi
 '''
+
+[tasks.make-docs-pdf]
+description = "Generate architecture PDF documentation"
+dir = "./docs/architecture"
+run = "make"
+
+[tasks.open-docs-pdf]
+description = "Open architecture PDF documentation"
+depends = ["make-docs-pdf"]
+run = "open docs/architecture/architecture.pdf"

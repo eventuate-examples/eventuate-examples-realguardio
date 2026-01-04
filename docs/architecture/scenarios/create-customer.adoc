@@ -54,7 +54,7 @@ alt User is REALGUARDIO_ADMIN
 
     Customer -> Customer: Assign COMPANY_ROLE_ADMIN\nto initial administrator
 
-    Customer -> Customer: Persist to database\n(transactional outbox)
+    Customer -> Customer: Persist Customer, Organization,\nMember, CustomerEmployee
 
     Customer -> Kafka: CustomerEmployeeAssignedCustomerRole event
 
@@ -104,7 +104,7 @@ The sequence of events is:
 .. The Customer Service calls the IAM Service's `/api/users` endpoint to create a user account for the initial administrator, sending the administrator's email as the username, a default password, and the role `REALGUARDIO_CUSTOMER_EMPLOYEE`, authenticated with the client credentials token.
 .. The IAM Service creates the user account and returns confirmation with the user details.
 .. The Customer Service assigns the `COMPANY_ROLE_ADMIN` role to the initial administrator employee, granting them permission to manage the customer organization.
-.. All entities are persisted to the database using the transactional outbox pattern to ensure reliable event publishing.
+.. All entities are persisted to the database.
 .. The Customer Service publishes a `CustomerEmployeeAssignedCustomerRole` event indicating the administrator role assignment.
 .. The Customer Service returns a 201 Created response to the BFF with both the customer and initial administrator details.
 
@@ -137,7 +137,7 @@ The operation demonstrates the application's data synchronization strategy:
 
 . *Source of Truth*: Customer Service database is the source of truth for customer, organization, and employee data.
 
-. *Event Publishing*: Domain events are published via the transactional outbox pattern for reliable delivery.
+. *Event Publishing*: Domain events are published to Kafka.
 
 . *Authorization Sync*: Oso Integration Service keeps Oso Cloud synchronized with customer, employee, and role data.
 
@@ -151,7 +151,6 @@ The operation demonstrates the application's data synchronization strategy:
 * *User Account Provisioning*: The initial administrator user account is automatically created in IAM Service, enabling immediate login
 * *Multi-Tenant Architecture*: Each customer has its own organization with isolated data and role assignments
 * *Event-Driven Synchronization*: All state changes synchronized via events to Oso Cloud
-* *Transactional Outbox*: Ensures events are published reliably with database changes
 * *Auditability*: All customer and employee creations recorded as events
 
 === Error Scenarios

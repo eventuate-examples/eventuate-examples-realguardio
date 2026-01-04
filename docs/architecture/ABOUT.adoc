@@ -18,6 +18,43 @@ IMPORTANT: Documentation must describe what actually exists in the code, not ima
 * If functionality is planned but not implemented, do NOT document it as if it exists
 * When in doubt, search the codebase to verify before documenting
 
+=== Verification Requirements Before Documenting
+
+==== Trace Through Actual Code Paths
+
+Never document behavior based on what seems logical or what existing documentation claims. Always trace through the actual implementation.
+
+When documenting that "Service A does X":
+
+1. **Find the entry point** - the controller method, event handler, or command handler
+2. **Trace through each method call** to understand the actual flow
+3. **Verify external calls** - if the diagram shows Service A calling Service B, find the actual HTTP client call or message send in the code
+4. **Check return values and responses** - what does the code actually return or respond with?
+
+==== When Updating Existing Documentation
+
+Never assume existing documentation is correct. When updating a scenario:
+
+1. **Re-verify all existing claims** - treat existing content with the same skepticism as new content
+2. **If a diagram shows a call or event, verify the code** - the original author may have documented planned behavior that was never implemented
+
+==== Common Verification Failures
+
+* Documenting an event being published when no `publish()` call exists
+* Documenting an event being consumed when no `@EventuateDomainEventHandler` exists
+* Documenting an API call (e.g., `POST /authorize`) when the code uses a different API (e.g., `authorizeLocal` which returns SQL)
+* Using logical/inferred names instead of actual class names
+* Showing 2 variations when the code has 3 profile-dependent implementations (or vice versa)
+
+==== Profile Variation Completeness
+
+When a scenario's behavior varies by Spring Profile:
+
+1. Search for ALL `@Profile` annotations on the relevant component (e.g., authorizer, finder)
+2. Create a diagram or alt block for EACH distinct behavior path
+3. Verify the table listing profile variations matches the actual `@Configuration` classes
+4. Check that every row in the profile table has corresponding diagram coverage
+
 == Structure
 
 In the top-level directory there is an `architecture.adoc` document:
@@ -206,6 +243,28 @@ Example of correct event subscription documentation:
 == Documenting the multi-service scenarios
 
 There is a `scenarios` directory that contains a document describing each request that spans multiple services including any OAuth2 flows.
+
+=== Scenario Scope: One API Call Per Scenario
+
+IMPORTANT: Each scenario should document a **single API operation** (one REST endpoint call) and its downstream effects. Do not combine multiple independent API calls into a single scenario.
+
+**Good example:**
+
+* "Create Customer Employee" - documents `POST /customers/{id}/employees` and its effects
+* "Assign Location Role" - documents `PUT /customers/{id}/location-roles` and its effects
+
+**Bad example:**
+
+* "Create Customer Employee with Location Role" - combines two separate API calls (`POST` then `PUT`) that can be invoked independently
+
+**Why this matters:**
+
+* Each API operation may have different authorization requirements
+* Users may invoke these operations separately or in different orders
+* Combining operations obscures the actual API contract
+* It makes it harder to verify documentation against code
+
+**Exception:** Composite scenarios are acceptable when documenting a **single API call that internally orchestrates multiple services** (e.g., a saga). The key distinction is whether the client makes one API call or multiple.
 
 Each scenarios document contains the following:
 

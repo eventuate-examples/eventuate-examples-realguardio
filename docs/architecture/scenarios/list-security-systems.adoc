@@ -2,9 +2,32 @@
 
 === Overview
 
-This scenario describes how a user retrieves a filtered list of security systems they can access. The operation queries the Security System Service's CQRS view (location roles replica), which maintains replicated authorization data from the Customer Service. This demonstrates how the CQRS pattern enables efficient authorization-aware queries without cross-service calls.
+This scenario describes how a user retrieves a filtered list of security systems they can access. The operation requires authorization at the Spring Security level, and then filters results based on location-based roles.
 
-=== Sequence Diagram
+=== Authorization Requirements
+
+*Spring Security Layer*: The requesting user must have either `REALGUARDIO_ADMIN` or `REALGUARDIO_CUSTOMER_EMPLOYEE` global role in their JWT token.
+
+*Result Filtering*: The returned list is filtered to only include security systems where the user has at least one location-based role (`SECURITY_SYSTEM_VIEWER`, `SECURITY_SYSTEM_ARMER`, or `SECURITY_SYSTEM_DISARMER`).
+
+=== Filtering Strategy by Profile
+
+[cols="2,3,2"]
+|===
+|Profile(s) |Filtering Strategy |Implementation Class
+
+|_(none)_ or `UseRolesReplica`
+|Local CQRS replica: Queries the location roles replica table directly
+|`SecuritySystemFinderUsingRepository`
+
+|`UseOsoService` (with or without `OsoLocalSecuritySystemLocation`)
+|Oso Cloud filtering: Calls Oso Cloud to get authorized security system IDs, then queries database
+|`SecuritySystemFinderUsingRepositoryWithOso`
+|===
+
+=== Sequence Diagrams
+
+==== Without `UseOsoService` Profile (CQRS Replica)
 
 [plantuml]
 ....
@@ -49,7 +72,53 @@ deactivate BFF
 @enduml
 ....
 
+==== With `UseOsoService` Profile (Oso Cloud Local Authorization)
+
+When Oso Cloud is used, the service calls Oso Cloud's `listLocal` API to get a SQL filter fragment, which is embedded in the database query. This approach combines Oso Cloud's centralized policy evaluation with local data filtering.
+
+[plantuml]
+....
+@startuml
+actor "User" as User
+participant "BFF" as BFF
+participant "Security System\nService" as SecuritySystem
+participant "Oso Cloud" as OsoCloud
+database "Security System\nDatabase" as DB
+
+User -> BFF: GET /api/securitysystems
+activate BFF
+
+BFF -> SecuritySystem: GET /securitysystems\n+ Bearer token
+activate SecuritySystem
+
+SecuritySystem -> SecuritySystem: Validate JWT token\n(not shown - JWKS endpoint)
+
+SecuritySystem -> SecuritySystem: Extract userName\nfrom JWT claims
+
+SecuritySystem -> OsoCloud: POST /list_local\nlistLocal(CustomerEmployee(userId), "view", "SecuritySystem", "ss.id")
+activate OsoCloud
+OsoCloud --> SecuritySystem: SQL filter fragment\n(WHERE clause condition)
+deactivate OsoCloud
+
+SecuritySystem -> DB: SELECT * FROM security_system ss\nWHERE {filter fragment}\n+ role aggregation subqueries
+activate DB
+DB --> SecuritySystem: Security system records\nwith aggregated roles
+deactivate DB
+
+SecuritySystem --> BFF: 200 OK\n[{id, name, armed, locationId, roleNames}]
+deactivate SecuritySystem
+
+BFF --> User: Display security systems\nwith available actions
+deactivate BFF
+
+@enduml
+....
+
+NOTE: The `listLocal` approach combines Oso Cloud's centralized policy with local data. Oso Cloud returns a SQL fragment that filters based on authorization facts stored in Oso Cloud, while local data (role names) is aggregated in the same query.
+
 === Description
+
+==== Without `UseOsoService` Profile (CQRS Replica)
 
 The sequence of events is:
 
@@ -73,7 +142,58 @@ The sequence of events is:
 
 . The BFF displays the security systems to the user, showing only the systems they have access to and enabling actions (arm/disarm) based on their roles.
 
-=== Why This Uses a CQRS View
+==== With `UseOsoService` Profile (Oso Cloud Local Authorization)
+
+. The User navigates to the security systems page in the BFF UI.
+
+. The BFF sends a GET request to the Security System Service at `/securitysystems`, including the user's JWT bearer token for authentication.
+
+. The Security System Service validates the JWT token (via IAM Service JWKS endpoint - not shown for brevity).
+
+. The Security System Service extracts the `userName` (email address) from the JWT token claims.
+
+. The Security System Service calls Oso Cloud's `listLocal` API, which returns a SQL filter fragment based on authorization facts stored in Oso Cloud.
+
+. The Security System Service executes a single database query that:
+.. Embeds the Oso-generated filter fragment in the WHERE clause
+.. Joins with local role tables to aggregate role names (direct roles, team roles, customer roles)
+.. Returns only security systems the user is authorized to view
+
+. The Security System Service returns a 200 OK response with the filtered security systems list, including role names.
+
+. The BFF displays the security systems to the user.
+
+=== Comparison: CQRS View vs Oso Cloud Local Authorization
+
+|===
+|Aspect |CQRS View (No Profile) |Oso Cloud (`UseOsoService`)
+
+|*Authorization Data Location*
+|Local database replica
+|Oso Cloud (facts) + Local database (role names)
+
+|*Network Calls*
+|None (local query)
+|1 call to Oso Cloud `listLocal` + 1 local query
+
+|*Latency*
+|Sub-millisecond
+|50-200ms (depends on Oso Cloud latency)
+
+|*Resilience*
+|Works when Customer Service is down
+|Requires Oso Cloud availability
+
+|*Policy Management*
+|Implicit in SQL query logic
+|Centralized in Polar policy files
+
+|*Role Information*
+|Returned in response
+|Returned in response (aggregated from local tables)
+|===
+
+=== Why CQRS View (Without `UseOsoService`)
 
 Without the CQRS view, this query would require:
 

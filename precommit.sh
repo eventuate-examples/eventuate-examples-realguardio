@@ -4,12 +4,13 @@ set -e
 
 echo "Running pre-commit checks..."
 
-# Function to check for uncommitted changes in a directory
+# Function to check for uncommitted changes in a directory (excluding docs/architecture)
 has_uncommitted_changes() {
     local dir=$1
     cd "$dir"
     # Check for uncommitted changes (staged, unstaged, or untracked files)
-    if git status --porcelain | grep -q "$dir"; then
+    # Exclude docs/architecture directories since they don't need gradle checks
+    if git status --porcelain | grep "$dir" | grep -v "docs/architecture" | grep -q .; then
         return 0  # Has changes
     else
         return 1  # No changes

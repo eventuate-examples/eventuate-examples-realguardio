@@ -8,6 +8,8 @@ include::create-customer.adoc[leveloffset=+1]
 
 include::create-customer-employee.adoc[leveloffset=+1]
 
+include::assign-location-role.adoc[leveloffset=+1]
+
 include::create-security-system.adoc[leveloffset=+1]
 
 include::list-security-systems.adoc[leveloffset=+1]

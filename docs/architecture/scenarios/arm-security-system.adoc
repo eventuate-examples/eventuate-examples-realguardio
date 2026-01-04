@@ -2,9 +2,40 @@
 
 === Overview
 
-This scenario describes how a customer employee arms a security system with authorization checks enforced via Oso Cloud policies. The operation requires location-based permissions validated through policy-based access control.
+This scenario describes how a customer employee arms a security system with authorization checks. The operation requires two layers of authorization.
 
-=== Sequence Diagram
+=== Two-Layer Authorization
+
+Arming a security system requires passing two authorization checks:
+
+1. *Layer 1 (Spring Security)*: The requesting user must have either `REALGUARDIO_ADMIN` or `REALGUARDIO_CUSTOMER_EMPLOYEE` global role in their JWT token.
+
+2. *Layer 2 (SecuritySystemActionAuthorizer)*: The requesting user must have the `SECURITY_SYSTEM_ARMER` role at the security system's location. This check varies by Spring Profile.
+
+=== Layer 2 Authorization Strategy by Profile
+
+[cols="2,3,2"]
+|===
+|Profile(s) |Authorization Flow |Implementation Class
+
+|_(none)_ or `UseRolesReplica`
+|Local authorization: Security System Service queries its local CQRS replica for role lookups
+|`LocalSecuritySystemActionAuthorizer`
+
+|`UseOsoService`
+|Oso Cloud authorization: Security System Service calls Oso Cloud API
+|`OsoSecuritySystemActionAuthorizer`
+
+|`UseOsoService` + `OsoLocalSecuritySystemLocation`
+|Hybrid authorization: Oso Cloud with local SecuritySystem-Location resolution
+|`OsoLocalSecuritySystemActionAuthorizer`
+|===
+
+=== Sequence Diagrams
+
+==== With `UseOsoService` Profile (without `OsoLocalSecuritySystemLocation`)
+
+This profile uses `OsoSecuritySystemActionAuthorizer` which calls Oso Cloud's `authorize` API directly.
 
 [plantuml]
 ....
@@ -14,8 +45,6 @@ participant "BFF" as BFF
 participant "Security System\nService" as SecuritySystem
 participant "Oso Cloud" as OsoCloud
 participant "IAM Service" as IAM
-database "Kafka" as Kafka
-participant "Oso Integration\nService" as Oso
 
 User -> BFF: Click "Arm" on Security System UI
 activate BFF
@@ -33,27 +62,20 @@ SecuritySystem -> SecuritySystem: Extract userId from token\nGet securitySystemI
 
 SecuritySystem -> SecuritySystem: Retrieve SecuritySystem entity\nGet locationId
 
-SecuritySystem -> OsoCloud: POST /authorize\nhas_permission(userId, "arm", securitySystemId)
+SecuritySystem -> OsoCloud: POST /authorize\nauthorize(CustomerEmployee(userId), "arm", SecuritySystem(id))
 activate OsoCloud
 
-OsoCloud -> OsoCloud: Evaluate has_permission(userId, "arm", securitySystemId)\nusing policy rules and authorization facts
+OsoCloud -> OsoCloud: Evaluate policy rules\nusing authorization facts stored in Oso Cloud
 
 alt User has SECURITY_SYSTEM_ARMER role at location
     OsoCloud --> SecuritySystem: {"allowed": true}
 
     SecuritySystem -> SecuritySystem: Update SecuritySystem\nset armed = true
-    SecuritySystem -> SecuritySystem: Persist to database\n(transactional outbox)
-
-    SecuritySystem -> Kafka: SecuritySystemArmed event
+    SecuritySystem -> SecuritySystem: Persist SecuritySystem
 
     SecuritySystem --> BFF: 200 OK\n{securitySystemId, armed: true}
 
     BFF --> User: Success: Security system armed
-
-    Kafka -> Oso: SecuritySystemArmed event
-    activate Oso
-    Oso -> Oso: Process event\n(may update audit log)
-    deactivate Oso
 
 else User does not have permission
     OsoCloud --> SecuritySystem: {"allowed": false}
@@ -69,9 +91,123 @@ end
 @enduml
 ....
 
+==== With `UseOsoService` + `OsoLocalSecuritySystemLocation` Profile (Hybrid)
+
+This profile uses `OsoLocalSecuritySystemActionAuthorizer` which calls Oso Cloud's `authorizeLocal` API to get a SQL fragment, then executes it against the local database.
+
+[plantuml]
+....
+@startuml
+actor "Customer\nEmployee" as User
+participant "BFF" as BFF
+participant "Security System\nService" as SecuritySystem
+participant "Oso Cloud" as OsoCloud
+database "Local Database" as DB
+participant "IAM Service" as IAM
+
+User -> BFF: Click "Arm" on Security System UI
+activate BFF
+
+BFF -> BFF: Get session with JWT token
+BFF -> SecuritySystem: PUT /securitysystems/{id}\n{"armed": true}\n+ Bearer token
+activate SecuritySystem
+
+SecuritySystem -> IAM: Validate JWT token\n(via JWKS endpoint)
+activate IAM
+IAM --> SecuritySystem: Token valid\n{userId, roles}
+deactivate IAM
+
+SecuritySystem -> SecuritySystem: Extract userId from token\nGet securitySystemId from path
+
+SecuritySystem -> SecuritySystem: Retrieve SecuritySystem entity\nGet locationId
+
+SecuritySystem -> OsoCloud: POST /authorize_local\nauthorizeLocal(CustomerEmployee(userId), "arm", SecuritySystem(id))
+activate OsoCloud
+OsoCloud --> SecuritySystem: SQL query fragment
+deactivate OsoCloud
+
+SecuritySystem -> DB: Execute SQL query\n(checks roles in local tables)
+activate DB
+DB --> SecuritySystem: true/false
+deactivate DB
+
+alt User has SECURITY_SYSTEM_ARMER role at location
+    SecuritySystem -> SecuritySystem: Update SecuritySystem\nset armed = true
+    SecuritySystem -> SecuritySystem: Persist SecuritySystem
+
+    SecuritySystem --> BFF: 200 OK\n{securitySystemId, armed: true}
+
+    BFF --> User: Success: Security system armed
+
+else User does not have permission
+    SecuritySystem --> BFF: 403 Forbidden\n{"error": "Access denied"}
+    deactivate SecuritySystem
+
+    BFF --> User: Error: You don't have permission\nto arm this security system
+    deactivate BFF
+end
+
+@enduml
+....
+
+==== Without `UseOsoService` Profile (Local Authorization)
+
+When Oso Cloud is not used, authorization is performed locally using the CQRS location roles replica.
+
+[plantuml]
+....
+@startuml
+actor "Customer\nEmployee" as User
+participant "BFF" as BFF
+participant "Security System\nService" as SecuritySystem
+database "Location Roles\nReplica (CQRS View)" as Replica
+participant "IAM Service" as IAM
+
+User -> BFF: Click "Arm" on Security System UI
+activate BFF
+
+BFF -> BFF: Get session with JWT token
+BFF -> SecuritySystem: PUT /securitysystems/{id}\n{"armed": true}\n+ Bearer token
+activate SecuritySystem
+
+SecuritySystem -> IAM: Validate JWT token\n(via JWKS endpoint)
+activate IAM
+IAM --> SecuritySystem: Token valid\n{userId, roles}
+deactivate IAM
+
+SecuritySystem -> SecuritySystem: Extract userId from token\nGet securitySystemId from path
+
+SecuritySystem -> SecuritySystem: Retrieve SecuritySystem entity\nGet locationId
+
+SecuritySystem -> Replica: Query user roles at location\nSELECT roles WHERE user=userId\nAND location_id=locationId
+activate Replica
+Replica --> SecuritySystem: User roles at location\n[SECURITY_SYSTEM_ARMER]
+deactivate Replica
+
+alt User has SECURITY_SYSTEM_ARMER role at location
+    SecuritySystem -> SecuritySystem: Update SecuritySystem\nset armed = true
+    SecuritySystem -> SecuritySystem: Persist SecuritySystem
+
+    SecuritySystem --> BFF: 200 OK\n{securitySystemId, armed: true}
+
+    BFF --> User: Success: Security system armed
+
+else User does not have permission
+    SecuritySystem --> BFF: 403 Forbidden\n{"error": "Access denied"}
+    deactivate SecuritySystem
+
+    BFF --> User: Error: You don't have permission\nto arm this security system
+    deactivate BFF
+end
+
+@enduml
+....
+
+NOTE: With `UseRolesReplica` profile, the replica queries use the local database. Without this profile, the Security System Service calls Customer Service via HTTP to retrieve role assignments.
+
 === Description
 
-The sequence of events is:
+==== Common Steps (All Profiles)
 
 . The Customer Employee clicks the "Arm" button on a security system in the BFF web UI.
 
@@ -87,21 +223,39 @@ The sequence of events is:
 
 . The Security System Service retrieves the SecuritySystem entity from the database to get the associated `locationId`.
 
-. The Security System Service calls Oso Cloud's authorization API with an authorize request, asking: "Can CustomerEmployee(userId) perform action 'arm' on SecuritySystem(id)?"
+==== Authorization Check (Profile-Dependent)
 
-. Oso Cloud evaluates the authorization policy by checking if the employee has the `SECURITY_SYSTEM_ARMER` role at the security system's location.
+*With `UseOsoService` Profile (without `OsoLocalSecuritySystemLocation`):*
+
+. The `OsoSecuritySystemActionAuthorizer` calls Oso Cloud's `authorize` API directly, asking: "Can CustomerEmployee(userId) perform action 'arm' on SecuritySystem(id)?"
+
+. Oso Cloud evaluates the authorization policy using facts stored in Oso Cloud (including the SecuritySystem-Location relationship) and returns true/false.
+
+*With `UseOsoService` + `OsoLocalSecuritySystemLocation` Profile:*
+
+. The `OsoLocalSecuritySystemActionAuthorizer` calls Oso Cloud's `authorizeLocal` API, which returns a SQL query fragment.
+
+. The Security System Service executes the SQL query against its local database, which contains role assignments replicated from Customer Service.
+
+. This hybrid approach uses Oso Cloud's policy logic but resolves the SecuritySystem-Location relationship locally.
+
+*Without `UseOsoService` Profile:*
+
+. The `LocalSecuritySystemActionAuthorizer` queries its local CQRS replica (or calls Customer Service if `UseRolesReplica` is not active) to get the user's roles at the security system's location.
+
+. Authorization is checked entirely locally without any Oso Cloud interaction.
+
+==== Result Handling (All Profiles)
 
 . *If the user has permission*:
-.. Oso Cloud returns `{"allowed": true}`.
+.. The authorization check returns true.
 .. The Security System Service updates the SecuritySystem entity, setting `armed = true`.
-.. The change is persisted to the database using the transactional outbox pattern.
-.. The Security System Service publishes a SecuritySystemArmed event to Kafka.
+.. The change is persisted to the database.
 .. The Security System Service returns a 200 OK response to the BFF with the updated security system state.
 .. The BFF displays a success message to the user.
-.. The Oso Integration Service consumes the SecuritySystemArmed event for potential audit logging or further processing.
 
 . *If the user does not have permission*:
-.. Oso Cloud returns `{"allowed": false}`.
+.. The authorization check returns false.
 .. The Security System Service returns a 403 Forbidden response with an error message.
 .. The BFF displays an error message to the user indicating they lack permission to arm the security system.
 
@@ -137,7 +291,7 @@ For an employee to arm a security system:
 
 . This assignment is done via the Customer Service endpoint: `PUT /customers/{customerId}/location-roles`.
 
-. When the role is assigned, the Customer Service publishes a `CustomerEmployeeLocationRoleCreated` event.
+. When the role is assigned, the Customer Service publishes a `CustomerEmployeeAssignedLocationRole` event.
 
 . The Oso Integration Service consumes this event and creates the `has_role(employee, "SECURITY_SYSTEM_ARMER", location)` fact in Oso Cloud.
 
@@ -150,7 +304,6 @@ For an employee to arm a security system:
 * *Location-Based Permissions*: Employees have different permissions at different locations
 * *Real-Time Authorization*: Permission checked on every request
 * *Separation of Concerns*: Business logic (arming) separated from authorization logic (Oso policies)
-* *Auditability*: SecuritySystemArmed events provide audit trail
 * *User-Friendly Errors*: Clear error messages when permission denied
 
 === Error Scenarios

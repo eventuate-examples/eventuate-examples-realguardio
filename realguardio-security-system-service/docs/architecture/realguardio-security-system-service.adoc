@@ -51,7 +51,7 @@ include::subdomains/security-system.adoc[leveloffset=+1]
 
 The Location Roles Replica module subscribes to Customer Service events:
 
-* `CustomerEmployeeLocationRoleCreated` - Replicates role assignment locally
+* `CustomerEmployeeAssignedLocationRole` - Replicates role assignment locally
 * `CustomerEmployeeLocationRoleDeleted` - Removes role assignment from replica
 * Other Customer Service events as needed for maintaining consistent replica
 

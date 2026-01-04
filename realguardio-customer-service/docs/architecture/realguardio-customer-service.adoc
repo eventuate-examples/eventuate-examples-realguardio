@@ -56,7 +56,7 @@ Publishes domain events:
 * `CustomerCreated` - New customer created
 * `CustomerEmployeeCreated` - New employee added to customer
 * `LocationCreated` - New location created for customer
-* `CustomerEmployeeLocationRoleCreated` - Location role assigned to employee
+* `CustomerEmployeeAssignedLocationRole` - Location role assigned to employee
 
 Events are published via Eventuate TRAM using the transactional outbox pattern to ensure reliability.
 

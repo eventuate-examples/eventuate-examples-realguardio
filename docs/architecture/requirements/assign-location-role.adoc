@@ -15,7 +15,7 @@ Feature: Assign Location Roles to Employee
     When I submit a request to assign role "SECURITY_SYSTEM_ARMER" to employee 456 at location 789
     Then the role assignment is created
     And I receive a 200 OK response
-    And a CustomerEmployeeLocationRoleCreated event is published to Kafka
+    And a CustomerEmployeeAssignedLocationRole event is published to Kafka
     And a "has_role(employee_456, SECURITY_SYSTEM_ARMER, location_789)" fact is created in Oso Cloud
     And the Security System Service replicates the role assignment locally
 
