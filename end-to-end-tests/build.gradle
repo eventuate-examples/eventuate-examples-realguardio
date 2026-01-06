@@ -38,6 +38,11 @@ configurations {
     endToEndTestRuntimeOnly.extendsFrom runtimeOnly
 }
 
+if (System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES") != null)
+    configurations.all {
+        resolutionStrategy.cacheChangingModulesFor Integer.parseInt(System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES")), 'minutes'
+    }
+
 dependencies {
     // Test Framework
     endToEndTestImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'

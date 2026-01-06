@@ -12,6 +12,7 @@ on:
 
 env:
   MISE_VERSION: 2025.8.7
+  GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES: 15
 
 jobs:
   test:

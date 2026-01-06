@@ -63,6 +63,11 @@ subprojects {
 	jar {
 		enabled = true
 	}
+
+	if (System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES") != null)
+		configurations.all {
+			resolutionStrategy.cacheChangingModulesFor Integer.parseInt(System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES")), 'minutes'
+		}
 }
 
 project(':customer-service-main') {
