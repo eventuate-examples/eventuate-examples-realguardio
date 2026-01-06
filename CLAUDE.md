@@ -44,3 +44,7 @@ cd /path/to/realguardio-customer-service && ./gradlew check
 ```
 
 There is no root-level gradlew. Each service is an independent Gradle project.
+
+# Debugging Github Actions Workflow failures
+
+Run `mise gh-download` to download the logs.

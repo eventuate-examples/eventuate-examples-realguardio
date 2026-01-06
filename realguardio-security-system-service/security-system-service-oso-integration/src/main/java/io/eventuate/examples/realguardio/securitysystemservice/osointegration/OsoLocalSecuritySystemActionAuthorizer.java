@@ -29,7 +29,7 @@ public class OsoLocalSecuritySystemActionAuthorizer implements SecuritySystemAct
         String userId = userNameSupplier.getCurrentUserName();
         String sqlQuery = realGuardOsoAuthorizer.authorizeLocal(userId, permission, "SecuritySystem", String.valueOf(securitySystemId));
 
-        logger.debug("Executing local authorization query: {}", sqlQuery);
+        logger.info("Executing local authorization query: {}", sqlQuery);
 
         Boolean allowed = jdbcTemplate.queryForObject(sqlQuery, Boolean.class);
 

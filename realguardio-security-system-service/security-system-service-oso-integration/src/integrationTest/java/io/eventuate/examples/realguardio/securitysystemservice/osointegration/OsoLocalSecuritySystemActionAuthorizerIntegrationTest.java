@@ -78,6 +78,8 @@ public class OsoLocalSecuritySystemActionAuthorizerIntegrationTest {
     private String customerEmployeeEmail;
     private String company;
     private long locationId;
+    private String locationIdString;
+    private String locationId2;
     private SecuritySystem securitySystem;
 
     @BeforeEach
@@ -85,6 +87,8 @@ public class OsoLocalSecuritySystemActionAuthorizerIntegrationTest {
         customerEmployeeEmail = "employee%s@realguard.io".formatted(System.currentTimeMillis());
         company = "acme" + System.currentTimeMillis();
         locationId = System.currentTimeMillis();
+        locationIdString = String.valueOf(locationId);
+        locationId2 = locationIdString + "2";
 
         // Create security system with locationId in local database
         securitySystem = new SecuritySystem("Oakland office", SecuritySystemState.ARMED);
@@ -92,7 +96,8 @@ public class OsoLocalSecuritySystemActionAuthorizerIntegrationTest {
         securitySystem = securitySystemRepository.save(securitySystem);
 
         // Create Location-Customer relation in Oso Cloud
-        realGuardOsoFactManager.createLocationForCustomer(String.valueOf(locationId), company);
+        realGuardOsoFactManager.createLocationForCustomer(locationIdString, company);
+        realGuardOsoFactManager.createLocationForCustomer(locationId2, company);
 
         // NOTE: We do NOT create SecuritySystem-Location relation in Oso Cloud
         // That relationship is derived from local data bindings (the security_system.location_id column)
@@ -101,7 +106,8 @@ public class OsoLocalSecuritySystemActionAuthorizerIntegrationTest {
     @Test
     void shouldAuthorizeWhenUserHasRoleAtLocation() {
         // Create role at location in Oso Cloud
-        realGuardOsoFactManager.createRoleAtLocation(customerEmployeeEmail, String.valueOf(locationId), RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
+        realGuardOsoFactManager.createRoleAtLocation(customerEmployeeEmail, locationIdString, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
+        realGuardOsoFactManager.createRoleAtLocation(customerEmployeeEmail, locationId2, RolesAndPermissions.SECURITY_SYSTEM_DISARMER);
 
         when(userNameSupplier.getCurrentUserName()).thenReturn(customerEmployeeEmail);
 
