@@ -34,9 +34,6 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 	}
 
 	@Autowired
-	private ComponentTestSupport componentTestSupport;
-
-	@Autowired
 	private RealGuardOsoFactManager realGuardOsoFactManager;
 
 	@LocalServerPort
@@ -100,7 +97,7 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 
 		assertThat(getRolesForLocation(companyAdminAccessToken, locationId).getRoles()).contains("DISARM");
 
-		componentTestSupport.assertDomainEventInOutbox(
+		domainEventOutboxTestSupport.assertDomainEventInOutbox(
 			"io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer",
 			String.valueOf(customerSummary.customerId()),
 			"io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole"

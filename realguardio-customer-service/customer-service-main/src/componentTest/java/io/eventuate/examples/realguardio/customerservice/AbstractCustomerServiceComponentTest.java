@@ -7,8 +7,9 @@ import io.eventuate.examples.realguardio.customerservice.restapi.RolesResponse;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainer;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
-import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
-import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
+import io.eventuate.tram.spring.testing.outbox.commands.EnableCommandOutboxTestSupport;
+import io.eventuate.tram.spring.testing.outbox.events.DomainEventOutboxTestSupport;
+import io.eventuate.tram.spring.testing.outbox.events.EnableDomainEventOutboxTestSupport;
 import io.eventuate.tram.testing.producer.kafka.replies.EnableDirectToKafkaCommandReplyProducer;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 public abstract class AbstractCustomerServiceComponentTest {
 
@@ -26,10 +26,8 @@ public abstract class AbstractCustomerServiceComponentTest {
 
   @Configuration
   @EnableAutoConfiguration
-  @Import({
-      CommandOutboxTestSupportConfiguration.class,
-      ComponentTestSupportConfiguration.class
-  })
+  @EnableCommandOutboxTestSupport
+  @EnableDomainEventOutboxTestSupport
   @EnableDirectToKafkaCommandReplyProducer
   static class AbstractConfig {
   }
@@ -58,10 +56,7 @@ public abstract class AbstractCustomerServiceComponentTest {
 
 
   @Autowired
-  protected CommandOutboxTestSupport commandOutboxTestSupport;
-
-  @Autowired
-  protected ComponentTestSupport componentTestSupport;
+  protected DomainEventOutboxTestSupport domainEventOutboxTestSupport;
 
 
   protected RolesResponse getRolesForLocation(String realGuardIOAdminAccessToken, Long locationId) {
