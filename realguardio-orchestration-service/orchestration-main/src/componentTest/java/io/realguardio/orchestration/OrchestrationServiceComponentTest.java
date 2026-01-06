@@ -7,7 +7,7 @@ import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.testcontainers.service.ServiceContainer;
 import io.eventuate.tram.messaging.common.Message;
-import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
+import io.eventuate.tram.testing.producer.kafka.replies.EnableDirectToKafkaCommandReplyProducer;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemResponse;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.ValidateLocationCommand;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationNotFound;
@@ -43,9 +43,9 @@ public class OrchestrationServiceComponentTest {
 	@Configuration
 	@EnableAutoConfiguration
 	@Import({
-			EventuateKafkaTestCommandProducerConfiguration.class,
 			ComponentTestSupportConfiguration.class
 	})
+	@EnableDirectToKafkaCommandReplyProducer
 	static class TestConfiguration {
 
 	}
