@@ -3,7 +3,7 @@ package io.eventuate.examples.realguardio.customerservice;
 import io.eventuate.common.json.mapper.JSonMapper;
 import io.eventuate.tram.commands.common.Command;
 import io.eventuate.tram.commands.consumer.CommandHandlerParams;
-import io.eventuate.tram.commands.consumer.CommandReplyProducer;
+import io.eventuate.tram.testing.producer.kafka.replies.DirectToKafkaCommandReplyProducer;
 import io.eventuate.tram.commands.consumer.CommandReplyToken;
 import io.eventuate.tram.messaging.common.Message;
 import io.eventuate.tram.messaging.producer.MessageBuilder;
@@ -33,7 +33,7 @@ public class ComponentTestSupport {
   private CommandOutboxTestSupport commandOutboxTestSupport;
 
   @Autowired
-  private CommandReplyProducer commandReplyProducer;
+  private DirectToKafkaCommandReplyProducer commandReplyProducer;
 
   public List<Message> findMessagesSentToChannel(String channel) {
     return jdbcTemplate.query("select headers,payload from message where destination = ?", (rs, rowNum) -> {

@@ -9,6 +9,7 @@ import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
+import io.eventuate.tram.testing.producer.kafka.replies.EnableDirectToKafkaCommandReplyProducer;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.slf4j.Logger;
@@ -29,6 +30,7 @@ public abstract class AbstractCustomerServiceComponentTest {
       CommandOutboxTestSupportConfiguration.class,
       ComponentTestSupportConfiguration.class
   })
+  @EnableDirectToKafkaCommandReplyProducer
   static class AbstractConfig {
   }
 
