@@ -5,10 +5,10 @@ import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemService;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaCluster;
-import io.eventuate.tram.commands.producer.CommandProducer;
+import io.eventuate.tram.testing.producer.kafka.commands.DirectToKafkaCommandProducer;
 import io.eventuate.tram.messaging.consumer.SubscriberMapping;
 import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration;
-import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
+import io.eventuate.tram.testing.producer.kafka.commands.EnableDirectToKafkaCommandProducer;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
 import io.eventuate.util.test.async.Eventually;
@@ -49,8 +49,8 @@ public class SecuritySystemCommandHandlerIntegrationTest {
     @Configuration
     @EnableAutoConfiguration
     @Import({SecuritySystemCommandHandlerConfiguration.class,
-            EventuateKafkaTestCommandProducerConfiguration.class,
             CommandOutboxTestSupportConfiguration.class})
+    @EnableDirectToKafkaCommandProducer
     static public class Config {
         @Bean
         public SubscriberMapping subscriberMapping() {
@@ -62,7 +62,7 @@ public class SecuritySystemCommandHandlerIntegrationTest {
     private SecuritySystemService securitySystemService;
     
     @Autowired
-    private CommandProducer commandProducer;
+    private DirectToKafkaCommandProducer commandProducer;
 
     @Autowired
     private CommandOutboxTestSupport commandOutboxTestSupport;

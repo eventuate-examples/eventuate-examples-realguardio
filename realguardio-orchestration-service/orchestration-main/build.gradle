@@ -21,7 +21,14 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
     implementation "io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl-starter"
     implementation "org.postgresql:postgresql"
-    
+
+    // Micrometer and OpenTelemetry dependencies for distributed tracing
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.micrometer:micrometer-registry-otlp'
+
+    implementation "io.eventuate.tram.springmicrometertracing:eventuate-tram-spring-micrometer-tracing-starter:$eventuateTramSpringMicrometerTracingVersion"
+
     testImplementation "org.springframework.boot:spring-boot-starter-test"
     
     componentTestImplementation project(':customer-service-api')

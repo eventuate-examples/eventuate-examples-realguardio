@@ -16,6 +16,13 @@ dependencies {
     runtimeOnly 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly 'org.springframework.boot:spring-boot-starter-web'
 
+    // Micrometer and OpenTelemetry dependencies for distributed tracing
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.micrometer:micrometer-registry-otlp'
+
+    implementation "io.eventuate.tram.springmicrometertracing:eventuate-tram-spring-micrometer-tracing-starter:$eventuateTramSpringMicrometerTracingVersion"
+
     testImplementation "org.springframework.boot:spring-boot-starter-test"
 
     componentTestImplementation project(':oso-service-test-container')

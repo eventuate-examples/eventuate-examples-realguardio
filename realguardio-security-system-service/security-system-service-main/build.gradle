@@ -38,6 +38,8 @@ dependencies {
     // AspectJ dependencies for custom tracing
     implementation 'org.aspectj:aspectjweaver'
     
+    implementation "io.eventuate.tram.springmicrometertracing:eventuate-tram-spring-micrometer-tracing-starter:$eventuateTramSpringMicrometerTracingVersion"
+    
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     testImplementation 'org.testcontainers:postgresql'
@@ -55,7 +57,6 @@ dependencies {
     componentTestImplementation "io.eventuate.common:eventuate-common-testcontainers"
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-commands"
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-consumer-kafka"
-    componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-kafka-producer"
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-producer-kafka"
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-test-util"
     componentTestImplementation "io.eventuate.platform.testcontainer.support:eventuate-platform-testcontainer-support-service:$eventuatePlatformTestContainerSupportVersion"

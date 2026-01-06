@@ -9,10 +9,10 @@ import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.testcontainers.service.BuildArgsResolver;
 import io.eventuate.testcontainers.service.ServiceContainer;
-import io.eventuate.tram.commands.producer.CommandProducer;
+import io.eventuate.tram.testing.producer.kafka.commands.DirectToKafkaCommandProducer;
 import io.eventuate.tram.events.publisher.DomainEventPublisher;
 import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration;
-import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
+import io.eventuate.tram.testing.producer.kafka.commands.EnableDirectToKafkaCommandProducer;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
 import io.eventuate.tram.testing.producer.kafka.events.DirectToKafkaDomainEventPublisher;
@@ -68,12 +68,12 @@ public class SecuritySystemServiceWithLocalAuthorizationComponentTest {
 	@Configuration
 	@EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class})
 	@Import({
-			EventuateKafkaTestCommandProducerConfiguration.class,
 			CommandOutboxTestSupportConfiguration.class,
 			EventuateTramFlywayMigrationConfiguration.class,
 			LocationRolesReplicaConfiguration.class,
 			OsoServiceConfiguration.class
 	})
+	@EnableDirectToKafkaCommandProducer
 	@EnableDirectToKafkaDomainEventPublisher
 	static class TestConfiguration {
 
@@ -131,7 +131,7 @@ public class SecuritySystemServiceWithLocalAuthorizationComponentTest {
 		;
 
 	@Autowired
-	private CommandProducer commandProducer;
+	private DirectToKafkaCommandProducer commandProducer;
 
 	@Autowired
 	private CommandOutboxTestSupport commandOutboxTestSupport;

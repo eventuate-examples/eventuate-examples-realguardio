@@ -6,9 +6,9 @@ import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Location;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaCluster;
-import io.eventuate.tram.commands.producer.CommandProducer;
+import io.eventuate.tram.testing.producer.kafka.commands.DirectToKafkaCommandProducer;
 import io.eventuate.tram.messaging.consumer.SubscriberMapping;
-import io.eventuate.tram.spring.testing.kafka.producer.EventuateKafkaTestCommandProducerConfiguration;
+import io.eventuate.tram.testing.producer.kafka.commands.EnableDirectToKafkaCommandProducer;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
 import io.eventuate.common.json.mapper.JSonMapper;
@@ -58,8 +58,8 @@ public class CustomerCommandHandlerIntegrationTest {
     @Configuration
     @EnableAutoConfiguration
     @Import({CustomerCommandHandlerConfiguration.class,
-            EventuateKafkaTestCommandProducerConfiguration.class,
             CommandOutboxTestSupportConfiguration.class})
+    @EnableDirectToKafkaCommandProducer
     static public class Config {
         @Bean
         public SubscriberMapping subscriberMapping() {
@@ -71,7 +71,7 @@ public class CustomerCommandHandlerIntegrationTest {
     private CustomerService customerService;
 
     @Autowired
-    private CommandProducer commandProducer;
+    private DirectToKafkaCommandProducer commandProducer;
 
     @Autowired
     private CommandOutboxTestSupport commandOutboxTestSupport;

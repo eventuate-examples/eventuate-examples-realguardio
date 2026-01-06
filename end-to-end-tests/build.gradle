@@ -112,6 +112,12 @@ test {
     useJUnitPlatform()
 }
 
+task compileAll {
+    description = 'Compiles all source sets'
+    group = 'build'
+    dependsOn compileJava, compileTestJava, compileEndToEndTestJava
+}
+
 check.dependsOn endToEndTest
 
 endToEndTest {

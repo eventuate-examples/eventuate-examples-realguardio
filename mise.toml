@@ -239,6 +239,12 @@ run = [
     "mise compose-down"
 ]
 
+[tasks.backend-end-to-end-with-compose-no-down]
+dir = "end-to-end-tests"
+run = [
+    "DOCKERFILE_SUFFIX=-local ./gradlew -P endToEndTestMode=DockerCompose clean build",
+]
+
 [tasks.backend-end-to-end-with-compose-test-only]
 dir = "end-to-end-tests"
 run = [
@@ -379,3 +385,13 @@ run = "make"
 description = "Open architecture PDF documentation"
 depends = ["make-docs-pdf"]
 run = "open docs/architecture/architecture.pdf"
+
+[tasks.gradle-refresh-all-dependencies]
+description = "Refresh all Gradle dependencies across all projects"
+run = """
+for dir in realguardio-customer-service realguardio-security-system-service realguardio-orchestration-service realguardio-oso-integration-service end-to-end-tests; do
+  echo "Refreshing dependencies in $dir..."
+  (cd "$dir" && ./gradlew compileAll --refresh-dependencies --parallel) || exit 1
+done
+echo "All dependencies refreshed."
+"""

@@ -73,6 +73,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: realguardio,UserDatabase
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
       OTEL_PROPAGATORS: tracecontext
     depends_on:
       - jaeger
@@ -109,6 +111,8 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CUSTOMER_SERVICE_URL: http://realguardio-customer-service:8080
@@ -167,6 +171,8 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OSO_URL: ${OSO_URL:-http://oso-service:8080}
@@ -197,6 +203,8 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
       OTEL_PROPAGATORS: tracecontext
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
@@ -220,8 +228,13 @@ services:
       EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OSO_URL: ${OSO_URL:-http://oso-service:8080}
       OSO_AUTH: ${OSO_AUTH:-e_0123456789_12345_osotesttoken01xiIn}
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
+      OTEL_PROPAGATORS: tracecontext
     depends_on:
       - kafka
+      - jaeger
       - oso-service
 
   cdc:

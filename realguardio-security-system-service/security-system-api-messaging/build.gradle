@@ -30,8 +30,9 @@ dependencies {
     integrationTestImplementation 'org.testcontainers:postgresql'
     integrationTestRuntimeOnly 'org.postgresql:postgresql'
     
-    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-kafka-producer"
+    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-producer-kafka"
     integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-outbox-commands"
+    integrationTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-producer"
 }
 
 integrationTest {
