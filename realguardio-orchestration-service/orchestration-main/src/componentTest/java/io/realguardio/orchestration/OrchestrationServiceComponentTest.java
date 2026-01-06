@@ -7,6 +7,9 @@ import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
 import io.eventuate.testcontainers.service.ServiceContainer;
 import io.eventuate.tram.messaging.common.Message;
+import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
+import io.eventuate.tram.spring.testing.outbox.commands.EnableCommandOutboxTestSupport;
+import io.eventuate.tram.testing.producer.kafka.replies.DirectToKafkaCommandReplyProducer;
 import io.eventuate.tram.testing.producer.kafka.replies.EnableDirectToKafkaCommandReplyProducer;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemResponse;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.commands.ValidateLocationCommand;
@@ -24,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
@@ -42,9 +44,7 @@ public class OrchestrationServiceComponentTest {
 
 	@Configuration
 	@EnableAutoConfiguration
-	@Import({
-			ComponentTestSupportConfiguration.class
-	})
+	@EnableCommandOutboxTestSupport
 	@EnableDirectToKafkaCommandReplyProducer
 	static class TestConfiguration {
 
@@ -91,7 +91,10 @@ public class OrchestrationServiceComponentTest {
 
 
 	@Autowired
-	private ComponentTestSupport componentTestSupport;
+	private CommandOutboxTestSupport commandOutboxTestSupport;
+
+	@Autowired
+	private DirectToKafkaCommandReplyProducer commandReplyProducer;
 
 	@DynamicPropertySource
 	static void registerProperties(DynamicPropertyRegistry registry) {
@@ -174,20 +177,20 @@ public class OrchestrationServiceComponentTest {
 		);
 
 		// Step 1: Intercept ValidateLocationCommand with matching locationId
-		Message validateCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+		Message validateCommandMessage = commandOutboxTestSupport.assertThatCommandMessageSent(
 				ValidateLocationCommand.class, customerServiceChannel,
 				cmd -> cmd.locationId().equals(locationId));
 
 		// Reply with LocationValidated
-		componentTestSupport.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationValidated(locationId, locationName, customerId));
+		commandReplyProducer.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationValidated(locationId, locationName, customerId));
 
 		// Step 2: Intercept CreateSecuritySystemCommand with matching locationId
-		Message createCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+		Message createCommandMessage = commandOutboxTestSupport.assertThatCommandMessageSent(
 				CreateSecuritySystemCommand.class, securitySystemServiceChannel,
 				cmd -> cmd.locationId().equals(locationId));
 
 		// Reply with SecuritySystemCreated
-		componentTestSupport.sendReply(createCommandMessage, CreateSecuritySystemCommand.class, new SecuritySystemCreated(securitySystemId));
+		commandReplyProducer.sendReply(createCommandMessage, CreateSecuritySystemCommand.class, new SecuritySystemCreated(securitySystemId));
 
 		// Verify response
 		assertThat(createResponse.get().securitySystemId()).isEqualTo(securitySystemId);
@@ -223,12 +226,12 @@ public class OrchestrationServiceComponentTest {
 		);
 
 		// Step 1: Intercept ValidateLocationCommand with matching locationId
-		Message validateCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+		Message validateCommandMessage = commandOutboxTestSupport.assertThatCommandMessageSent(
 				ValidateLocationCommand.class, customerServiceChannel,
 				cmd -> cmd.locationId().equals(nonExistentLocationId));
 
 		// Reply with LocationNotFound (failure)
-		componentTestSupport.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationNotFound());
+		commandReplyProducer.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationNotFound());
 
 		// Verify response is 404 Not Found
 		assertThat(statusCodeFuture.get()).isEqualTo(404);
@@ -266,20 +269,20 @@ public class OrchestrationServiceComponentTest {
 		);
 
 		// Step 1: Intercept ValidateLocationCommand with matching locationId
-		Message validateCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+		Message validateCommandMessage = commandOutboxTestSupport.assertThatCommandMessageSent(
 				ValidateLocationCommand.class, customerServiceChannel,
 				cmd -> cmd.locationId().equals(locationId));
 
 		// Reply with LocationValidated (location exists)
-		componentTestSupport.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationValidated(locationId, locationName, customerId));
+		commandReplyProducer.sendReply(validateCommandMessage, ValidateLocationCommand.class, new LocationValidated(locationId, locationName, customerId));
 
 		// Step 2: Intercept CreateSecuritySystemCommand with matching locationId
-		Message createCommandMessage = componentTestSupport.assertThatCommandMessageSent(
+		Message createCommandMessage = commandOutboxTestSupport.assertThatCommandMessageSent(
 				CreateSecuritySystemCommand.class, securitySystemServiceChannel,
 				cmd -> cmd.locationId().equals(locationId));
 
 		// Reply with LocationAlreadyHasSecuritySystem (failure - constraint violation)
-		componentTestSupport.sendReply(createCommandMessage, CreateSecuritySystemCommand.class, new LocationAlreadyHasSecuritySystem(locationId));
+		commandReplyProducer.sendReply(createCommandMessage, CreateSecuritySystemCommand.class, new LocationAlreadyHasSecuritySystem(locationId));
 
 		// Verify response is 409 Conflict
 		assertThat(statusCodeFuture.get()).isEqualTo(409);
