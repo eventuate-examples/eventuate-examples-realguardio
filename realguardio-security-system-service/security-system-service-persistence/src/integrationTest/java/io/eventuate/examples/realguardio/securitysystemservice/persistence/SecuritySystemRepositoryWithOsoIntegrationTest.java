@@ -4,7 +4,8 @@ import io.eventuate.examples.realguardio.securitysystemservice.domain.RolesAndPe
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystem;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemRepositoryWithOso;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemState;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.domain.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.persistence.JdbcLocationRolesRepository;
 import io.eventuate.examples.realguardio.securitysystemservice.osointegration.OsoSecuritySystemActionAuthorizerConfiguration;
 import io.realguardio.osointegration.ososervice.RealGuardOsoFactManager;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,7 @@ public class SecuritySystemRepositoryWithOsoIntegrationTest extends AbstractSecu
     static class Config {
         @Bean
         LocationRolesReplicaService locationRolesReplicaService(JdbcTemplate jdbcTemplate) {
-            return new LocationRolesReplicaService(jdbcTemplate);
+            return new LocationRolesReplicaService(new JdbcLocationRolesRepository(jdbcTemplate));
         }
     }
 

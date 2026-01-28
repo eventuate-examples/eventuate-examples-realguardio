@@ -1,5 +1,14 @@
 # Project Guidelines
 
+## Executing bash commands
+
+IMPORTANT: Use simple commands that you have permission to execute. Avoid complex commands that may fail due to permission issues.
+
+When copying or moving files:
+- Avoid compound commands with `&&` - run commands separately
+- Avoid wildcard patterns (`*.java`) - copy files individually
+- Single-file operations are more reliable with Bash permission system
+
 ## Skills
 
 Always invoke the relevant skill before performing these actions:
@@ -29,6 +38,13 @@ The specialized tools are faster, have correct permissions, and provide better o
 
 Always run git commands from the project root directory. If you need to operate on the repository, cd to the root directory first rather than using `git -C`. This prevents accidentally committing files outside the project root.
 
+## Pattern-Based Fixes
+
+When fixing issues caused by naming conventions or patterns:
+1. Search the entire codebase for similar occurrences before making any changes
+2. Fix ALL instances in a single commit
+3. Never commit partial fixes for pattern-based problems
+
 ## Multi-Service Gradle Structure
 
 This project contains multiple independent services, each with its own Gradle wrapper:
@@ -48,3 +64,5 @@ There is no root-level gradlew. Each service is an independent Gradle project.
 # Debugging Github Actions Workflow failures
 
 Run `mise gh-download` to download the logs.
+
+<!-- claude-config-files-sha: f8e6469fd91735ffcae2dc46f979cfb0677ec5b6 -->

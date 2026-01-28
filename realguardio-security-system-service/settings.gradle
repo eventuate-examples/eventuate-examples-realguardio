@@ -18,7 +18,10 @@ include 'security-system-service-persistence'
 include 'security-system-service-restapi'
 include 'security-system-api-messaging'
 include 'security-system-service-main'
-include 'location-roles-replica'
+include 'security-system-location-roles-replica-domain'
+include 'security-system-location-roles-replica-persistence'
+include 'security-system-location-roles-replica-restapi'
+include 'security-system-location-roles-replica-event-subscribers'
 include 'security-system-service-customer-service-proxy'
 
 includeBuild("../realguardio-oso-integration-service") {

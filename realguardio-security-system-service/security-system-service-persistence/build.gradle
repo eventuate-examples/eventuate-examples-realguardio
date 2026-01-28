@@ -15,7 +15,9 @@ dependencies {
     testImplementation 'org.mockito:mockito-junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
 
-    integrationTestImplementation project(':location-roles-replica')
+    integrationTestImplementation project(':security-system-location-roles-replica-domain')
+    integrationTestImplementation project(':security-system-location-roles-replica-persistence')
+    integrationTestImplementation project(':security-system-location-roles-replica-event-subscribers')
     integrationTestImplementation 'io.realguardio.osointegration:oso-service-test-container:0.1.0-SNAPSHOT'
 
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'

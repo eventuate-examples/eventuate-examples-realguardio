@@ -1,0 +1,20 @@
+plugins {
+    id 'io.eventuate.plugins.gradle.testing.integration-tests'
+}
+
+dependencies {
+
+    implementation project(':security-system-location-roles-replica-domain')
+
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+
+    integrationTestImplementation project(':security-system-service-domain')
+
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'io.eventuate.common:eventuate-common-testcontainers'
+    integrationTestImplementation 'org.assertj:assertj-core'
+
+    integrationTestRuntimeOnly 'org.postgresql:postgresql'
+    integrationTestRuntimeOnly 'io.eventuate.tram.core:eventuate-tram-spring-flyway'
+    integrationTestRuntimeOnly 'org.flywaydb:flyway-database-postgresql:11.8.2'
+}

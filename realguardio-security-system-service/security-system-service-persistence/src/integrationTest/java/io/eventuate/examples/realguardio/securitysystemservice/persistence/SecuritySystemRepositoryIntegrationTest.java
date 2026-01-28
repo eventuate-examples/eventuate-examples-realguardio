@@ -1,6 +1,7 @@
 package io.eventuate.examples.realguardio.securitysystemservice.persistence;
 
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.domain.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.persistence.JdbcLocationRolesRepository;
 import io.eventuate.examples.realguardio.securitysystemservice.osointegration.OsoSecuritySystemActionAuthorizerConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -20,7 +21,7 @@ public class SecuritySystemRepositoryIntegrationTest extends AbstractSecuritySys
     static class Config {
         @Bean
         LocationRolesReplicaService locationRolesReplicaService(JdbcTemplate jdbcTemplate) {
-            return new LocationRolesReplicaService(jdbcTemplate);
+            return new LocationRolesReplicaService(new JdbcLocationRolesRepository(jdbcTemplate));
         }
     }
 

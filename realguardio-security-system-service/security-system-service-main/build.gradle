@@ -16,9 +16,10 @@ dependencies {
     implementation project(':security-system-service-persistence')
     implementation project(':security-system-service-restapi')
     implementation project(':security-system-api-messaging')
-    implementation project(':location-roles-replica')
+    implementation project(':security-system-location-roles-replica-event-subscribers')
+    implementation project(':security-system-location-roles-replica-persistence')
+    implementation project(':security-system-location-roles-replica-restapi')
     implementation project(':security-system-service-oso-integration')
-    implementation project(':location-roles-replica')
     implementation project(':security-system-service-customer-service-proxy')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -46,7 +47,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     
     componentTestImplementation project(':security-system-api-messaging')
-    componentTestImplementation project(':location-roles-replica')
+    componentTestImplementation project(':security-system-location-roles-replica-event-subscribers')
     componentTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     componentTestImplementation 'io.rest-assured:rest-assured'
     componentTestImplementation 'org.postgresql:postgresql'
@@ -68,6 +69,9 @@ dependencies {
 
     componentTestImplementation 'io.realguardio.osointegration:oso-service:0.1.0-SNAPSHOT'
     componentTestImplementation 'io.realguardio.osointegration:oso-service-test-container:0.1.0-SNAPSHOT'
+
+    integrationTestImplementation project(':security-system-location-roles-replica-domain')
+    integrationTestImplementation project(':security-system-location-roles-replica-persistence')
 
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-webflux'

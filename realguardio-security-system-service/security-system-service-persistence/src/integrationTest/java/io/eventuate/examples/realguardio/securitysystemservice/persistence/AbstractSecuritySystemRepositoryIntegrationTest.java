@@ -1,7 +1,7 @@
 package io.eventuate.examples.realguardio.securitysystemservice.persistence;
 
 import io.eventuate.examples.realguardio.securitysystemservice.domain.*;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.domain.LocationRolesReplicaService;
 import io.realguardio.osointegration.testcontainer.OsoTestContainer;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;

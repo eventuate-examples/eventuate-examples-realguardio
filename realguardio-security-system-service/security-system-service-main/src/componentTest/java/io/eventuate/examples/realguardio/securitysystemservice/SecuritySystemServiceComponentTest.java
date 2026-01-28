@@ -4,7 +4,6 @@ import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole;
 import io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.LocationRolesReplicaConfiguration;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForServiceContainers;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
@@ -12,7 +11,6 @@ import io.eventuate.testcontainers.service.BuildArgsResolver;
 import io.eventuate.testcontainers.service.ServiceContainer;
 import io.eventuate.tram.testing.producer.kafka.commands.DirectToKafkaCommandProducer;
 import io.eventuate.tram.events.publisher.DomainEventPublisher;
-import io.eventuate.tram.spring.flyway.EventuateTramFlywayMigrationConfiguration;
 import io.eventuate.tram.testing.producer.kafka.commands.EnableDirectToKafkaCommandProducer;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupport;
 import io.eventuate.tram.spring.testing.outbox.commands.CommandOutboxTestSupportConfiguration;
@@ -26,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
+import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,12 +54,8 @@ public class SecuritySystemServiceComponentTest {
 	private String replyTo;
 
 	@Configuration
-	@EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class})
-	@Import({
-			CommandOutboxTestSupportConfiguration.class,
-			EventuateTramFlywayMigrationConfiguration.class,
-			LocationRolesReplicaConfiguration.class
-	})
+	@EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class, FlywayAutoConfiguration.class})
+	@Import(CommandOutboxTestSupportConfiguration.class)
 	@EnableDirectToKafkaCommandProducer
 	@EnableDirectToKafkaDomainEventPublisher
 	static class TestConfiguration {

@@ -4,7 +4,7 @@ import io.eventuate.common.testcontainers.DatabaseContainerFactory;
 import io.eventuate.common.testcontainers.EventuateDatabaseContainer;
 import io.eventuate.examples.realguardio.securitysystemservice.db.DBInitializer;
 import io.eventuate.examples.realguardio.securitysystemservice.domain.*;
-import io.eventuate.examples.realguardio.securitysystemservice.locationroles.common.LocationRolesReplicaService;
+import io.eventuate.examples.realguardio.securitysystemservice.locationroles.domain.LocationRolesReplicaService;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeContainer;
