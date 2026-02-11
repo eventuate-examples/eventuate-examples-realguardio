@@ -1,1 +1,34 @@
-rootProject.name = 'security-system-service'
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url 'https://snapshots.repositories.eventuate.io/repository' }
+    }
+    plugins {
+        id 'io.eventuate.plugins.gradle.testing.integration-tests' version "${eventuateTestPluginsVersion}"
+        id 'io.eventuate.plugins.gradle.testing.component-tests' version "${eventuateTestPluginsVersion}"
+    }
+}
+
+rootProject.name = 'realguardio-security-system-service'
+
+include 'security-system-service-domain'
+include 'security-system-service-event-publishing'
+include 'security-system-service-oso-integration'
+include 'security-system-service-persistence'
+include 'security-system-service-restapi'
+include 'security-system-api-messaging'
+include 'security-system-service-main'
+include 'security-system-location-roles-replica-domain'
+include 'security-system-location-roles-replica-persistence'
+include 'security-system-location-roles-replica-restapi'
+include 'security-system-location-roles-replica-event-subscribers'
+include 'security-system-service-customer-service-proxy'
+
+includeBuild("../realguardio-oso-integration-service") {
+    dependencySubstitution {
+        substitute(module("io.realguardio.osointegration:oso-service"))
+                .using(project(":oso-service"))
+        substitute(module("io.realguardio.osointegration:oso-service-test-container"))
+                .using(project(":oso-service-test-container"))
+    }
+}

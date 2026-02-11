@@ -1,0 +1,16 @@
+I want to make the following changes:
+
+1. Locations are explicitly created in the Customer Service via a new REST endpoint:
+   - `POST /customers/{customerId}/locations` with body `{ "name": "..." }`
+   - Returns the created locationId
+   - Locations can exist independently of SecuritySystems
+
+2. The SecuritySystem-Location relationship is maintained by the Security System Service - not the Customer Service:
+   - Remove `securitySystemId` field from Location entity in Customer Service
+   - SecuritySystem stores `locationId` and `locationName`
+   - One SecuritySystem per Location constraint enforced by Security System Service
+
+3. SecuritySystem creation takes `locationId` as input (instead of creating a new Location):
+   - Orchestration Service saga validates locationId exists
+   - Saga fetches locationName during validation
+   - SecuritySystem created with locationId + locationName reference

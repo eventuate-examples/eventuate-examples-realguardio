@@ -1,0 +1,53 @@
+=== User Story: Create Security System
+
+[source,gherkin]
+----
+Feature: Create Security System with Location
+  As an authenticated user
+  I want to create a security system with an associated location
+  So that customers can monitor and control security systems at their locations
+
+  Scenario: Successfully create security system via saga
+    Given I am authenticated
+    And a customer exists with ID 123
+    When I submit a request to create a security system with:
+      | customerId   | 123                    |
+      | name         | Building A Alarm       |
+      | locationName | Downtown Office        |
+    Then the CreateSecuritySystemSaga is initiated
+    And I receive a 202 Accepted response with a saga ID
+    And the Security System Service creates a SecuritySystem entity with name "Building A Alarm"
+    And a SecuritySystemCreated event is published
+    And the Customer Service creates a Location entity with name "Downtown Office"
+    And the location is linked to the security system
+    And a LocationCreated event is published
+    And the Security System Service links the location back to the security system
+    And the saga completes successfully within 30 seconds
+    And the security system and location are synchronized to Oso Cloud
+
+  Scenario: Saga fails at location creation step
+    Given I am authenticated
+    And a customer exists with ID 123
+    When I submit a request to create a security system
+    And the SecuritySystem is created successfully
+    But the Location creation fails due to database error
+    Then the saga triggers compensation
+    And the Security System Service marks the security system as failed
+    And I can query the saga status to see the failure reason
+
+  Scenario: Saga timeout at location linking step
+    Given I am authenticated
+    And a customer exists with ID 123
+    When I submit a request to create a security system
+    And the SecuritySystem and Location are created successfully
+    But the location linking step times out after 30 seconds
+    Then the saga triggers compensation
+    And the security system is marked as failed
+    And the saga is marked as failed
+
+  Scenario: Attempt to create security system without authentication
+    Given I am not authenticated
+    When I submit a request to create a security system
+    Then I receive a 401 Unauthorized response
+    And no saga is initiated
+----

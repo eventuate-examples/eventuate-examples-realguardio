@@ -1,0 +1,41 @@
+package io.realguardio.osointegration.ososervice;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.CompletableFuture;
+
+public class RealGuardOsoAuthorizer {
+
+  private static final Logger logger = LoggerFactory.getLogger(RealGuardOsoAuthorizer.class);
+
+  private final OsoService osoService;
+
+  public RealGuardOsoAuthorizer(OsoService osoService) {
+    this.osoService = osoService;
+  }
+
+  @CircuitBreaker(name = "osoAuthorizer")
+  @TimeLimiter(name = "osoAuthorizer")
+  @Retry(name = "osoAuthorizer", fallbackMethod = "isAuthorizedFallback")
+  public CompletableFuture<Boolean> isAuthorized(String user, String action, String resourceType, String resourceId) {
+        return CompletableFuture.supplyAsync(() -> osoService.authorize("CustomerEmployee", user, action, resourceType, resourceId));
+  }
+
+  private CompletableFuture<Boolean> isAuthorizedFallback(String user, String action, String resourceType, String resourceId, Exception exception) {
+    logger.error("isAuthorizedFallback: Authorization service unavailable for user {} attempting action {} on {} {}. Denying access.",
+        user, action, resourceType, resourceId, exception);
+    return CompletableFuture.completedFuture(false);
+  }
+
+  public String listLocal(String userId, String action, String resourceType, String column) {
+      return osoService.listLocal("CustomerEmployee", userId, action, resourceType, column);
+  }
+
+  public String authorizeLocal(String userId, String action, String resourceType, String resourceId) {
+      return osoService.authorizeLocal("CustomerEmployee", userId, action, resourceType, resourceId);
+  }
+}

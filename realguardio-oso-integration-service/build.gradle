@@ -1,0 +1,112 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url "https://snapshots.repositories.eventuate.io/repository"
+        }
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
+    }
+}
+
+apply plugin: ConfigureContractRepoDirPlugin
+
+allprojects {
+    group = "io.realguardio.osointegration"
+}
+
+subprojects {
+
+    apply plugin: "java-library"
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+        eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
+        maven { url = contractRepoUrl }
+    }
+    
+    configurations.all {
+        exclude group: 'com.mysql', module: 'mysql-connector-j'
+    }
+
+    dependencies {
+        implementation(platform("io.eventuate.platform:eventuate-platform-dependencies:$eventuatePlatformVersion"))
+
+        implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+
+        implementation(platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"))
+
+        constraints {
+            implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocVersion"
+        }
+
+        testImplementation "org.springframework.boot:spring-boot-starter-test"
+         testImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"
+         testRuntimeOnly "org.junit.platform:junit-platform-launcher:$junitPlatformLauncherVersion"
+
+    }
+
+    tasks.withType(Copy).all { duplicatesStrategy 'WARN' }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-parameters"
+    }
+
+    tasks.withType(Test).configureEach {
+         useJUnitPlatform()
+    }
+
+    if (System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES") != null)
+        configurations.all {
+            resolutionStrategy.cacheChangingModulesFor Integer.parseInt(System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES")), 'minutes'
+        }
+
+}
+
+task validateOsoPolicy(type: Exec) {
+	description = 'Validates the OSO policy file'
+	group = 'verification'
+
+	workingDir projectDir
+    commandLine './validate-oso-policy.sh'
+}
+
+task testOsoPolicy(type: Exec) {
+	description = 'test the OSO policy file'
+	group = 'verification'
+
+	workingDir projectDir
+	commandLine './test-oso-policy.sh'
+}
+
+subprojects {
+	tasks.withType(Test).configureEach {
+		dependsOn rootProject.tasks.named('validateOsoPolicy')
+		dependsOn rootProject.tasks.named('testOsoPolicy')
+	}
+}
+
+task compileAll {
+	description = 'Compiles all main and test classes including integration and end-to-end tests'
+	group = 'build'
+
+	subprojects.each { subproject ->
+		dependsOn subproject.tasks.named('testClasses')
+		if (subproject.tasks.findByName('integrationTestClasses')) {
+			dependsOn subproject.tasks.named('integrationTestClasses')
+		}
+		if (subproject.tasks.findByName('componentTestClasses')) {
+			dependsOn subproject.tasks.named('componentTestClasses')
+		}
+	}
+}

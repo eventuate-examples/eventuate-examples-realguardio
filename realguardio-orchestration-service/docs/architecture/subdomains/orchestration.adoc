@@ -1,0 +1,90 @@
+== Orchestration Subdomain
+
+The Orchestration subdomain coordinates distributed transactions across multiple services using the Saga pattern. It ensures atomicity and consistency for operations that span service boundaries.
+
+=== Domain Model
+
+[plantuml]
+....
+@startuml
+class CreateSecuritySystemSaga {
+  +SagaDefinition<CreateSecuritySystemSagaData> sagaDefinition
+  +createSecuritySystem(CreateSecuritySystemSagaData)
+  -handleValidateLocationReply()
+  -handleCreateSecuritySystemReply()
+}
+
+class CreateSecuritySystemSagaData {
+  +Long locationId
+  +Long customerId
+  +String locationName
+  +Long securitySystemId
+  +String rejectionReason
+}
+
+CreateSecuritySystemSaga ..> CreateSecuritySystemSagaData : orchestrates
+
+@enduml
+....
+
+=== Entity Responsibilities
+
+* **CreateSecuritySystemSaga** - Saga orchestrator for creating security systems for existing locations
+** Coordinates distributed transaction across Customer Service and Security System Service
+** Validates that the location exists before creating the security system
+** Saga Steps:
+*** Step 1: Validate Location in Customer Service (returns location details)
+*** Step 2: Create SecuritySystem with locationId in Security System Service
+** No compensation needed: validation is read-only, creation failure doesn't require rollback
+
+* **CreateSecuritySystemSagaData** - Saga state holder
+** Maintains state throughout the saga execution
+** Fields:
+*** `locationId` - ID of the existing location (provided at saga start)
+*** `customerId` - Customer ID (retrieved from location validation)
+*** `locationName` - Name of the location (retrieved from location validation)
+*** `securitySystemId` - ID of created security system (set after Step 2)
+*** `rejectionReason` - Reason for failure (if saga fails)
+** Passed between saga steps to accumulate results
+** Immutable - each step produces new state
+
+=== Domain Services
+
+* **SecuritySystemSagaService** - Entry point for initiating sagas
+** Accepts locationId from orchestration REST API
+** Creates saga instance and starts execution
+** Returns securitySystemId when saga completes
+
+=== Relationships to Other Subdomains
+
+* **Customer Management** - Validates Location exists and retrieves details
+** Command sent: `ValidateLocationCommand`
+** Returns `LocationValidated` with locationId, locationName, customerId
+
+* **Security System** - Creates SecuritySystem for the validated location
+** Command sent: `CreateSecuritySystemCommand`
+** Creates SecuritySystem in DISARMED state with locationId reference
+
+=== Business Rules
+
+* Location must exist before creating a security system
+* Each location can have at most one security system (unique constraint)
+* Security system starts in DISARMED state
+* Saga must be idempotent (can replay safely if system crashes)
+* Each saga step must be able to detect if it has already been executed
+
+=== Technology Details
+
+* Uses Eventuate TRAM Sagas framework with Simple DSL
+* Commands and replies are sent via Kafka
+* Saga state is persisted in Eventuate Saga tables
+* Supports automatic retry for transient failures
+* Provides saga orchestration dashboard for monitoring
+
+=== Design Patterns
+
+* **Saga Pattern** - Coordinates distributed transactions with compensation
+* **Command Pattern** - Each saga step sends commands to services
+* **State Machine** - Saga definition is a state machine of steps
+* **Compensation** - Failed steps trigger compensating transactions
+* **Eventual Consistency** - Saga ensures consistency across services over time

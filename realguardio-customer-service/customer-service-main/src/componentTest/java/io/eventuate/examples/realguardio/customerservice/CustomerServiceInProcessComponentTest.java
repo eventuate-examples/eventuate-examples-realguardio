@@ -1,0 +1,129 @@
+package io.eventuate.examples.realguardio.customerservice;
+
+import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddress;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.RolesAndPermissions;
+import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
+import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
+import io.realguardio.osointegration.ososervice.RealGuardOsoFactManager;
+import io.realguardio.osointegration.testcontainer.OsoTestContainer;
+import io.restassured.RestAssured;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.lifecycle.Startables;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest(classes = CustomerServiceInProcessComponentTest.Config.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("UseOsoService")
+public class CustomerServiceInProcessComponentTest extends AbstractCustomerServiceComponentTest {
+
+
+	@TestConfiguration
+	@Import({AbstractConfig.class})
+	@EnableAutoConfiguration
+	static class Config {
+	}
+
+	@Autowired
+	private RealGuardOsoFactManager realGuardOsoFactManager;
+
+	@LocalServerPort
+	private int port;
+
+    private static OsoTestContainer osoTestContainer;
+
+    static {
+		makeContainers(CustomerServiceInProcessComponentTest.class.getSimpleName());
+		iamService = new AuthorizationServerContainerForLocalTests()
+				.withUserDb()
+				.withNetwork(eventuateKafkaCluster.network)
+				.withNetworkAliases("iam-service")
+				.withReuse(false);
+        osoTestContainer = new OsoTestContainer();
+	}
+
+	@DynamicPropertySource
+	static void registerProperties(DynamicPropertyRegistry registry) {
+		Startables.deepStart(kafka, database, iamService, osoTestContainer).join();
+
+		kafka.registerProperties(registry::add);
+		database.registerProperties(registry::add);
+
+        osoTestContainer.addProperties(registry);
+
+		registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
+				() -> "http://localhost:" + iamService.getFirstMappedPort());
+		registry.add("spring.security.oauth2.resourceserver.jwt.jwk-set-uri",
+				() -> "http://localhost:" + iamService.getFirstMappedPort() + "/oauth2/jwks");
+	}
+
+	@BeforeEach
+	void setupReplyConsumer() {
+		baseUri = String.format("http://localhost:%d", port);
+	}
+
+	@Test
+	void shouldCreateLocationAndAssignRoles() throws Exception {
+		String realGuardIOAdminAccessToken = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort());
+
+		EmailAddress adminUser = Uniquifier.uniquify(new EmailAddress("admin@example.com"));
+
+		CustomerSummary customerSummary = createCustomer(adminUser, realGuardIOAdminAccessToken);
+
+		// Sync the admin role to Oso (normally done by Oso integration service consuming domain events)
+		realGuardOsoFactManager.createRoleInCustomer(
+				adminUser.email(),
+				String.valueOf(customerSummary.customerId()),
+				RolesAndPermissions.COMPANY_ROLE_ADMIN);
+
+		String companyAdminAccessToken = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, adminUser.email(), "password");
+
+		var locationId = createLocation(customerSummary.customerId(), companyAdminAccessToken);
+
+        assertThat(getRolesForLocation(realGuardIOAdminAccessToken, locationId).getRoles()).isEmpty();
+
+		assertThat(getRolesForLocation(companyAdminAccessToken, locationId).getRoles()).isEmpty();
+
+		assignDisarmRoleToSelfAtLocation(companyAdminAccessToken, customerSummary, locationId);
+
+		assertThat(getRolesForLocation(companyAdminAccessToken, locationId).getRoles()).contains("DISARM");
+
+		domainEventOutboxTestSupport.assertDomainEventInOutbox(
+			"io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer",
+			String.valueOf(customerSummary.customerId()),
+			"io.eventuate.examples.realguardio.customerservice.domain.CustomerEmployeeAssignedLocationRole"
+		);
+
+	}
+
+	private void assignDisarmRoleToSelfAtLocation(String companyAdminAccessToken, CustomerSummary customerSummary, Long locationId) {
+		String requestBody = """
+			{
+				"employeeId": %d,
+				"locationId": %d,
+				"roleName": "DISARM"
+			}
+			""".formatted(customerSummary.employeeId(), locationId);
+
+		RestAssured.given()
+				.baseUri(baseUri)
+				.header("Authorization", "Bearer " + companyAdminAccessToken)
+				.contentType("application/json")
+				.body(requestBody)
+				.when()
+				.put("/customers/" + customerSummary.customerId() + "/location-roles")
+				.then()
+				.statusCode(200);
+	}
+
+
+}

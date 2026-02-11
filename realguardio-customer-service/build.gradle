@@ -1,0 +1,113 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
+    }
+    dependencies {
+        classpath "org.springframework.cloud:spring-cloud-contract-gradle-plugin:$springCloudContractDependenciesVersion"
+    }
+}
+
+plugins {
+	id 'java-library'
+	id 'org.springframework.boot' version '3.4.5' apply false
+	id 'io.spring.dependency-management' version '1.1.7' apply false
+}
+
+allprojects {
+	group = 'io.eventuate.examples.realguardio'
+	
+	repositories {
+		mavenCentral()
+		eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
+	}
+}
+
+subprojects {
+	apply plugin: 'java-library'
+	apply plugin: 'io.spring.dependency-management'
+	
+	dependencyManagement {
+		imports {
+			mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+			mavenBom "io.eventuate.platform:eventuate-platform-dependencies:$eventuatePlatformVersion"
+		}
+	}
+	
+	configurations.all {
+		exclude group: 'com.mysql', module: 'mysql-connector-j'
+	}
+	
+	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(17)
+		}
+	}
+	
+	tasks.withType(JavaCompile) {
+		options.compilerArgs += '-parameters'
+	}
+	
+	dependencies {
+		testImplementation 'org.assertj:assertj-core'
+		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	}
+	
+	tasks.named('test') {
+		useJUnitPlatform()
+	}
+	
+	jar {
+		enabled = true
+	}
+
+	if (System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES") != null)
+		configurations.all {
+			resolutionStrategy.cacheChangingModulesFor Integer.parseInt(System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES")), 'minutes'
+		}
+}
+
+project(':customer-service-main') {
+	apply plugin: 'org.springframework.boot'
+	
+	bootJar {
+		enabled = true
+	}
+}
+
+task compileAll {
+	description = 'Compiles all main and test classes including integration and end-to-end tests'
+	group = 'build'
+
+	subprojects.each { subproject ->
+		dependsOn subproject.tasks.named('testClasses')
+		if (subproject.tasks.findByName('integrationTestClasses')) {
+			dependsOn subproject.tasks.named('integrationTestClasses')
+		}
+		if (subproject.tasks.findByName('componentTestClasses')) {
+			dependsOn subproject.tasks.named('componentTestClasses')
+		}
+	}
+}
+
+task precommitCheck {
+	group = 'build'
+
+	dependsOn 'compileAll'
+	finalizedBy 'precommitTests'
+}
+
+task precommitTests {
+	group = 'build'
+
+	subprojects.each { subproject ->
+		dependsOn subproject.tasks.named('test')
+		if (subproject.tasks.findByName('integrationTest')) {
+			dependsOn subproject.tasks.named('integrationTest')
+		}
+	}
+
+}

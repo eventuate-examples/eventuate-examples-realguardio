@@ -125,7 +125,15 @@ export class HomePage {
     async expectSecuritySystemInTable(securitySystem: GetSecuritySystemResponse): Promise<void> {
         const rows = await this.getSecuritySystemsTableRows();
         const securitySystemRow = rows.find(row => row[0] == securitySystem.locationName);
-        expect(securitySystemRow).toBeTruthy();
-        expect(securitySystemRow![1]).toBe(securitySystem.state);
+        
+        // Check if security system exists in table
+        if (!securitySystemRow) {
+            throw new Error(`Security system with locationName "${securitySystem.locationName}" not found in table. Available rows: ${JSON.stringify(rows)}`);
+        }
+        
+        // Check if state matches
+        if (securitySystemRow[1] !== securitySystem.state) {
+            throw new Error(`State for security system "${securitySystem.locationName}" does not match. Expected: "${securitySystem.state}", Actual: "${securitySystemRow[1]}"`);
+        }
     }
 }

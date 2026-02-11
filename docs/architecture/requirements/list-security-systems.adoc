@@ -1,0 +1,33 @@
+=== User Story: List Security Systems
+
+[source,gherkin]
+----
+Feature: List Security Systems
+  As an authenticated user
+  I want to view all security systems
+  So that I can see which systems are registered in the system
+
+  Scenario: Successfully retrieve security systems list
+    Given I am authenticated
+    And the following security systems exist:
+      | systemId | name              | armed | locationId |
+      | 1        | Building A Alarm  | true  | 101        |
+      | 2        | Building B Alarm  | false | 102        |
+      | 3        | Warehouse System  | true  | 103        |
+    When I submit a request to list all security systems
+    Then I receive a 200 OK response
+    And the response contains 3 security systems
+    And the security systems include their current armed status
+
+  Scenario: Retrieve empty security systems list
+    Given I am authenticated
+    And no security systems exist in the system
+    When I submit a request to list all security systems
+    Then I receive a 200 OK response
+    And the response contains an empty array
+
+  Scenario: Attempt to list security systems without authentication
+    Given I am not authenticated
+    When I submit a request to list all security systems
+    Then I receive a 401 Unauthorized response
+----

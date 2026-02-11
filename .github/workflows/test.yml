@@ -2,15 +2,25 @@ name: Run Tests
 
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - '*/docs/**'
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*/docs/**'
+
+env:
+  MISE_VERSION: 2025.8.7
+  GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES: 15
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-8-core
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Cache npm dependencies
       uses: actions/setup-node@v4
@@ -20,7 +30,10 @@ jobs:
 
     - uses: jdx/mise-action@v2
       with:
-        version: 2025.3.0
+        version: ${{ env.MISE_VERSION }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: mise node-version
       run: mise node-version
@@ -30,8 +43,21 @@ jobs:
       with:
         cache-read-only: false
 
-    - name: Build security-system-service
-      run: mise security-system-service-build
+    - name: Install OSO CLI
+      run: |
+        curl -L https://cloud.osohq.com/install.sh | bash
+
+    - name: Build IAM service container
+      run: mise iam-service-compose-build
+
+    - name: List images
+      run: docker images
+
+    - name: Build Java services
+      run: GRADLE_BUILD_OPTIONS=--build-cache mise build
+
+    - name: Run backend end-to-end tests with compose
+      run: mise backend-end-to-end-with-compose
 
     - name: Create logs
       run: mkdir -p logs
@@ -64,6 +90,15 @@ jobs:
     - name: Run E2E Tests with containers
       run: mise go
 
+    - name: Save test results
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: |
+          **/build/reports
+          **/build/test-results
+
     - name: Get container logs
       if: always() 
       run: ./print-container-logs.sh
@@ -76,24 +111,54 @@ jobs:
         path: ./logs
 
   test-compose-up:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-8-core
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Compose up
-      run: docker compose up -d --build 
+      uses: actions/checkout@v4
 
     - uses: jdx/mise-action@v2
       with:
-        version: 2025.3.0
+        version: ${{ env.MISE_VERSION }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: Cache npm dependencies
       uses: actions/setup-node@v4
       with:
         cache: 'npm'
         cache-dependency-path: 'realguardio-bff/package.json'
+
+
+    - name: Expose GitHub runtime to env
+      uses: crazy-max/ghaction-github-runtime@v3
+
+    - name: Verify GitHub Actions cache env vars
+      run: |
+        missing=0
+
+        for var in ACTIONS_CACHE_URL ACTIONS_RUNTIME_TOKEN; do
+          if [ -z "${!var}" ]; then
+            echo "::error::Environment variable '$var' is NOT set."
+            missing=1
+          else
+            echo "✅ $var is set."
+          fi
+        done
+
+        if [ "$missing" -ne 0 ]; then
+          echo "::error::One or more required env vars are missing. type=gha caching will NOT work."
+          exit 1
+        else
+          echo "🎉 All required env vars are available. type=gha caching should work."
+        fi
+
+    - name: Build images with caching
+      run: mise run docker-build-helper '' build
+
+    - name: Start services
+      run: docker compose up -d --wait --no-build
 
     - name: Install dependencies (ignoring package lock)
       working-directory: ./realguardio-bff
@@ -114,3 +179,18 @@ jobs:
       if: always() 
       run: ./print-container-logs.sh
 
+    - name: Save test results
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: compose-up-test-reports
+        path: |
+          **/build/reports
+          **/build/test-results
+
+    - name: Upload Logs
+      if: always() 
+      uses: actions/upload-artifact@v4
+      with:
+        name: compose-up-logs
+        path: ./logs

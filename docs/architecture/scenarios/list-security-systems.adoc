@@ -1,0 +1,269 @@
+== Scenario: List Security Systems for User
+
+=== Overview
+
+This scenario describes how a user retrieves a filtered list of security systems they can access. The operation requires authorization at the Spring Security level, and then filters results based on location-based roles.
+
+=== Authorization Requirements
+
+*Spring Security Layer*: The requesting user must have either `REALGUARDIO_ADMIN` or `REALGUARDIO_CUSTOMER_EMPLOYEE` global role in their JWT token.
+
+*Result Filtering*: The returned list is filtered to only include security systems where the user has at least one location-based role (`SECURITY_SYSTEM_VIEWER`, `SECURITY_SYSTEM_ARMER`, or `SECURITY_SYSTEM_DISARMER`).
+
+=== Filtering Strategy by Profile
+
+[cols="2,3,2"]
+|===
+|Profile(s) |Filtering Strategy |Implementation Class
+
+|_(none)_ or `UseRolesReplica`
+|Local CQRS replica: Queries the location roles replica table directly
+|`SecuritySystemFinderUsingRepository`
+
+|`UseOsoService` (with or without `OsoLocalSecuritySystemLocation`)
+|Oso Cloud filtering: Calls Oso Cloud to get authorized security system IDs, then queries database
+|`SecuritySystemFinderUsingRepositoryWithOso`
+|===
+
+=== Sequence Diagrams
+
+==== Without `UseOsoService` Profile (CQRS Replica)
+
+[plantuml]
+....
+@startuml
+actor "User" as User
+participant "BFF" as BFF
+participant "Security System\nService" as SecuritySystem
+database "Location Roles\nReplica (CQRS View)" as Replica
+
+User -> BFF: GET /api/securitysystems
+activate BFF
+
+BFF -> SecuritySystem: GET /securitysystems\n+ Bearer token
+activate SecuritySystem
+
+SecuritySystem -> SecuritySystem: Validate JWT token\n(not shown - JWKS endpoint)
+
+SecuritySystem -> SecuritySystem: Extract userName\nfrom JWT claims
+
+SecuritySystem -> Replica: Query security systems\nwith authorization filter\nJOIN customer_employee_location_role\nJOIN team_members + team_location_roles\nWHERE user_name = {userName}
+activate Replica
+
+note right of Replica
+  The query joins:
+  - security_system table
+  - customer_employee_location_role (direct roles)
+  - team_members + team_location_roles (team roles)
+
+  Returns only security systems where
+  the user has at least one role
+end note
+
+Replica --> SecuritySystem: List of security systems\nwith aggregated role names
+deactivate Replica
+
+SecuritySystem --> BFF: 200 OK\n[{id, name, armed, locationId, roleNames}]
+deactivate SecuritySystem
+
+BFF --> User: Display security systems\nwith available actions
+deactivate BFF
+
+@enduml
+....
+
+==== With `UseOsoService` Profile (Oso Cloud Local Authorization)
+
+When Oso Cloud is used, the service calls Oso Cloud's `listLocal` API to get a SQL filter fragment, which is embedded in the database query. This approach combines Oso Cloud's centralized policy evaluation with local data filtering.
+
+[plantuml]
+....
+@startuml
+actor "User" as User
+participant "BFF" as BFF
+participant "Security System\nService" as SecuritySystem
+participant "Oso Cloud" as OsoCloud
+database "Security System\nDatabase" as DB
+
+User -> BFF: GET /api/securitysystems
+activate BFF
+
+BFF -> SecuritySystem: GET /securitysystems\n+ Bearer token
+activate SecuritySystem
+
+SecuritySystem -> SecuritySystem: Validate JWT token\n(not shown - JWKS endpoint)
+
+SecuritySystem -> SecuritySystem: Extract userName\nfrom JWT claims
+
+SecuritySystem -> OsoCloud: POST /list_local\nlistLocal(CustomerEmployee(userId), "view", "SecuritySystem", "ss.id")
+activate OsoCloud
+OsoCloud --> SecuritySystem: SQL filter fragment\n(WHERE clause condition)
+deactivate OsoCloud
+
+SecuritySystem -> DB: SELECT * FROM security_system ss\nWHERE {filter fragment}\n+ role aggregation subqueries
+activate DB
+DB --> SecuritySystem: Security system records\nwith aggregated roles
+deactivate DB
+
+SecuritySystem --> BFF: 200 OK\n[{id, name, armed, locationId, roleNames}]
+deactivate SecuritySystem
+
+BFF --> User: Display security systems\nwith available actions
+deactivate BFF
+
+@enduml
+....
+
+NOTE: The `listLocal` approach combines Oso Cloud's centralized policy with local data. Oso Cloud returns a SQL fragment that filters based on authorization facts stored in Oso Cloud, while local data (role names) is aggregated in the same query.
+
+=== Description
+
+==== Without `UseOsoService` Profile (CQRS Replica)
+
+The sequence of events is:
+
+. The User navigates to the security systems page in the BFF UI.
+
+. The BFF sends a GET request to the Security System Service at `/securitysystems`, including the user's JWT bearer token for authentication.
+
+. The Security System Service validates the JWT token (via IAM Service JWKS endpoint - not shown for brevity).
+
+. The Security System Service extracts the `userName` (email address) from the JWT token claims.
+
+. The Security System Service queries its local CQRS view (location roles replica) with a complex SQL join that:
+.. Joins the `security_system` table with `customer_employee_location_role` to find systems where the user has direct location roles
+.. UNIONs with a join to `team_members` and `team_location_roles` to find systems where the user has roles via team membership
+.. Filters to only return security systems where the user has at least one role (SECURITY_SYSTEM_ARMER, SECURITY_SYSTEM_DISARMER, or SECURITY_SYSTEM_VIEWER)
+.. Aggregates all applicable role names for each security system
+
+. The CQRS view returns a filtered list of security systems with the user's roles at each location.
+
+. The Security System Service returns a 200 OK response with the filtered security systems list, including the role names.
+
+. The BFF displays the security systems to the user, showing only the systems they have access to and enabling actions (arm/disarm) based on their roles.
+
+==== With `UseOsoService` Profile (Oso Cloud Local Authorization)
+
+. The User navigates to the security systems page in the BFF UI.
+
+. The BFF sends a GET request to the Security System Service at `/securitysystems`, including the user's JWT bearer token for authentication.
+
+. The Security System Service validates the JWT token (via IAM Service JWKS endpoint - not shown for brevity).
+
+. The Security System Service extracts the `userName` (email address) from the JWT token claims.
+
+. The Security System Service calls Oso Cloud's `listLocal` API, which returns a SQL filter fragment based on authorization facts stored in Oso Cloud.
+
+. The Security System Service executes a single database query that:
+.. Embeds the Oso-generated filter fragment in the WHERE clause
+.. Joins with local role tables to aggregate role names (direct roles, team roles, customer roles)
+.. Returns only security systems the user is authorized to view
+
+. The Security System Service returns a 200 OK response with the filtered security systems list, including role names.
+
+. The BFF displays the security systems to the user.
+
+=== Comparison: CQRS View vs Oso Cloud Local Authorization
+
+|===
+|Aspect |CQRS View (No Profile) |Oso Cloud (`UseOsoService`)
+
+|*Authorization Data Location*
+|Local database replica
+|Oso Cloud (facts) + Local database (role names)
+
+|*Network Calls*
+|None (local query)
+|1 call to Oso Cloud `listLocal` + 1 local query
+
+|*Latency*
+|Sub-millisecond
+|50-200ms (depends on Oso Cloud latency)
+
+|*Resilience*
+|Works when Customer Service is down
+|Requires Oso Cloud availability
+
+|*Policy Management*
+|Implicit in SQL query logic
+|Centralized in Polar policy files
+
+|*Role Information*
+|Returned in response
+|Returned in response (aggregated from local tables)
+|===
+
+=== Why CQRS View (Without `UseOsoService`)
+
+Without the CQRS view, this query would require:
+
+1. Query Security System Service for all security systems
+2. For each security system, call Customer Service to check user's roles at that location
+3. Filter the list based on roles
+4. Multiple network round-trips (N+1 query problem)
+
+With the CQRS view:
+
+1. Single local database query with joins
+2. No cross-service calls
+3. Sub-millisecond response time
+4. Works even if Customer Service is temporarily unavailable
+
+=== Data Freshness
+
+* The CQRS view is *eventually consistent* with Customer Service
+* When an admin assigns a location role to an employee:
+.. Customer Service publishes `CustomerEmployeeAssignedLocationRole` event
+.. Event is consumed by Security System Service's replica module (typically within 100ms-2s)
+.. New role immediately visible in subsequent queries
+* The trade-off of eventual consistency is acceptable because role changes are infrequent administrative operations
+
+=== Key Characteristics
+
+* *CQRS Pattern*: Queries use replicated read model, commands use write model
+* *Authorization-Aware Filtering*: Only returns security systems the user can access
+* *Single Service Call*: BFF only calls Security System Service, no fan-out to Customer Service
+* *Low Latency*: Local database query with indexes on `user_name` and `location_id`
+* *Resilience*: Works independently of Customer Service availability
+* *Role Aggregation*: Returns all roles (direct and team-based) in a single query
+* *No Over-Fetching*: Authorization filtering happens in database, not application layer
+
+=== Authorization Roles
+
+The query respects the following roles at the location level:
+
+* `SECURITY_SYSTEM_VIEWER` - Can view security system status
+* `SECURITY_SYSTEM_ARMER` - Can arm security systems (implies viewer)
+* `SECURITY_SYSTEM_DISARMER` - Can disarm security systems (implies viewer)
+
+Users must have at least one of these roles at the security system's location to see it in the list.
+
+=== Query Performance
+
+* *Database Indexes*:
+** `idx_customer_employee_location_role_user_name` - Fast lookup by user
+** `idx_customer_employee_location_role_location_id` - Fast lookup by location
+** Primary key indexes on `team_members` and `team_location_roles`
+
+* *Query Complexity*: O(log n) due to index usage, where n = number of role assignments
+
+* *Typical Response Time*: < 10ms for users with < 100 accessible security systems
+
+=== Error Scenarios
+
+* *Invalid Token*: If the JWT token is invalid, the service returns 401 Unauthorized.
+
+* *No Accessible Systems*: If the user has no roles at any location, returns 200 OK with an empty array `[]`.
+
+* *CQRS View Not Yet Populated*: If replica is empty (new deployment), returns empty list until events are processed.
+
+* *Eventual Consistency Lag*: Newly assigned roles may not appear immediately (typically < 2s delay).
+
+=== Relationship to Other Scenarios
+
+This scenario demonstrates:
+
+* *Why CQRS views are needed* - Efficient authorization-aware queries
+* *Event-driven replication* - See create-customer-employee.adoc for how role assignments are published
+* *Authorization enforcement* - Only shows systems the user can access
+* *Read-side of CQRS* - Contrasted with arm-security-system.adoc (write-side)

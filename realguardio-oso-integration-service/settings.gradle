@@ -1,0 +1,16 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url 'https://snapshots.repositories.eventuate.io/repository' }
+    }
+    plugins {
+        id 'io.eventuate.plugins.gradle.testing.component-tests' version "${eventuateTestPluginsVersion}"
+    }
+}
+
+rootProject.name = 'realguardio-oso-integration-service'
+
+include 'oso-service'
+include 'oso-service-test-container'
+include 'oso-integration-service'
+include 'oso-event-subscribers'

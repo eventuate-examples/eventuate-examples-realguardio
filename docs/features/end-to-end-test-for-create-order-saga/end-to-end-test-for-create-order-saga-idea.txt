@@ -1,0 +1,11 @@
+Create a new Gradle project called end-to-end-tests
+
+It will launch the containers using testcontainers's support for docker compose
+
+The first end to end test case will
+
+1. Create a customer - see /Users/cer/src/eventuate-examples/eventuate-examples-realguardio/realguardio-customer-service/customer-service-main/src/componentTest/java/io/eventuate/examples/realguardio/customerservice/CustomerServiceComponentTest.java
+2. Create a security system - see /Users/cer/src/eventuate-examples/eventuate-examples-realguardio/realguardio-orchestration-service/orchestration-main/src/componentTest/java/io/realguardio/orchestration/OrchestrationServiceComponentTest.java
+3. Use the security services REST API to retrieve the security system and verify that it has been assigned a locationID
+
+

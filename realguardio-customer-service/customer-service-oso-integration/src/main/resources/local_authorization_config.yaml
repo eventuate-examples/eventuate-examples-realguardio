@@ -1,0 +1,46 @@
+
+facts:
+
+#  # CustomerEmployee has role on Customer
+#  # Join member_roles with customer_employees through members to get email -> role -> customer_id
+#  "has_role(CustomerEmployee:_, String:_, Customer:_)":
+#    query: >
+#      SELECT m.email, mr.name, ce.customer_id
+#      FROM member_roles mr
+#      JOIN members m ON mr.member_id = m.id
+#      JOIN customer_employees ce ON ce.member_id = m.id
+
+#  # CustomerEmployee has role on Location
+#  "has_role(CustomerEmployee:_, String:_, Location:_)":
+#    query: >
+#      SELECT m.email, celr.role_name, celr.location_id
+#      FROM customer_employee_location_roles celr
+#      JOIN customer_employees ce ON celr.customer_employee_id = ce.id
+#      JOIN members m ON ce.member_id = m.id
+#
+#  # Team has role on Location
+#  "has_role(Team:_, String:_, Location:_)":
+#    query: 'SELECT team_id, role_name, location_id FROM team_location_roles'
+#
+#  # Location belongs to Customer (customer relation)
+#  "has_relation(Location:_, String:customer, Customer:_)":
+#    query: 'SELECT id, customer_id FROM locations'
+#
+#  # SecuritySystem belongs to Location (location relation)
+#  "has_relation(SecuritySystem:_, String:location, Location:_)":
+#    query: 'SELECT security_system_id, id FROM locations WHERE security_system_id IS NOT NULL'
+#
+#  # Team has members (CustomerEmployee members relation)
+#  "has_relation(Team:_, String:members, CustomerEmployee:_)":
+#    query: >
+#      SELECT tm.team_id, m.email
+#      FROM team_members tm
+#      JOIN customer_employees ce ON tm.customer_employee_id = ce.id
+#      JOIN members m ON ce.member_id = m.id
+
+sql_types:
+  Customer: integer
+#  CustomerEmployee: string
+#  Location: integer
+#  SecuritySystem: integer
+#  Team: integer

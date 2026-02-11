@@ -1,0 +1,11 @@
+dependencies {
+
+    implementation project(':security-system-service-domain')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.slf4j:slf4j-api'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+}

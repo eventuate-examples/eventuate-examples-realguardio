@@ -1,0 +1,59 @@
+=== User Story: Assign Location Role to Employee
+
+[source,gherkin]
+----
+Feature: Assign Location Roles to Employee
+  As an administrator or customer employee
+  I want to assign role-based permissions to employees at specific locations
+  So that they can perform authorized operations on security systems
+
+  Scenario: Successfully assign SECURITY_SYSTEM_ARMER role
+    Given I am authenticated as a user with "REALGUARDIO_ADMIN" role
+    And a customer exists with ID 123
+    And an employee exists with ID 456 for customer 123
+    And a location exists with ID 789 for customer 123
+    When I submit a request to assign role "SECURITY_SYSTEM_ARMER" to employee 456 at location 789
+    Then the role assignment is created
+    And I receive a 200 OK response
+    And a CustomerEmployeeAssignedLocationRole event is published to Kafka
+    And a "has_role(employee_456, SECURITY_SYSTEM_ARMER, location_789)" fact is created in Oso Cloud
+    And the Security System Service replicates the role assignment locally
+
+  Scenario: Assign SECURITY_SYSTEM_DISARMER role
+    Given I am authenticated as a user with "REALGUARDIO_ADMIN" role
+    And a customer exists with ID 123
+    And an employee exists with ID 456 for customer 123
+    And a location exists with ID 789 for customer 123
+    When I submit a request to assign role "SECURITY_SYSTEM_DISARMER" to employee 456 at location 789
+    Then the role assignment is created
+    And I receive a 200 OK response
+    And the employee can disarm security systems at location 789
+
+  Scenario: Assign SECURITY_SYSTEM_VIEWER role
+    Given I am authenticated as a user with "REALGUARDIO_ADMIN" role
+    And a customer exists with ID 123
+    And an employee exists with ID 456 for customer 123
+    And a location exists with ID 789 for customer 123
+    When I submit a request to assign role "SECURITY_SYSTEM_VIEWER" to employee 456 at location 789
+    Then the role assignment is created
+    And I receive a 200 OK response
+    And the employee can view security systems at location 789
+
+  Scenario: Attempt to assign role to location not belonging to customer
+    Given I am authenticated as a user with "REALGUARDIO_ADMIN" role
+    And a customer exists with ID 123
+    And an employee exists with ID 456 for customer 123
+    And a location exists with ID 999 for a different customer
+    When I submit a request to assign role "SECURITY_SYSTEM_ARMER" to employee 456 at location 999
+    Then I receive a 404 Not Found response
+    And the error message indicates "Location not found for this customer"
+
+  Scenario: Customer employee assigns role
+    Given I am authenticated as a user with "REALGUARDIO_CUSTOMER_EMPLOYEE" role
+    And a customer exists with ID 123
+    And an employee exists with ID 456 for customer 123
+    And a location exists with ID 789 for customer 123
+    When I submit a request to assign role "SECURITY_SYSTEM_ARMER" to employee 456 at location 789
+    Then the role assignment is created
+    And I receive a 200 OK response
+----

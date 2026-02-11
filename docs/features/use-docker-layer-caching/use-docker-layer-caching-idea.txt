@@ -1,0 +1,21 @@
+Speed up GitHub Actions workflow by implementing Docker Layer Caching for the 6 custom services.
+
+SOLUTION:
+- Use Docker buildx bake with GitHub Actions Cache (type=gha)
+- Environment-controlled via mise.toml (auto-enabled in CI)
+- Two-phase build: buildx bake (with caching) + docker compose up --no-build
+- Layered cache strategy: dependencies cached separately from source code
+- Per-branch caching with 7-day expiration
+- Parallel builds of all 6 services
+
+BENEFITS:
+- Significantly faster CI builds (especially for dependency-only or no changes)
+- Zero impact on local development workflow
+- Automatic in GitHub Actions (GITHUB_ACTIONS=true)
+- Optional for local testing (USE_DOCKER_CACHE=true)
+
+FILES TO MODIFY:
+1. mise.toml - Add conditional caching logic to compose tasks
+2. .github/workflows/test.yml - Add buildx setup step
+
+IMPLEMENTATION: See use-docker-layer-caching-discussion.md for full specification

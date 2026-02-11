@@ -5,3 +5,11 @@ repomix-output.xml
 .idea
 
 .DS_Store
+2025-*
+_download
+build.log
+wip-docs
+build
+**/.claude/issues
+**/.claude/sessions
+*SessionID.txt

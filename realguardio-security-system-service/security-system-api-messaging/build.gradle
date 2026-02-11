@@ -1,0 +1,40 @@
+plugins {
+    id 'io.eventuate.plugins.gradle.testing.integration-tests'
+}
+
+dependencies {
+    implementation project(':security-system-service-domain')
+    implementation project(':security-system-service-persistence')
+    
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation "io.eventuate.tram.core:eventuate-tram-spring-commands-starter"
+    implementation 'io.eventuate.tram.sagas:eventuate-tram-sagas-spring-participant'
+    implementation 'io.eventuate.tram.core:eventuate-tram-spring-consumer-kafka'
+    implementation 'io.eventuate.tram.core:eventuate-tram-spring-producer-jdbc'
+    implementation "io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka"
+    implementation 'io.eventuate.tram.core:eventuate-tram-spring-flyway'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.8.2'
+    implementation "org.flywaydb:flyway-core"
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'io.eventuate.tram.sagas:eventuate-tram-sagas-spring-in-memory'
+    testImplementation 'io.eventuate.tram.core:eventuate-tram-test-util'
+    testRuntimeOnly 'com.h2database:h2'
+    
+    integrationTestImplementation 'io.eventuate.common:eventuate-common-testcontainers'
+    integrationTestImplementation 'io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers'
+    integrationTestImplementation 'io.eventuate.util:eventuate-util-test'
+    integrationTestImplementation 'org.testcontainers:testcontainers'
+    integrationTestImplementation 'org.testcontainers:postgresql'
+    integrationTestRuntimeOnly 'org.postgresql:postgresql'
+    
+    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-producer-kafka"
+    integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-outbox-commands"
+    integrationTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-producer"
+}
+
+integrationTest {
+    systemProperty "spring.profiles.active", "test,postgres"
+}

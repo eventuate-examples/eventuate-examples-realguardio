@@ -1,0 +1,6 @@
+facts:
+
+sql_types:
+  Location: text
+  SecuritySystem: text
+  Customer: text

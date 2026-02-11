@@ -1,0 +1,12 @@
+Implement the CQRS pattern:
+
+* Security Service maintains a CQRS replica of CustomerEmployeeLocation roles:
+  * Subscribes to CustomerEmployeeLocationCreated(userName, Long locationId, String roleName) published by the customer service
+  * Updates using JDBC customer_employee_location_role table
+  * Subscribes using Eventuate Tram
+
+* Customer Service publishes CustomerEmployeeLocationCreated
+  * Specifically CustomerService.assignLocationRole() publishes the event
+  * Uses Eventuate Tram events: DomainEventPublisher
+
+See https://eventuate.io/docs/manual/eventuate-tram/latest/getting-started-eventuate-tram-spring-boot.html section "Event publishing and consuming events"

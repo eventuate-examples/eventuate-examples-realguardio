@@ -1,0 +1,11 @@
+dependencies {
+
+    implementation project(':security-system-location-roles-replica-domain')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation project(':security-system-service-domain')
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-security'
+}

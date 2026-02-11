@@ -1,0 +1,13 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: net.chrisrichardson.recipes.MoveClasses
+displayName: Move classes to target package
+description: Move multiple classes to a target package.
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.realguardio.securitysystem.api.CreateSecuritySystemCommand
+      newFullyQualifiedTypeName: io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand
+  - net.chrisrichardson.openrewrite.recipes.addimportsfrompackage.AddImportsFromPackageRecipe:
+      classMapping:
+        io.realguardio.securitysystem.api.CreateSecuritySystemCommand: io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands.CreateSecuritySystemCommand
+  - org.openrewrite.java.ShortenFullyQualifiedTypeReferences
+  - org.openrewrite.java.RemoveUnusedImports

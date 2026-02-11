@@ -1,0 +1,152 @@
+== Scenario: Create Customer Employee
+
+=== Overview
+
+This scenario describes how a customer administrator creates a new employee within their customer organization. The operation involves creating the employee record and provisioning a user account in the IAM Service.
+
+NOTE: To assign location-based roles to the employee, see the separate link:assign-location-role.adoc[Assign Location Role] scenario.
+
+=== Two-Layer Authorization
+
+Creating an employee requires passing two authorization checks:
+
+1. *Layer 1 (Spring Security)*: The requesting user must have `REALGUARDIO_CUSTOMER_EMPLOYEE` global role in their JWT token.
+
+2. *Layer 2 (CustomerActionAuthorizer)*: The requesting user must have `createCustomerEmployee` permission for the target customer. This check varies by Spring Profile.
+
+=== Layer 2 Authorization Strategy by Profile
+
+[cols="2,3,2"]
+|===
+|Profile(s) |Authorization Flow |Implementation Class
+
+|_(none)_
+|Local authorization: Maps permission to `COMPANY_ROLE_ADMIN` role, checks if user has that role in customer
+|`LocalCustomerActionAuthorizer`
+
+|`UseOsoService`
+|Oso Cloud authorization: Calls Oso Cloud to check `createCustomerEmployee` permission on Customer
+|`OsoCustomerActionAuthorizer`
+|===
+
+=== Sequence Diagram
+
+[plantuml]
+....
+@startuml
+actor "Customer\nAdmin" as Admin
+participant "BFF" as BFF
+participant "Customer\nService" as Customer
+participant "IAM Service" as IAM
+database "Oso Cloud" as OsoCloud
+
+Admin -> BFF: POST /api/customers/{id}/employees\n{name, emailAddress}
+activate BFF
+
+BFF -> Customer: POST /customers/{customerId}/employees\n{name, emailAddress}\n+ Bearer token
+activate Customer
+
+Customer -> IAM: Validate JWT token\n(via JWKS endpoint)
+activate IAM
+IAM --> Customer: Token valid\n{userId, roles: [REALGUARDIO_CUSTOMER_EMPLOYEE]}
+deactivate IAM
+
+Customer -> Customer: Check user has\nREALGUARDIO_CUSTOMER_EMPLOYEE role\n(Spring Security)
+
+alt UseOsoService profile
+    Customer -> OsoCloud: authorize(user, "createCustomerEmployee", Customer)
+    activate OsoCloud
+    OsoCloud --> Customer: allowed: true/false
+    deactivate OsoCloud
+else No profile (local authorization)
+    Customer -> Customer: Check user has\nCOMPANY_ROLE_ADMIN role\nin this customer
+end
+
+alt User is authorized
+    Customer -> Customer: Create CustomerEmployee entity\n{customerId, employeeId, name, emailAddress}
+
+    ' User account creation in IAM Service
+    Customer -> IAM: POST /oauth2/token\ngrant_type=client_credentials\nAuthorization: Basic (client_id:client_secret)
+    activate IAM
+    IAM -> IAM: Validate client credentials
+    IAM --> Customer: 200 OK\n{access_token: JWT}
+    deactivate IAM
+
+    Customer -> IAM: POST /api/users\n{username: emailAddress,\npassword: "{noop}password",\nroles: ["REALGUARDIO_CUSTOMER_EMPLOYEE"]}\nAuthorization: Bearer <client_token>
+    activate IAM
+    IAM -> IAM: Create user account
+    IAM --> Customer: 201 Created\n{userId, username}
+    deactivate IAM
+
+    Customer -> Customer: Persist CustomerEmployee
+
+    Customer --> BFF: 201 Created\n{employeeId, name, emailAddress}
+    deactivate Customer
+
+    BFF --> Admin: Success: Employee created
+    deactivate BFF
+
+else User not authorized
+    Customer --> BFF: 403 Forbidden
+    deactivate Customer
+    BFF --> Admin: Error: Access denied
+    deactivate BFF
+end
+
+@enduml
+....
+
+=== Description
+
+The sequence of events is:
+
+. The Customer Admin submits a request via the BFF UI to create a new employee, providing the employee's name and email address.
+
+. The BFF sends a POST request to the Customer Service at `/customers/{customerId}/employees` with the employee details and the admin's JWT bearer token.
+
+. The Customer Service validates the JWT token with the IAM Service's JWKS endpoint to verify its authenticity and extract the user's roles.
+
+. The IAM Service confirms the token is valid and returns the user's ID and roles, including `REALGUARDIO_CUSTOMER_EMPLOYEE`.
+
+. The Customer Service performs two authorization checks:
+.. *Spring Security*: Verifies the user has the `REALGUARDIO_CUSTOMER_EMPLOYEE` global role.
+.. *CustomerActionAuthorizer*: Verifies the user has the `COMPANY_ROLE_ADMIN` role within the target customer organization.
+
+. *If the user has the required roles*:
+.. The Customer Service creates a new CustomerEmployee entity with a generated `employeeId`, linking it to the customer.
+.. The Customer Service requests a client credentials access token from the IAM Service by sending a POST request to `/oauth2/token` with `grant_type=client_credentials`, authenticating with client ID (`realguardio-client`) and client secret via HTTP Basic authentication.
+.. The IAM Service validates the client credentials and returns a JWT access token for service-to-service authentication.
+.. The Customer Service calls the IAM Service's `/api/users` endpoint to create a user account, sending the employee's email as the username, a default password, and the role `REALGUARDIO_CUSTOMER_EMPLOYEE`, authenticated with the client credentials token.
+.. The IAM Service creates the user account and returns confirmation with the user details.
+.. The entity is persisted to the database.
+.. The Customer Service returns a 201 Created response to the BFF with the newly created employee details.
+
+. *If the user lacks the required roles*:
+.. The Customer Service returns a 403 Forbidden response.
+.. The BFF displays an error message indicating the user lacks permission to create employees.
+
+=== Authorization Requirements
+
+See <<Two-Layer Authorization>> and <<Layer 2 Authorization Strategy by Profile>> above for details.
+
+=== Key Characteristics
+
+* *Two-Layer Authorization*: Spring Security checks JWT role, then CustomerActionAuthorizer checks customer-level permission (strategy varies by profile)
+* *Service-to-Service Authentication*: Customer Service uses OAuth2 client credentials grant to authenticate with IAM Service for user account creation
+* *User Account Provisioning*: Creating an employee automatically provisions a user account in IAM Service, enabling the employee to log in
+
+=== Error Scenarios
+
+* *Invalid Token*: If the JWT token is invalid, the service returns 401 Unauthorized.
+
+* *Insufficient Permissions*: If the user lacks `REALGUARDIO_CUSTOMER_EMPLOYEE` global role or `COMPANY_ROLE_ADMIN` customer-level role, the service returns 403 Forbidden.
+
+* *IAM Service Client Credentials Failure*: If the Customer Service cannot obtain a client credentials token from IAM Service (invalid client ID/secret, IAM Service unavailable), the employee creation fails and returns 500 Internal Server Error or 503 Service Unavailable.
+
+* *IAM Service User Creation Failure*: If the IAM Service `/api/users` call fails (duplicate username, IAM Service error, validation failure), the Customer Service should handle this gracefully. The current implementation may throw an exception, causing the entire employee creation to fail.
+
+* *Duplicate Employee*: If an employee with the same email already exists for the customer, the service returns 409 Conflict.
+
+=== Related Scenarios
+
+* link:assign-location-role.adoc[Assign Location Role] - Assign location-based roles to the employee after creation

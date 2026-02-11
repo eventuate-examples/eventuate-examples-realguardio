@@ -1,0 +1,232 @@
+== Scenario: OAuth2 Login Flow
+
+=== Overview
+
+This scenario describes the OAuth2 authorization code flow with PKCE (Proof Key for Code Exchange) used to authenticate users. The BFF acts as an OAuth2 client, delegating authentication to the IAM Service (OAuth2 authorization server).
+
+=== Sequence Diagram
+
+[plantuml]
+....
+@startuml
+actor "User" as User
+participant "Browser" as Browser
+participant "BFF\n(NextAuth)" as BFF
+participant "IAM Service\n(OAuth2 Server)" as IAM
+
+User -> Browser: Navigate to protected page\n(e.g., /dashboard)
+activate Browser
+
+Browser -> BFF: GET /dashboard
+activate BFF
+
+BFF -> BFF: Check session\n(no valid session found)
+
+BFF --> Browser: 302 Redirect to\n/api/auth/signin
+deactivate BFF
+
+Browser -> BFF: GET /api/auth/signin
+activate BFF
+
+BFF -> BFF: Generate PKCE\ncode_verifier and code_challenge
+
+BFF --> Browser: 302 Redirect to\n/oauth2/authorize\n+ client_id\n+ redirect_uri\n+ code_challenge\n+ state
+deactivate BFF
+
+Browser -> IAM: GET /oauth2/authorize\n?client_id=realguardio-bff\n&redirect_uri=http://localhost:3000/api/auth/callback\n&response_type=code\n&code_challenge=...\n&state=...
+activate IAM
+
+IAM -> IAM: Check user authentication\n(no session found)
+
+IAM --> Browser: 200 OK\nLogin page HTML
+deactivate IAM
+
+Browser --> User: Display login form
+
+User -> Browser: Enter credentials\n(username, password)
+
+Browser -> IAM: POST /login\n{username, password}
+activate IAM
+
+IAM -> IAM: Validate credentials
+
+IAM -> IAM: Create user session
+
+IAM --> Browser: 302 Redirect to\n/oauth2/authorize\n(continue authorization)
+deactivate IAM
+
+Browser -> IAM: GET /oauth2/authorize\n(with session cookie)
+activate IAM
+
+IAM -> IAM: User is authenticated,\ngenerate authorization code
+
+IAM --> Browser: 302 Redirect to\nhttp://localhost:3000/api/auth/callback\n?code=AUTH_CODE\n&state=...
+deactivate IAM
+
+Browser -> BFF: GET /api/auth/callback\n?code=AUTH_CODE\n&state=...
+activate BFF
+
+BFF -> BFF: Validate state parameter\n(CSRF protection)
+
+BFF -> IAM: POST /oauth2/token\n{grant_type: "authorization_code",\ncode: AUTH_CODE,\nredirect_uri: ...,\ncode_verifier: ...,\nclient_id: ...,\nclient_secret: ...}
+activate IAM
+
+IAM -> IAM: Validate authorization code\nand code_verifier (PKCE)
+
+IAM -> IAM: Generate tokens
+
+IAM --> BFF: 200 OK\n{access_token: JWT,\nrefresh_token: ...,\nid_token: ...,\nexpires_in: 3600}
+deactivate IAM
+
+BFF -> BFF: Create NextAuth session\n{user, accessToken, refreshToken, expiresAt}
+
+BFF -> BFF: Store session in\nencrypted cookie
+
+BFF --> Browser: 302 Redirect to\n/dashboard\n+ Set-Cookie: session=...
+deactivate BFF
+
+Browser -> BFF: GET /dashboard\n+ Cookie: session=...
+activate BFF
+
+BFF -> BFF: Validate session from cookie
+
+BFF --> Browser: 200 OK\nDashboard page HTML
+deactivate BFF
+
+Browser --> User: Display dashboard
+deactivate Browser
+
+@enduml
+....
+
+=== Description
+
+The sequence of events is:
+
+. The User navigates to a protected page (e.g., `/dashboard`) in their browser.
+
+. The Browser sends a GET request to the BFF for `/dashboard`.
+
+. The BFF checks for a valid session and finds none.
+
+. The BFF responds with a 302 redirect to `/api/auth/signin` (NextAuth sign-in endpoint).
+
+. The Browser follows the redirect and requests `/api/auth/signin`.
+
+. The BFF generates a PKCE code verifier and code challenge (SHA-256 hash of the verifier) for enhanced security.
+
+. The BFF responds with a 302 redirect to the IAM Service's `/oauth2/authorize` endpoint, including query parameters: `client_id=realguardio-bff`, `redirect_uri` (BFF callback URL), `response_type=code`, `code_challenge` (PKCE), and `state` (CSRF protection token).
+
+. The Browser follows the redirect to the IAM Service's authorization endpoint.
+
+. The IAM Service checks if the user is already authenticated and finds no session.
+
+. The IAM Service responds with an HTML login page.
+
+. The Browser displays the login form to the User.
+
+. The User enters their credentials (username and password) and submits the form.
+
+. The Browser posts the credentials to the IAM Service's `/login` endpoint.
+
+. The IAM Service validates the credentials against stored user records.
+
+. The IAM Service creates an authenticated user session and stores it in a session cookie.
+
+. The IAM Service redirects back to `/oauth2/authorize` to continue the authorization flow.
+
+. The Browser follows the redirect to `/oauth2/authorize`, now with the authenticated session cookie.
+
+. The IAM Service verifies the user is authenticated, validates the OAuth2 request parameters, and generates a single-use authorization code.
+
+. The IAM Service redirects to the BFF's callback URL (`http://localhost:3000/api/auth/callback`) with the authorization code and state parameter in the query string.
+
+. The Browser follows the redirect to the BFF's callback endpoint.
+
+. The BFF validates the state parameter to ensure the request originated from the same session (CSRF protection).
+
+. The BFF sends a POST request to the IAM Service's `/oauth2/token` endpoint with the authorization code, PKCE code verifier, client credentials, and redirect URI.
+
+. The IAM Service validates the authorization code, verifies it hasn't been used before, validates the PKCE code verifier matches the challenge, and authenticates the client.
+
+. The IAM Service generates a JWT access token, refresh token, and ID token.
+
+. The IAM Service returns the tokens to the BFF with an expiration time (typically 3600 seconds / 1 hour for the access token).
+
+. The BFF creates a NextAuth session object containing the user information, access token, refresh token, and token expiration timestamp.
+
+. The BFF encrypts the session data and stores it in an HTTP-only, secure session cookie.
+
+. The BFF redirects the user to the originally requested page (`/dashboard`) and sets the session cookie.
+
+. The Browser follows the redirect to `/dashboard`, including the session cookie in the request.
+
+. The BFF reads and validates the session cookie, confirming the user is authenticated.
+
+. The BFF responds with the dashboard page HTML.
+
+. The Browser displays the dashboard to the User, who is now successfully logged in.
+
+=== Key OAuth2 Flow Characteristics
+
+* *Authorization Code Grant*: Standard OAuth2 flow for web applications with server-side backend.
+
+* *PKCE (Proof Key for Code Exchange)*: Prevents authorization code interception attacks by requiring the client to prove it initiated the flow.
+
+* *State Parameter*: Protects against CSRF attacks by binding the authorization request to the client session.
+
+* *Redirect-Based Flow*: User stays in their browser; authentication happens via redirects between BFF, IAM Service, and back.
+
+* *Client Credentials*: BFF authenticates to IAM Service using client ID and client secret when exchanging the code for tokens.
+
+* *Short-Lived Tokens*: Access tokens expire after 1 hour; refresh tokens allow obtaining new access tokens without re-authentication.
+
+* *Encrypted Session Storage*: Tokens stored server-side in encrypted cookies, never exposed to browser JavaScript.
+
+* *HTTP-Only Cookies*: Session cookies inaccessible to JavaScript, preventing XSS token theft.
+
+=== Token Usage After Login
+
+Once authenticated, the user's session contains the access token. For subsequent requests to backend services:
+
+. The User performs an action (e.g., clicking "Arm" on a security system).
+
+. The Browser sends a request to a BFF API route (e.g., `POST /api/securitysystems/{id}`), including the session cookie.
+
+. The BFF extracts the access token from the session.
+
+. The BFF proxies the request to the backend service (e.g., Security System Service), adding the header: `Authorization: Bearer {access_token}`.
+
+. The backend service validates the JWT by verifying its signature against the IAM Service's JWKS (public key) endpoint.
+
+. The backend service extracts user information (user ID, roles) from the token claims and processes the request.
+
+=== Token Refresh Flow
+
+When the access token expires, NextAuth automatically refreshes it:
+
+. The BFF detects the access token is expired (based on `expires_at` in session).
+
+. The BFF sends a request to `/oauth2/token` with `grant_type=refresh_token` and the refresh token.
+
+. The IAM Service validates the refresh token and issues a new access token.
+
+. The BFF updates the session with the new access token and expiration time.
+
+. The user continues without interruption (transparent token refresh).
+
+If the refresh token is also expired, the user must re-authenticate by logging in again.
+
+=== Security Considerations
+
+* *Client Secret Protection*: Client secret stored as environment variable, never exposed to browser.
+
+* *Token Storage*: Tokens stored server-side only; browser only receives encrypted session cookie.
+
+* *HTTPS Required*: All OAuth2 flows must use HTTPS in production to prevent token interception.
+
+* *Token Expiration*: Short-lived access tokens limit damage if compromised.
+
+* *PKCE*: Prevents authorization code interception even if HTTPS is compromised.
+
+* *State Validation*: Prevents CSRF attacks by ensuring requests originate from legitimate sessions.

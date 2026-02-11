@@ -1,0 +1,5 @@
+ARG baseImageVersion
+FROM eventuateio/eventuate-examples-docker-images-spring-example-base-image:$baseImageVersion
+ARG serviceImageVersion
+COPY oso-integration-service/build/libs/oso-integration-service-$serviceImageVersion.jar service.jar
+HEALTHCHECK --interval=3s --retries=20 CMD curl -f http://localhost:8080/actuator/health || exit 1

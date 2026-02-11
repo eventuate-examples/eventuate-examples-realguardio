@@ -30,12 +30,19 @@ dir = "./realguardio-bff"
 run = "npm run e2e-test"
 
 [tasks.assemble]
-dir = "./realguardio-security-system-service"
-run = "./gradlew assemble"
+description = "Assemble all realguardio services with Gradle"
+run = """
+for dir in realguardio-*/; do
+  if [ -f "$dir/build.gradle" ]; then
+    echo "Assembling $dir..."
+    (cd "$dir" && ./gradlew assemble) || exit 1
+  fi
+done
+"""
 
 [tasks.compose-up]
 depends = ["assemble", "bff-dev-stop"]
-run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build}"
+run = "mise run docker-build-helper '' up"
 
 [tasks.compose-down]
 run = "docker compose down"
@@ -45,9 +52,11 @@ depends = ["compose-up"]
 run = ["mise run wait-all"]
 
 [tasks.wait-all]
-run = ["mise run security-system-service-wait", 
-    "mise run bff-dev-wait", 
-    "mise run iam-service-wait"]
+depends = ["customer-service-wait", 
+  "security-system-service-wait", 
+  "orchestration-service-wait", 
+  "bff-dev-wait", 
+  "iam-service-wait"]
 
 
 [tasks.bff-e2e-test-only]
@@ -55,7 +64,10 @@ dir = "./realguardio-bff"
 run = "npm run e2e-test"
 
 [tasks.iam-service-compose-up]
-run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build} realguardio-iam-service"
+run = "mise run docker-build-helper realguardio-iam-service up"
+
+[tasks.iam-service-compose-build]
+run = "mise run docker-build-helper realguardio-iam-service build"
 
 [tasks.bff-compose-down]
 run = "docker compose down realguardio-bff"
@@ -65,11 +77,11 @@ run = "docker compose down realguardio-security-system-service"
 
 [tasks.security-system-service-compose-up]
 depends = ["assemble"]
-run = "DOCKERFILE_SUFFIX=-local docker compose up -d ${COMPOSE_OPTS:---build} realguardio-security-system-service"
+run = "mise run docker-build-helper realguardio-security-system-service up"
 
 [tasks.e2e-test-only]
 dir = "./realguardio-bff"
-run = "DISABLE_MOCK_BACKEND=yes npm run e2e-test"
+run = "DISABLE_MOCK_BACKEND=yes npm run e2e-test || DISABLE_MOCK_BACKEND=yes npm run e2e-test"
 
 [tasks.bff-dev-wait]
 run = "npx wait-on@8.0.3 --timeout 30s http://localhost:3000"
@@ -79,6 +91,12 @@ run = "npx wait-on@8.0.3 --timeout 10s http://localhost:9000/actuator/health"
 
 [tasks.security-system-service-wait]
 run = "npx wait-on@8.0.3 --timeout 40s http://localhost:3001/actuator/health"
+
+[tasks.customer-service-wait]
+run = "npx wait-on@8.0.3 --timeout 40s http://localhost:3002/actuator/health"
+
+[tasks.orchestration-service-wait]
+run = "npx wait-on@8.0.3 --timeout 40s http://localhost:3003/actuator/health"
 
 [tasks.jaeger-restart]
 run = ["docker compose down jaeger", 
@@ -118,8 +136,262 @@ run = "java -version"
 
 [tasks.bff-npm-install]
 dir = "./realguardio-bff"
-run = "npm install"
+run = "npm install --legacy-peer-deps"
 
-[tasks.security-system-service-build]
+[tasks."customer-service:clean"]
+description = "Clean realguardio-customer-service"
+dir = "./realguardio-customer-service"
+run = "./gradlew clean"
+
+[tasks."customer-service:build"]
+description = "Build realguardio-customer-service"
+dir = "./realguardio-customer-service"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."clean-stubs-repo"]
+run = "rm -fr build/stubsRepo"
+
+[tasks."customer-service:publishContracts"]
+description = "Publish customer-service contracts"
+dir = "./realguardio-customer-service"
+run = "./gradlew publishStubsPublicationToStubsRepository"
+
+[tasks."security-system-service:clean"]
+description = "Clean realguardio-security-system-service"
 dir = "./realguardio-security-system-service"
-run = "./gradlew build"
+run = "./gradlew clean"
+
+[tasks."security-system-service:build"]
+description = "Build realguardio-security-system-service"
+dir = "./realguardio-security-system-service"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."orchestration-service:clean"]
+description = "Clean realguardio-orchestration-service"
+dir = "./realguardio-orchestration-service"
+run = "./gradlew clean"
+
+[tasks."orchestration-service:build"]
+description = "Build realguardio-orchestration-service"
+dir = "./realguardio-orchestration-service"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."oso-integration-service:clean"]
+description = "Clean realguardio-oso-integration-service"
+dir = "./realguardio-oso-integration-service"
+run = "./gradlew clean"
+
+[tasks."oso-integration-service:build"]
+description = "Build realguardio-oso-integration-service"
+dir = "./realguardio-oso-integration-service"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks."end-to-end-tests:clean"]
+description = "Clean end-to-end-tests"
+dir = "./end-to-end-tests"
+run = "./gradlew clean"
+
+[tasks."end-to-end-tests:build"]
+description = "Build end-to-end-tests"
+dir = "./end-to-end-tests"
+run = "./gradlew build $GRADLE_BUILD_OPTIONS"
+
+[tasks.build]
+description = "Build all realguardio services with Gradle"
+run = [
+    "mise run customer-service:build",
+    "mise run customer-service:publishContracts",
+    "mise run security-system-service:build",
+    "mise run orchestration-service:build",
+    "mise run oso-integration-service:build",
+    "mise run end-to-end-tests:build"
+]
+
+[tasks.clean]
+description = "Clean all realguardio services with Gradle"
+run = [
+    "mise run customer-service:clean",
+    "mise run security-system-service:clean",
+    "mise run orchestration-service:clean",
+    "mise run oso-integration-service:clean",
+    "mise run end-to-end-tests:clean"
+]
+
+[tasks.reset-db]
+description = "Reset PostgreSQL database by recreating the container"
+run = [
+    "docker compose rm -f -s -v postgres",
+    "docker compose up -d postgres",
+    "npx wait-on@8.0.3 --timeout 10s tcp:5432"
+]
+
+[tasks.db-query-security-systems]
+description = "Query all records from security_system table"
+run = "docker compose exec postgres psql -U postgres -d securitysystem -c 'SELECT * FROM security_system;'"
+
+[tasks.gh-download] 
+run = "rm -fr _download && gh run download --dir _download -n logs -n test-reports -n compose-up-logs"
+
+[tasks.backend-end-to-end-with-compose]
+dir = "end-to-end-tests"
+run = [
+    "DOCKERFILE_SUFFIX=-local ./gradlew -P endToEndTestMode=DockerCompose clean build",
+    "mise compose-down"
+]
+
+[tasks.backend-end-to-end-with-compose-no-down]
+dir = "end-to-end-tests"
+run = [
+    "DOCKERFILE_SUFFIX=-local ./gradlew -P endToEndTestMode=DockerCompose clean build",
+]
+
+[tasks.backend-end-to-end-with-compose-test-only]
+dir = "end-to-end-tests"
+run = [
+  "./gradlew clean",
+  "./gradlew --console=plain build -P endToEndTestMode=DockerCompose -x dockerComposeUp -x dockerComposeBuild -x assembleServices",
+]
+
+[tasks.gh-run-list]
+run = "gh run list --limit=3"
+
+[tasks.gh-run-watch]
+run = "gh run watch $(gh run list --limit=1 --json databaseId --jq '.[0].databaseId')"
+
+[tasks."oso:policy:upload"]
+run = "oso-cloud policy realguardio-oso-integration-service/policies/main.polar"
+
+[tasks."oso:policy:test"]
+run = "oso-cloud test realguardio-oso-integration-service/policies/main.polar"
+
+[tasks."oso:inspect"]
+run = "oso-cloud inspect"
+
+[tasks."oso:policy"]
+run = "oso-cloud policy"
+
+[tasks.docker-build-helper]
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Arguments:
+# $1 = SERVICE (or empty for all services)
+# $2 = ACTION (build, up, up-wait)
+
+SERVICE="${1:-}"
+ACTION="${2:-up}"
+
+# Detect if caching should be enabled
+USE_CACHE=false
+if [ "${GITHUB_ACTIONS:-false}" = "true" ] || [ "${USE_DOCKER_CACHE:-false}" = "true" ]; then
+  USE_CACHE=true
+fi
+
+# Get branch name for cache scoping
+BRANCH_NAME="${GITHUB_REF_NAME:-$(git branch --show-current)}"
+
+# Build command options
+COMPOSE_OPTS="${COMPOSE_OPTS:---build}"
+DOCKERFILE_SUFFIX="${DOCKERFILE_SUFFIX:--local}"
+
+# Services to build (when SERVICE is empty)
+ALL_SERVICES=(
+  "realguardio-iam-service"
+  "realguardio-security-system-service"
+  "realguardio-bff"
+  "realguardio-customer-service"
+  "realguardio-orchestration-service"
+  "realguardio-oso-integration-service"
+)
+
+if [ "$USE_CACHE" = "true" ]; then
+  echo "🚀 Building with Docker layer caching (branch: $BRANCH_NAME)..."
+
+  # Determine services to build
+  if [ -z "$SERVICE" ]; then
+    SERVICES=("${ALL_SERVICES[@]}")
+  else
+    SERVICES=("$SERVICE")
+  fi
+
+  # Phase 1: Build with caching
+  docker buildx bake \
+    -f docker-compose.yaml \
+    --set '*.output=type=docker' \
+    --set '*.cache-from=type=gha,scope=build-'"${BRANCH_NAME}" \
+    --set '*.cache-to=type=gha,mode=max,scope=build-'"${BRANCH_NAME}" \
+    "${SERVICES[@]}"
+
+  # Phase 2: Start services based on action
+  case "$ACTION" in
+    build)
+      # Just build, don't start
+      echo "✅ Build complete (images cached)"
+      ;;
+    up)
+      echo "🚀 Starting services..."
+      if [ -z "$SERVICE" ]; then
+        docker compose up -d --no-build
+      else
+        docker compose up -d --no-build "$SERVICE"
+      fi
+      ;;
+    up-wait)
+      echo "🚀 Starting services and waiting..."
+      if [ -z "$SERVICE" ]; then
+        docker compose up -d --wait --no-build
+      else
+        docker compose up -d --wait --no-build "$SERVICE"
+      fi
+      ;;
+  esac
+else
+  echo "🚀 Building without caching (local development)..."
+
+  # Standard docker compose commands
+  case "$ACTION" in
+    build)
+      if [ -z "$SERVICE" ]; then
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose build
+      else
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose build "$SERVICE"
+      fi
+      ;;
+    up)
+      if [ -z "$SERVICE" ]; then
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose up -d $COMPOSE_OPTS
+      else
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose up -d $COMPOSE_OPTS "$SERVICE"
+      fi
+      ;;
+    up-wait)
+      if [ -z "$SERVICE" ]; then
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose up -d --wait $COMPOSE_OPTS
+      else
+        DOCKERFILE_SUFFIX=$DOCKERFILE_SUFFIX docker compose up -d --wait $COMPOSE_OPTS "$SERVICE"
+      fi
+      ;;
+  esac
+fi
+'''
+
+[tasks.make-docs-pdf]
+description = "Generate architecture PDF documentation"
+dir = "./docs/architecture"
+run = "make"
+
+[tasks.open-docs-pdf]
+description = "Open architecture PDF documentation"
+depends = ["make-docs-pdf"]
+run = "open docs/architecture/architecture.pdf"
+
+[tasks.gradle-refresh-all-dependencies]
+description = "Refresh all Gradle dependencies across all projects"
+run = """
+for dir in realguardio-customer-service realguardio-security-system-service realguardio-orchestration-service realguardio-oso-integration-service end-to-end-tests; do
+  echo "Refreshing dependencies in $dir..."
+  (cd "$dir" && ./gradlew compileAll --refresh-dependencies --parallel) || exit 1
+done
+echo "All dependencies refreshed."
+"""

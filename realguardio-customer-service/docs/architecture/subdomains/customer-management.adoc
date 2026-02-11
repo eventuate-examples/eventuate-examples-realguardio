@@ -1,0 +1,157 @@
+== Customer Management Subdomain
+
+The Customer Management subdomain manages the customer organizational structure including customers, locations, employees, teams, and location-specific role assignments.
+
+=== Domain Model
+
+[plantuml]
+....
+@startuml
+class Customer {
+  +Long id
+  +String name
+  +Long organizationId
+}
+
+class Location {
+  +Long id
+  +String name
+  +Long customerId
+  +Long securitySystemId
+  +addSecuritySystem(Long)
+}
+
+class CustomerEmployee {
+  +Long id
+  +Long customerId
+  +Long memberId
+  +Set<Long> teamIds
+}
+
+class Team {
+  +Long id
+  +String name
+  +Long customerId
+  +Set<TeamLocationRole> roles
+  +Set<Long> memberIds
+  +addMember(Long)
+  +removeMember(Long)
+  +addRole(TeamLocationRole)
+  +removeRole(Long)
+}
+
+class CustomerEmployeeLocationRole {
+  +Long id
+  +Long customerId
+  +Long customerEmployeeId
+  +Long locationId
+  +String roleName
+}
+
+class TeamLocationRole {
+  +Long id
+  +Team team
+  +Long locationId
+  +String roleName
+}
+
+class RolesAndPermissions {
+  <<value object>>
+  +COMPANY_ROLE_ADMIN
+  +SECURITY_SYSTEM_ARMER
+  +SECURITY_SYSTEM_DISARMER
+  +SECURITY_SYSTEM_VIEWER
+}
+
+Customer "1" -- "*" Location : owns
+Customer "1" -- "*" CustomerEmployee : employs
+Customer "1" -- "*" Team : has
+Team "*" -- "*" CustomerEmployee : contains
+Team "1" -- "*" TeamLocationRole : has
+CustomerEmployeeLocationRole "*" --> "1" CustomerEmployee : assigned to
+CustomerEmployeeLocationRole "*" --> "1" Location : for
+TeamLocationRole "*" --> "1" Location : for
+
+@enduml
+....
+
+=== Entity Responsibilities
+
+* **Customer** - Aggregate root representing a customer organization
+** Links to an Organization (from Organization Management subdomain) for role-based authorization
+** Owns multiple locations where security systems are installed
+** Employs customer employees
+** Organizes employees into teams
+
+* **Location** - Entity representing a physical location
+** Belongs to a customer
+** Can be associated with one security system
+** Enforces business rule: only one security system per location via `addSecuritySystem()` method
+** Locations are the target of role assignments (employees and teams have roles at specific locations)
+
+* **CustomerEmployee** - Entity associating a Member with a Customer
+** References Member from Organization Management subdomain
+** Can belong to multiple teams
+** Can have location-specific roles assigned
+** Acts as the link between organizational membership and customer-specific employment
+
+* **Team** - Aggregate root for grouping customer employees
+** Belongs to a customer
+** Contains multiple customer employees
+** Has location-specific roles that apply to all team members
+** Provides methods to manage membership (`addMember`, `removeMember`)
+** Provides methods to manage team roles (`addRole`, `removeRole`)
+
+* **CustomerEmployeeLocationRole** - Entity for individual role assignments
+** Assigns specific roles to individual employees at specific locations
+** Used for fine-grained access control (e.g., who can arm/disarm security systems)
+** Supports roles like SECURITY_SYSTEM_ARMER, SECURITY_SYSTEM_DISARMER, SECURITY_SYSTEM_VIEWER
+
+* **TeamLocationRole** - Entity for team-based role assignments
+** Assigns roles to entire teams at specific locations
+** All team members inherit these roles
+** Simplifies management when groups of employees need the same permissions
+
+* **RolesAndPermissions** - Value object defining role-to-permission mappings
+** Company-wide roles: COMPANY_ROLE_ADMIN
+** Location-specific roles: SECURITY_SYSTEM_ARMER, SECURITY_SYSTEM_DISARMER, SECURITY_SYSTEM_VIEWER
+** Defines which permissions are granted by each role
+
+=== Domain Services
+
+* **CustomerService** - Primary domain service coordinating customer management operations
+** `createCustomer()` - Creates customer with initial admin
+** `createLocation()` - Creates location for customer
+** `addSecuritySystemToLocation()` - Assigns security system to location
+** `createLocationWithSecuritySystem()` - Atomic operation for saga coordination
+** `assignLocationRole()` - Assigns location-specific roles to employees
+** `createTeam()` - Creates teams for organizing employees
+** `addTeamMember()` - Adds employees to teams
+** `assignTeamRole()` - Assigns location-specific roles to teams
+** `verifyEmployeeHasSecuritySystemRole()` - Authorization check
+
+* **LocationRoleService** - Manages location-specific role assignments
+** Coordinates role assignments for both individuals and teams
+** Validates role assignments against business rules
+
+=== Domain Events
+
+* `LocationCreatedForCustomer` - Published when a location is created
+* `SecuritySystemAssignedToLocation` - Published when security system is assigned to location
+* `CustomerEmployeeAssignedLocationRole` - Published when employee is assigned a location role
+* `TeamAssignedLocationRole` - Published when team is assigned a location role
+* `TeamMemberAdded` - Published when employee joins a team
+* `CustomerEmployeeAssignedCustomerRole` - Published when employee gets company-wide role
+
+=== Relationships to Other Subdomains
+
+* **Organization Management** - Customer references Organization; CustomerEmployee references Member
+* **Security System** - Location references SecuritySystem; events notify when security systems are assigned
+* **Orchestration** - Saga orchestrates location and security system creation together
+
+=== Business Rules
+
+* A location can have at most one security system
+* Location roles can be assigned to individual employees or to teams
+* Team members inherit all location roles assigned to their teams
+* Company admins (COMPANY_ROLE_ADMIN) have broad permissions across the customer organization

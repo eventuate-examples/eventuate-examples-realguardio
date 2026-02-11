@@ -8,10 +8,10 @@ WORKDIR /app
 FROM base AS deps
 # COPY package.json package-lock.json ./
 COPY package.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 # Install architecture-specific dependencies
 RUN ARCH=$(uname -m | sed 's/aarch64/arm64/;s/x86_64/x64/') && \
-    npm install @tailwindcss/oxide-linux-$ARCH-gnu \
+    npm install --legacy-peer-deps @tailwindcss/oxide-linux-$ARCH-gnu \
         lightningcss-linux-$ARCH-gnu
 
 # Rebuild the source code only when needed

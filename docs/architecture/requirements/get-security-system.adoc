@@ -1,0 +1,37 @@
+=== User Story: Get Security System Details
+
+[source,gherkin]
+----
+Feature: Get Security System Details
+  As an authenticated user
+  I want to view details of a specific security system
+  So that I can check its current status and configuration
+
+  Scenario: Successfully retrieve security system details
+    Given I am authenticated
+    And a security system exists with:
+      | systemId   | 789                |
+      | name       | Building A Alarm   |
+      | armed      | true               |
+      | locationId | 123                |
+      | customerId | 456                |
+    When I submit a request to get security system 789
+    Then I receive a 200 OK response
+    And the response contains:
+      | systemId   | 789                |
+      | name       | Building A Alarm   |
+      | armed      | true               |
+      | locationId | 123                |
+      | customerId | 456                |
+
+  Scenario: Attempt to get non-existent security system
+    Given I am authenticated
+    When I submit a request to get security system 999
+    Then I receive a 404 Not Found response
+    And the error message indicates "Security system not found"
+
+  Scenario: Attempt to get security system without authentication
+    Given I am not authenticated
+    When I submit a request to get a security system
+    Then I receive a 401 Unauthorized response
+----

@@ -1,0 +1,208 @@
+package io.eventuate.examples.realguardio.customerservice.restapi;
+
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerAndCustomerEmployee;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployeeLocationRole;
+import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerService;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(CustomerController.class)
+class CustomerControllerTest {
+
+    @TestConfiguration
+    @EnableMethodSecurity
+    static class TestSecurityConfig {
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .build();
+        }
+    }
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private CustomerService customerService;
+
+    @Test
+    @WithMockUser
+    void shouldReturnCustomers() throws Exception {
+        Customer customer1 = new Customer("Acme, Inc", 1L);
+        EntityUtil.setId(customer1, 1L);
+        
+        Customer customer2 = new Customer("Big Co, Inc", 2L);
+        EntityUtil.setId(customer2, 2L);
+        
+        List<Customer> customers = Arrays.asList(customer1, customer2);
+        
+        when(customerService.findAll()).thenReturn(customers);
+        
+        mockMvc.perform(get("/customers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.customers[0].id").value(customer1.getId()))
+                .andExpect(jsonPath("$.customers[0].name").value(customer1.getName()))
+                .andExpect(jsonPath("$.customers[1].id").value(customer2.getId()))
+                .andExpect(jsonPath("$.customers[1].name").value(customer2.getName()))
+        ;
+    }
+
+
+    private static final String CREATE_CUSTOMER_REQUEST_JSON = """
+        {
+            "name": "New Customer",
+            "initialAdministrator": {
+                "name": {
+                    "firstName": "Admin",
+                    "lastName": "User"
+                },
+                "emailAddress": {
+                    "email": "admin@example.com"
+                }
+            }
+        }
+        """;
+
+    @Test
+    @WithMockUser(roles = "REALGUARDIO_ADMIN")
+    void shouldCreateCustomer() throws Exception {
+        long employeeId = 1L;
+        long organizationId = 2L;
+        long memberId = 100L;
+        long customerId = 10L;
+
+        Customer customer = new Customer("New Customer", organizationId);
+        EntityUtil.setId(customer, customerId);
+        CustomerEmployee employee = new CustomerEmployee(customer.getId(), memberId);
+        EntityUtil.setId(employee, employeeId);
+        
+        CustomerAndCustomerEmployee result = new CustomerAndCustomerEmployee(customer, employee);
+        
+        when(customerService.createCustomer(anyString(), any())).thenReturn(result);
+        
+        mockMvc.perform(post("/customers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(CREATE_CUSTOMER_REQUEST_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.customer.id").value(customerId))
+            .andExpect(jsonPath("$.customer.name").value("New Customer"))
+            .andExpect(jsonPath("$.initialAdministrator.id").value(employeeId))
+            .andExpect(jsonPath("$.initialAdministrator.customerId").value(customerId))
+            .andExpect(jsonPath("$.initialAdministrator.memberId").value(memberId))
+        ;
+    }
+
+    @Test
+    @WithMockUser(roles = "REALGUARDIO_CUSTOMER_EMPLOYEE")
+    void shouldNotAllowCustomerEmployeeToCreateCustomer() throws Exception {
+        mockMvc.perform(post("/customers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(CREATE_CUSTOMER_REQUEST_JSON))
+            .andExpect(status().isForbidden());
+    }
+
+    private static final String CREATE_EMPLOYEE_REQUEST_JSON = """
+        {
+            "personDetails": {
+                "name": {
+                    "firstName": "John",
+                    "lastName": "Doe"
+                },
+                "emailAddress": {
+                    "email": "john.doe@example.com"
+                }
+            }
+        }
+        """;
+
+    @Test
+    @WithMockUser(roles = "REALGUARDIO_CUSTOMER_EMPLOYEE")
+    void shouldCreateEmployee() throws Exception {
+        long customerId = 10L;
+        long employeeId = 1L;
+        long memberId = 100L;
+
+        CustomerEmployee employee = new CustomerEmployee(customerId, memberId);
+        EntityUtil.setId(employee, employeeId);
+
+        when(customerService.createCustomerEmployee(any(), any())).thenReturn(employee);
+
+        mockMvc.perform(post("/customers/{customerId}/employees", customerId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(CREATE_EMPLOYEE_REQUEST_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(employeeId))
+            .andExpect(jsonPath("$.customerId").value(customerId))
+            .andExpect(jsonPath("$.memberId").value(memberId));
+    }
+
+    private static final String ASSIGN_LOCATION_ROLE_REQUEST_JSON = """
+        {
+            "employeeId": 1,
+            "locationId": 123,
+            "roleName": "DISARM"
+        }
+        """;
+
+    @Test
+    @WithMockUser(roles = "REALGUARDIO_CUSTOMER_EMPLOYEE")
+    void shouldAssignLocationRole() throws Exception {
+        long customerId = 10L;
+        long employeeId = 1L;
+        long locationId = 123L;
+        String roleName = "DISARM";
+
+        CustomerEmployeeLocationRole role = new CustomerEmployeeLocationRole(customerId, employeeId, locationId, roleName);
+        EntityUtil.setId(role, 456L);
+
+        when(customerService.assignLocationRole(customerId, employeeId, locationId, roleName))
+            .thenReturn(role);
+
+        mockMvc.perform(put("/customers/{customerId}/location-roles", customerId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ASSIGN_LOCATION_ROLE_REQUEST_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(456L))
+            .andExpect(jsonPath("$.customerId").value(customerId))
+            .andExpect(jsonPath("$.customerEmployeeId").value(employeeId))
+            .andExpect(jsonPath("$.locationId").value(locationId))
+            .andExpect(jsonPath("$.roleName").value(roleName));
+    }
+
+    @Test
+    @WithMockUser(roles = "REALGUARDIO_ADMIN")
+    void shouldNotAllowAdminToAssignLocationRole() throws Exception {
+        mockMvc.perform(put("/customers/{customerId}/location-roles", 10L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ASSIGN_LOCATION_ROLE_REQUEST_JSON))
+            .andExpect(status().isForbidden());
+    }
+
+}

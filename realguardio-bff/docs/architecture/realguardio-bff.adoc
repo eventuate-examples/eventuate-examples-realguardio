@@ -1,0 +1,240 @@
+== RealGuardIO BFF (Backend for Frontend)
+
+The BFF is a Next.js application that serves as the web UI and API gateway for the RealGuardIO system. It implements the Backend-for-Frontend pattern, handling OAuth2 authentication, session management, and proxying authenticated requests to backend services.
+
+=== Responsibilities
+
+* Serve the React-based web user interface
+* Act as OAuth2/OIDC client for user authentication
+* Manage user sessions using next-auth
+* Proxy authenticated requests to backend services
+* Attach JWT bearer tokens to backend service requests
+* Handle OAuth2 token refresh
+* Provide distributed tracing via OpenTelemetry
+* Route UI requests to appropriate backend services
+
+=== Technology Stack
+
+* *Framework*: Next.js 15.2.2 (React 19)
+* *Language*: TypeScript
+* *Authentication*: next-auth v4
+* *HTTP Client*: Axios
+* *Styling*: Tailwind CSS
+* *Observability*: OpenTelemetry API, Vercel OTEL integration
+* *Runtime*: Node.js
+
+=== Application Structure
+
+==== Pages and Routes
+
+* `/` - Home page
+* `/login` - Login page (redirects to OAuth2 flow)
+* `/dashboard` - Main dashboard (authenticated)
+* `/customers` - Customer management UI
+* `/security-systems` - Security system management UI
+* `/employees` - Employee management UI
+* `/locations` - Location management UI
+
+==== API Routes (Next.js Server-Side)
+
+* `/api/auth/[...nextauth]` - NextAuth authentication handler
+** Handles OAuth2 authorization code flow
+** Manages session creation and token storage
+** Handles token refresh
+
+* `/api/securitysystems` - Proxy to Security System Service
+** `GET` - List security systems
+** `POST` - Create security system (via Orchestration Service)
+** `PUT /{id}` - Arm/disarm security system
+
+* `/api/customers` - Proxy to Customer Service
+** `GET` - List customers
+** `POST` - Create customer
+** `POST /{id}/employees` - Create employee
+** `PUT /{id}/location-roles` - Assign location roles
+
+=== Authentication Flow
+
+==== OAuth2 Integration with NextAuth
+
+The BFF uses next-auth with OAuth2 provider configuration:
+
+1. *User Access*: User navigates to protected page
+2. *Session Check*: NextAuth middleware checks for valid session
+3. *Redirect to Login*: If no session, redirect to `/api/auth/signin`
+4. *OAuth2 Flow*:
+** NextAuth redirects to IAM Service `/oauth2/authorize`
+** User authenticates at IAM Service
+** IAM Service redirects back with authorization code
+** NextAuth exchanges code for tokens at `/oauth2/token`
+5. *Session Creation*: NextAuth creates session with:
+** Access token (JWT)
+** Refresh token
+** ID token
+** User profile information
+6. *Session Storage*: Session stored in encrypted cookie
+7. *Authenticated Access*: User can now access protected pages
+
+==== Token Management
+
+* *Access Token*: Stored in session, attached to backend requests as `Authorization: Bearer <token>`
+* *Refresh Token*: Stored in session, used to obtain new access tokens when expired
+* *Token Refresh*: NextAuth automatically refreshes tokens before expiration
+* *Session Expiry*: Session expires when refresh token expires, requiring re-authentication
+
+=== Backend Service Integration
+
+==== Proxying Requests
+
+API routes in the BFF proxy requests to backend services:
+
+```typescript
+// Example: /api/securitysystems/route.ts
+export async function GET(request: Request) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.accessToken) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const response = await axios.get(
+    `${process.env.SECURITY_SYSTEM_SERVICE_URL}/securitysystems`,
+    {
+      headers: {
+        'Authorization': `Bearer ${session.accessToken}`
+      }
+    }
+  );
+
+  return Response.json(response.data);
+}
+```
+
+==== Service URLs (Environment Variables)
+
+* `CUSTOMER_SERVICE_URL` - Customer Service base URL (e.g., `http://realguardio-customer-service:8080`)
+* `SECURITY_SYSTEM_SERVICE_URL` - Security System Service URL (e.g., `http://realguardio-security-system-service:8080`)
+* `ORCHESTRATION_SERVICE_URL` - Orchestration Service URL (e.g., `http://realguardio-orchestration-service:8080`)
+
+=== Backend Service Calls
+
+The BFF makes the following calls to backend services:
+
+==== To Customer Service
+
+* `GET /customers` - Retrieve list of customers for display
+* `POST /customers` - Create new customer (admin only)
+* `POST /customers/{customerId}/employees` - Add employee to customer
+* `PUT /customers/{customerId}/location-roles` - Assign employee to location with role
+
+==== To Security System Service
+
+* `GET /securitysystems` - Retrieve list of security systems for display
+* `GET /securitysystems/{id}` - Get security system details
+* `PUT /securitysystems/{id}` - Arm or disarm security system
+** Request: `{"armed": true}` or `{"armed": false}`
+
+==== To Orchestration Service
+
+* `POST /securitysystems` - Initiate CreateSecuritySystemSaga
+** Request: `{"customerId": number, "name": string, "locationName": string}`
+** This creates both the security system and location in a distributed transaction
+
+==== To IAM Service
+
+* `POST /oauth2/token` - Exchange authorization code for tokens (via NextAuth)
+* `POST /oauth2/token` - Refresh access token (via NextAuth)
+* `GET /userinfo` - Retrieve user profile information
+
+=== UI Components
+
+==== Key React Components
+
+* `SecuritySystemList` - Displays security systems with arm/disarm controls
+* `CustomerList` - Displays customers with management actions
+* `EmployeeForm` - Form for creating employees
+* `LocationRoleAssignment` - UI for assigning roles to employees at locations
+* `LoginButton` - Triggers OAuth2 login flow
+* `UserProfile` - Displays authenticated user information
+
+==== State Management
+
+* Uses React hooks (`useState`, `useEffect`) for component state
+* May use React Context for global state (user session, notifications)
+* Server-side data fetching in API routes reduces client-side state complexity
+
+=== Deployment
+
+* *Port*: 3000
+* *Container Image*: Built using Docker (Next.js standalone output)
+* *Environment Variables*:
+** `NEXTAUTH_URL` - BFF base URL (e.g., `http://localhost:3000`)
+** `NEXTAUTH_SECRET` - Secret for encrypting session cookies
+** `IAM_SERVICE_URL` - IAM Service URL (e.g., `http://realguardio-iam-service:9000`)
+** `OAUTH2_CLIENT_ID` - OAuth2 client ID (e.g., `realguardio-bff`)
+** `OAUTH2_CLIENT_SECRET` - OAuth2 client secret
+** `CUSTOMER_SERVICE_URL` - Customer Service URL
+** `SECURITY_SYSTEM_SERVICE_URL` - Security System Service URL
+** `ORCHESTRATION_SERVICE_URL` - Orchestration Service URL
+** `OTEL_EXPORTER_OTLP_ENDPOINT` - OpenTelemetry collector endpoint (e.g., `http://jaeger:4318`)
+
+=== Observability
+
+==== Distributed Tracing
+
+* Integrates OpenTelemetry SDK
+* Traces HTTP requests to backend services
+* Propagates trace context via HTTP headers
+* Sends trace data to Jaeger collector
+* Enables end-to-end request tracing across BFF and backend services
+
+==== Logging
+
+* Logs authentication events (login, logout, token refresh)
+* Logs backend service calls with timing information
+* Logs errors and exceptions for debugging
+
+=== Security Considerations
+
+==== Session Security
+
+* Session cookies are HTTP-only (not accessible via JavaScript)
+* Session cookies are Secure (HTTPS only in production)
+* Session cookies use SameSite=Lax to prevent CSRF
+* Encrypted session data using NEXTAUTH_SECRET
+
+==== Token Handling
+
+* Access tokens never exposed to browser JavaScript
+* Tokens stored server-side in session
+* Tokens transmitted only in server-to-server requests
+* PKCE (Proof Key for Code Exchange) used in OAuth2 flow
+
+==== CORS
+
+* BFF acts as same-origin proxy, avoiding CORS issues
+* Backend services don't need CORS configuration
+* All client requests go to BFF origin
+
+=== Error Handling
+
+* *401 Unauthorized*: Redirects to login page
+* *403 Forbidden*: Displays "Access Denied" message
+* *Backend Service Unavailable*: Displays user-friendly error message
+* *Network Errors*: Retry logic with exponential backoff
+* *Token Expiry*: Automatic token refresh, re-authentication if refresh fails
+
+=== Testing Strategy
+
+* *Unit Tests*: Test React components in isolation
+* *Integration Tests*: Test API routes with mocked backend services
+* *E2E Tests*: Test complete user flows (login, create customer, arm/disarm system)
+* *Authentication Tests*: Verify OAuth2 flow and session management
+
+=== Key Design Patterns
+
+* *Backend for Frontend (BFF)* - Dedicated backend for web UI needs
+* *API Gateway Pattern* - Single entry point for backend services
+* *Session Management* - Server-side session storage for security
+* *Proxy Pattern* - Forwards requests to backend services
+* *Token Relay Pattern* - Relays JWT tokens to downstream services

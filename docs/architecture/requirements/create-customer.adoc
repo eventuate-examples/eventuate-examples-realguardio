@@ -1,0 +1,30 @@
+=== User Story: Create Customer
+
+[source,gherkin]
+----
+Feature: Create Customer Organization
+  As an administrator
+  I want to create a new customer organization
+  So that I can manage security systems for different companies
+
+  Scenario: Successfully create a customer as admin
+    Given I am authenticated as a user with "REALGUARDIO_ADMIN" role
+    When I submit a request to create a customer with name "Acme Corporation"
+    Then a new customer is created with the name "Acme Corporation"
+    And I receive a 201 Created response with the customer ID
+    And a CustomerCreated event is published to Kafka
+    And the customer is synchronized to Oso Cloud
+
+  Scenario: Attempt to create customer without admin role
+    Given I am authenticated as a user with "REALGUARDIO_CUSTOMER_EMPLOYEE" role
+    When I submit a request to create a customer with name "Beta Corp"
+    Then I receive a 403 Forbidden response
+    And no customer is created
+    And the error message indicates "Insufficient permissions"
+
+  Scenario: Attempt to create customer without authentication
+    Given I am not authenticated
+    When I submit a request to create a customer
+    Then I receive a 401 Unauthorized response
+    And no customer is created
+----

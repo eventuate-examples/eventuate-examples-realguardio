@@ -1,0 +1,395 @@
+== Security Architecture
+
+This section describes how the RealGuardIO application implements authentication and authorization.
+
+=== Authentication Flow
+
+The application uses OAuth2/OIDC with authorization code flow and PKCE (Proof Key for Code Exchange) for user authentication.
+
+==== User Authentication Flow
+
+See link:../scenarios/oauth2-login.adoc[OAuth2 Login Scenario] for the complete sequence diagram.
+
+1. User accesses the BFF application
+2. BFF redirects to IAM Service `/oauth2/authorize` endpoint with PKCE challenge
+3. User authenticates with username/password at IAM Service
+4. IAM Service redirects back to BFF with authorization code
+5. BFF exchanges authorization code for tokens at `/oauth2/token` endpoint, providing PKCE verifier
+6. IAM Service validates PKCE and returns:
+   * Access token (JWT) - used for API calls
+   * Refresh token - used to obtain new access tokens
+   * ID token - contains user profile information
+7. BFF stores tokens in server-side session
+8. For subsequent API calls, BFF includes access token as Bearer token in Authorization header
+
+=== Token Types and Lifetimes
+
+==== Access Tokens (JWT)
+
+* **Format**: JSON Web Token (JWT) signed with RS256
+* **Lifetime**: 2 minutes
+* **Purpose**: Authenticate API requests to backend services
+* **Contains**:
+** `sub`: User identifier (email address)
+** `scope`: OAuth2 scopes (openid, profile, email)
+** Custom claims: `roles` array (e.g., REALGUARDIO_ADMIN, REALGUARDIO_CUSTOMER_EMPLOYEE)
+** `iss`: Issuer (IAM Service URL)
+** `aud`: Audience
+** `exp`: Expiration timestamp
+** `iat`: Issued at timestamp
+
+==== Refresh Tokens
+
+* **Format**: Opaque string
+* **Lifetime**: 60 minutes
+* **Purpose**: Obtain new access tokens without re-authentication
+* **Usage**: BFF uses refresh tokens to maintain user sessions beyond access token expiration
+
+==== ID Tokens
+
+* **Format**: JSON Web Token (JWT)
+* **Purpose**: Provide user profile information to the BFF
+* **Contains**: User claims (sub, name, email, etc.)
+
+=== JWT Validation
+
+Backend services (Customer Service, Security System Service, Orchestration Service) validate JWTs using the following process:
+
+1. **Extract JWT** from Authorization header (`Bearer <token>`)
+2. **Retrieve public keys** from IAM Service JWKS endpoint (`/oauth2/jwks`)
+   * Public keys are cached to avoid repeated calls
+   * Keys are rotated periodically by IAM Service
+3. **Verify signature** using RS256 algorithm with public key
+4. **Validate claims**:
+   * `iss` (issuer) matches expected IAM Service URL
+   * `exp` (expiration) is in the future
+   * `aud` (audience) matches expected value (if configured)
+5. **Extract user information**:
+   * Username from `sub` claim
+   * Roles from custom `roles` claim
+6. **Populate security context** with authenticated user and roles
+
+This validation happens automatically via Spring Security OAuth2 Resource Server configuration:
+
+```yaml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://realguardio-iam-service:9000
+          jwk-set-uri: http://realguardio-iam-service:9000/oauth2/jwks
+```
+
+=== Service-to-Service Authentication
+
+The Customer Service authenticates to the IAM Service using OAuth2 Client Credentials grant when creating user accounts for new employees.
+
+See link:../scenarios/create-customer-employee.adoc[Create Customer Employee Scenario] for the complete flow.
+
+==== Client Credentials Flow
+
+1. Customer Service sends POST request to IAM Service `/oauth2/token`:
+   * `grant_type=client_credentials`
+   * `Authorization: Basic <base64(client_id:client_secret)>`
+   * Client ID: `realguardio-client`
+   * Client secret: `secret-rg`
+2. IAM Service validates client credentials
+3. IAM Service returns access token (JWT) with service-level permissions
+4. Customer Service uses this token to call IAM Service `/api/users` endpoint
+
+**Configuration**:
+* Client credentials are configured in IAM Service `application.yaml`
+* Scopes granted: `message.read`, `message.write`
+* Token lifetime: 2 minutes (same as user access tokens)
+
+=== Authorization Approach
+
+The application uses a two-layer authorization model.
+
+==== Spring Profiles for Authorization
+
+The application uses Spring Profiles to switch between different authorization strategies. This enables flexible deployment configurations.
+
+===== Authorization Strategy Profiles
+
+[cols="1,1,2a"]
+|===
+|Profiles |Services Affected |Authorization Strategy
+
+|_(none)_
+|Customer Service, Security System Service
+|
+* Application-implemented
+* Security System Service calls Customer Service via HTTP for role lookups
+
+|`UseRolesReplica`
+|Security System Service
+|
+* Application-implemented
+* Security System Service queries local CQRS replica for role lookups
+
+|`UseOsoService`
+|Customer Service, Security System Service, Oso Integration Service
+|
+* Delegates to Oso Cloud
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|Customer Service, Security System Service
+|
+* Delegates to Oso Cloud
+* Local data bindings for SecuritySystem-Location resolution
+|===
+
+NOTE: When `UseOsoService` is active without `OsoLocalSecuritySystemLocation`, Security System Service publishes `SecuritySystemAssignedToLocation` events which Oso Integration Service consumes to sync SecuritySystem-Location relationships to Oso Cloud. With `OsoLocalSecuritySystemLocation`, this event is suppressed because location relationships are resolved locally.
+
+===== Implementation Classes by Profile
+
+====== Security System Service
+
+[cols="2a,1,1"]
+|===
+|Class |Profiles |Implementation
+
+.4+|*SecuritySystemActionAuthorizer*
+
+Verifies user has permission to arm/disarm a security system.
+|_(none)_
+|`LocalSecuritySystemActionAuthorizer`
+
+|`UseRolesReplica`
+|`LocalSecuritySystemActionAuthorizer`
+
+|`UseOsoService`
+|`OsoSecuritySystemActionAuthorizer`
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|`OsoLocalSecuritySystemActionAuthorizer`
+
+.4+|*SecuritySystemFinder*
+
+Finds security systems accessible to the current user.
+|_(none)_
+|`SecuritySystemFinderUsingRepository`
+
+|`UseRolesReplica`
+|`SecuritySystemFinderUsingRepository`
+
+|`UseOsoService`
+|`SecuritySystemFinderUsingRepositoryWithOso`
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|`SecuritySystemFinderUsingRepositoryWithOso`
+
+.4+|*CustomerServiceClient*
+
+Retrieves user role assignments at a location. Used by `LocalSecuritySystemActionAuthorizer` for authorization checks.
+|_(none)_
+|`CustomerServiceClientImpl`
+
+|`UseRolesReplica`
+|`CustomerServiceClientReplicaImpl`
+
+|`UseOsoService`
+|N/A (Oso Cloud has authorization data)
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|N/A (Oso Cloud has authorization data)
+
+.4+|*SecuritySystemLocationEventPublishingPolicy*
+
+Determines whether to publish `SecuritySystemAssignedToLocation` events for Oso Cloud synchronization.
+|_(none)_
+|`DefaultSecuritySystemLocationEventPublishingPolicy`
+
+|`UseRolesReplica`
+|`DefaultSecuritySystemLocationEventPublishingPolicy`
+
+|`UseOsoService`
+|`DefaultSecuritySystemLocationEventPublishingPolicy`
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|`LocalSecuritySystemLocationEventPublishingPolicy`
+|===
+
+====== Customer Service
+
+[cols="2a,1,1"]
+|===
+|Class |Profiles |Implementation
+
+.4+|*CustomerActionAuthorizer*
+
+Verifies user has permission to perform actions on a customer (e.g., create employees, manage locations).
+|_(none)_
+|`LocalCustomerActionAuthorizer`
+
+|`UseRolesReplica`
+|`LocalCustomerActionAuthorizer`
+
+|`UseOsoService`
+|`OsoCustomerActionAuthorizer`
+
+|`UseOsoService`, `OsoLocalSecuritySystemLocation`
+|`OsoCustomerActionAuthorizer`
+|===
+
+==== Layer 1: Role-Based Access Control (RBAC) via Spring Security
+
+**Global Roles** (enforced at service endpoints using `@PreAuthorize`):
+
+* `REALGUARDIO_ADMIN` - System administrators
+  ** Can create customers (Customer Service)
+  ** Full access to all resources
+
+* `REALGUARDIO_CUSTOMER_EMPLOYEE` - Customer employees
+  ** Can create employees within their customer (Customer Service)
+  ** Can manage locations for their customer (Customer Service)
+  ** Access controlled by Oso policies (see Layer 2)
+
+**Implementation**:
+```java
+@PostMapping("/customers")
+@PreAuthorize("hasRole('REALGUARDIO_ADMIN')")
+public CustomerResponse createCustomer(@RequestBody CreateCustomerRequest request) {
+    // Only admins can create customers
+}
+```
+
+Roles are extracted from JWT `roles` claim and automatically checked by Spring Security.
+
+==== Layer 2: Policy-Based Authorization via Oso Cloud
+
+**Location-Based Roles** (fine-grained permissions at the resource level):
+
+* `SECURITY_SYSTEM_VIEWER` - Can view security system status
+* `SECURITY_SYSTEM_ARMER` - Can arm security systems
+* `SECURITY_SYSTEM_DISARMER` - Can disarm security systems
+* `COMPANY_ROLE_ADMIN` - Can manage entire customer organization
+
+**How it works**:
+
+1. User attempts action (e.g., arm security system)
+2. Service extracts location from request
+3. Service calls Oso Cloud: "Can user X perform action Y on resource Z?"
+4. Oso Cloud evaluates policy using authorization facts:
+   * User's location-based roles (from `customer_employee_location_role` replica)
+   * Team memberships and team roles (indirect permissions)
+   * Organizational relationships (which customer owns the location)
+5. Oso Cloud returns `true` (allow) or `false` (deny)
+6. Service enforces decision
+
+**Example Policy** (from `main.polar`):
+```polar
+# Users can arm security systems if they have SECURITY_SYSTEM_ARMER role at the location
+allow(actor: CustomerEmployee, "arm", resource: SecuritySystem) if
+    has_role(actor, "SECURITY_SYSTEM_ARMER", resource.location);
+```
+
+**Authorization Data Synchronization**:
+* Customer Service publishes events when roles are assigned
+* Oso Integration Service consumes events and updates Oso Cloud
+* Security System Service maintains local replica of location roles for performance (see below)
+
+=== Location Roles Replica (CQRS View)
+
+The Security System Service maintains a local read replica of location-based role assignments to support efficient authorization queries. This is a critical component of the security architecture that enables:
+
+* **Performance**: Authorization queries in < 10ms without cross-service calls
+* **Resilience**: Authorization enforcement even when Customer Service or Oso Cloud are unavailable
+* **Scalability**: No N+1 query problems when listing accessible security systems
+
+See link:../services/realguardio-security-system-service/realguardio-security-system-service.adoc#_cqrs_view_location_roles_replica[Security System Service - CQRS View] for complete documentation of events consumed, tables maintained, and queries supported.
+
+=== Where Security Decisions Are Made
+
+|===
+|Service |Authentication |Authorization
+
+|**BFF**
+|Initiates OAuth2 flow, manages sessions
+|None (delegates to backend)
+
+|**IAM Service**
+|Issues tokens, validates credentials
+|None (identity provider only)
+
+|**Customer Service**
+|Validates JWT via JWKS
+|RBAC: Checks REALGUARDIO_ADMIN, REALGUARDIO_CUSTOMER_EMPLOYEE roles via Spring Security
+
+|**Security System Service**
+|Validates JWT via JWKS
+|RBAC + Oso Cloud: Checks roles via Spring Security, then queries Oso Cloud for arm/disarm permissions. Uses location-roles-replica for efficient role lookups.
+
+|**Orchestration Service**
+|Validates JWT via JWKS (if exposed via REST)
+|RBAC: Checks roles for saga initiation
+
+|**Oso Integration Service**
+|None (event consumer only)
+|None (system service)
+|===
+
+=== User Account Management
+
+User accounts are managed in the IAM Service.
+
+==== User Creation
+
+When a customer employee is created:
+
+1. Customer Service creates employee record in its database
+2. Customer Service obtains client credentials token from IAM Service
+3. Customer Service calls IAM Service `/api/users` endpoint to create user account:
+   * Username: Employee's email address
+   * Password: Default password `{noop}password`
+   * Roles: `["REALGUARDIO_CUSTOMER_EMPLOYEE"]`
+   * Enabled: `true`
+4. IAM Service creates user account in its database
+5. Employee can now log in via OAuth2 flow
+
+See link:../scenarios/create-customer-employee.adoc[Create Customer Employee Scenario] for details.
+
+==== Default Users
+
+The IAM Service is pre-configured with default users for testing:
+
+* **Username**: `user1`
+* **Password**: `password`
+* **Roles**: `USER`, `ADMIN`, `REALGUARDIO_ADMIN`
+
+=== Security Best Practices
+
+==== Token Security
+
+* Access tokens have short lifetimes (2 minutes) to limit exposure
+* Refresh tokens allow session extension without credential re-entry
+* Tokens are stored server-side in BFF (not exposed to browser)
+* PKCE prevents authorization code interception attacks
+
+==== Service-to-Service Security
+
+* Client credentials are stored as environment variables
+* Client secrets should be rotated periodically (currently hardcoded for demo)
+* Service-to-service tokens have same short lifetime as user tokens
+
+==== Authorization Data Integrity
+
+* Authorization facts synchronized via reliable event streaming (transactional outbox)
+* Eventual consistency accepted for role assignments (typically < 2 seconds)
+* Security System Service maintains local replica for resilience (works even if Oso Cloud unavailable)
+
+==== Secret Management
+
+* **Current (Demo)**: Secrets hardcoded in configuration files
+* **Production Recommendation**: Use external secret manager (HashiCorp Vault, AWS Secrets Manager, etc.)
+* **Never log**: Tokens, passwords, client secrets
+
+=== Related Scenarios
+
+* link:../scenarios/oauth2-login.adoc[OAuth2 Login Scenario] - Complete user authentication flow
+* link:../scenarios/create-customer.adoc[Create Customer Scenario] - Shows REALGUARDIO_ADMIN role enforcement
+* link:../scenarios/create-customer-employee.adoc[Create Customer Employee Scenario] - Shows user account creation and service-to-service auth
+* link:../scenarios/arm-security-system.adoc[Arm Security System Scenario] - Shows Oso Cloud policy enforcement
+* link:../scenarios/list-security-systems.adoc[List Security Systems Scenario] - Shows authorization-aware queries using CQRS view

@@ -1,0 +1,19 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url 'https://snapshots.repositories.eventuate.io/repository' }
+    }
+    plugins {
+        id 'io.eventuate.plugins.gradle.testing.integration-tests' version "${eventuateTestPluginsVersion}"
+        id 'io.eventuate.plugins.gradle.testing.component-tests' version "${eventuateTestPluginsVersion}"
+    }
+}
+
+rootProject.name = 'realguardio-orchestration-service'
+
+include ':orchestration-sagas'
+include ':orchestration-domain'
+include ':orchestration-restapi'
+include ':orchestration-main'
+include ':security-system-service-api'
+include ':customer-service-api'

@@ -1,0 +1,233 @@
+== Security System Service
+
+The Security System Service manages security systems and their states (armed/disarmed). It maintains a replica of location role assignments to support authorization decisions and integrates with Oso Cloud for fine-grained access control.
+
+=== Responsibilities
+
+* Create and manage security systems
+* Track security system states (armed, disarmed)
+* Handle arm/disarm operations with authorization checks
+* Replicate location role assignments from Customer Service events
+* Publish domain events for security system state changes
+* Handle saga commands for security system creation and location linking
+* Enforce authorization policies via Oso Cloud integration
+
+=== Subdomains
+
+This service contains the following subdomain:
+
+* **Security System** - Manages security systems, their states, and state transitions
+
+include::subdomains/security-system.adoc[leveloffset=+1]
+
+=== Inbound Dependencies
+
+==== Synchronous (REST API)
+
+* `GET /securitysystems` - List all security systems
+* `GET /securitysystems/{id}` - Get specific security system details
+* `PUT /securitysystems/{id}` - Arm or disarm a security system
+** Requires: REALGUARDIO_ADMIN or REALGUARDIO_CUSTOMER_EMPLOYEE role
+** Authorization: Checked against Oso Cloud policies (location-based permissions)
+** Request Body: `{"armed": true/false}`
+
+==== Asynchronous (Commands via Kafka)
+
+* `CreateSecuritySystemCommand` - Saga command to create a new security system
+** Channel: `security-system-service`
+** Handler: `SecuritySystemCommandHandler`
+** Reply: `CreateSecuritySystemReply` with `securitySystemId`
+
+* `NoteLocationCreatedCommand` - Saga command to link location to security system
+** Channel: `security-system-service`
+** Handler: `SecuritySystemCommandHandler`
+** Updates: Links `locationId` to existing security system
+
+* `UpdateCreationFailedCommand` - Saga compensation command for failed creation
+** Channel: `security-system-service`
+** Handler: Marks security system creation as failed
+
+==== Event Subscriptions (Kafka)
+
+The Location Roles Replica module subscribes to Customer Service events:
+
+* `CustomerEmployeeAssignedLocationRole` - Replicates role assignment locally
+* `CustomerEmployeeLocationRoleDeleted` - Removes role assignment from replica
+* Other Customer Service events as needed for maintaining consistent replica
+
+=== Outbound Dependencies
+
+==== Synchronous
+
+* *IAM Service* - JWT token validation via JWKS endpoint
+* *Oso Cloud* - Authorization policy evaluation for arm/disarm permissions
+* *Customer Service* (via proxy) - Optional HTTP calls for customer data retrieval
+
+==== Asynchronous (Events via Kafka)
+
+Publishes domain events:
+
+* `SecuritySystemCreated` - New security system created
+* `SecuritySystemArmed` - Security system armed
+* `SecuritySystemDisarmed` - Security system disarmed
+* `LocationLinked` - Location linked to security system
+
+Events are published via Eventuate TRAM using the transactional outbox pattern.
+
+=== Technology Stack
+
+* *Framework*: Spring Boot 3.4.5
+* *Language*: Java 17
+* *Persistence*: Spring Data JPA with Hibernate
+* *Database*: PostgreSQL (port 5433)
+* *Messaging*: Eventuate TRAM
+* *Event Consumption*: Eventuate TRAM event consumers
+* *Security*: Spring Security OAuth2 Resource Server
+* *Authorization*: Oso Cloud integration
+* *Observability*: Micrometer, OpenTelemetry
+
+=== Module Structure
+
+The service is organized into multiple Gradle submodules:
+
+* `security-system-service-domain` - Domain entities and business logic
+* `security-system-service-persistence` - JPA repositories and database persistence
+* `security-system-service-restapi` - REST controllers and API layer
+* `security-system-api-messaging` - Command handlers for saga integration
+* `security-system-service-oso-integration` - Oso Cloud authorization integration
+* `security-system-service-customer-service-proxy` - HTTP proxy to Customer Service
+* `location-roles-replica` - Event consumer module for replicating Customer Service data
+** Subscribes to Customer Service domain events
+** Maintains local replica of location and role assignment data
+** Ensures eventual consistency
+
+=== Security
+
+==== Authentication
+* Uses JWT Bearer tokens issued by IAM Service
+* Validates tokens via IAM Service JWKS endpoint
+* Configured as OAuth2 Resource Server
+
+==== Authorization
+* Role-based access control (RBAC): REALGUARDIO_ADMIN, REALGUARDIO_CUSTOMER_EMPLOYEE
+* Policy-based authorization via Oso Cloud:
+** `arm` permission - Checked before arming security system
+** `disarm` permission - Checked before disarming security system
+** Location-based access: Users must have appropriate role at the location
+** Supported roles: SECURITY_SYSTEM_ARMER, SECURITY_SYSTEM_DISARMER, SECURITY_SYSTEM_VIEWER
+
+=== Data Replication Strategy
+
+The service implements the *CQRS (Command Query Responsibility Segregation)* pattern:
+
+* *Command Side*: Handles arm/disarm operations, updates local SecuritySystem state
+* *Query Side*: Maintains replicated location and role data from Customer Service events
+* *Benefits*:
+** Reduces latency - no cross-service calls for authorization
+** Improves resilience - service can operate even if Customer Service is unavailable
+** Enables complex queries without distributed joins
+* *Trade-off*: Eventual consistency - role changes may take time to propagate
+
+=== CQRS View: Location Roles Replica
+
+The `location-roles-replica` module maintains a read-only replica of Customer Service data for efficient authorization queries.
+
+==== Events Consumed
+
+|===
+|Event Type |Published By
+
+|`CustomerEmployeeAssignedLocationRole`
+|Customer Service
+
+|`LocationCreatedForCustomer`
+|Customer Service
+
+|`TeamMemberAdded`
+|Customer Service
+
+|`TeamAssignedLocationRole`
+|Customer Service
+|===
+
+==== Database Tables
+
+|===
+|Table Name |Column Names |Events that update it
+
+|`customer_employee_location_role`
+|`id`, `user_name`, `location_id`, `role_name`, `created_at`
+|`CustomerEmployeeAssignedLocationRole`
+
+|`locations`
+|`id`, `customer_id`
+|`LocationCreatedForCustomer`
+
+|`team_location_roles`
+|`team_id`, `role_name`, `location_id`
+|`TeamAssignedLocationRole`
+
+|`team_members`
+|`team_id`, `customer_employee_id`
+|`TeamMemberAdded`
+|===
+
+==== Queries Supported
+
+The CQRS view supports the following queries:
+
+* *Get Location Roles for User*:
+** API: `GET /location-roles?userName={userName}&locationId={locationId}`
+** Query: `SELECT id, user_name, location_id, role_name FROM customer_employee_location_role WHERE user_name = ? AND location_id = ?`
+** Purpose: Retrieve all roles a user has at a specific location
+** Used by: Authorization checks before arm/disarm operations
+
+* *Find Security Systems for User*:
+** Query: Complex join across `security_system`, `customer_employee_location_role`, `team_members`, and `team_location_roles`
+** Purpose: List all security systems the user can access based on their roles
+** Returns: Security system details with aggregated role names
+** Used by: UI to display filtered list of accessible security systems
+
+* *Authorization Fact Queries* (for Oso local authorization):
+** `SELECT user_name, role_name, location_id FROM customer_employee_location_role` - Employee-to-location roles
+** `SELECT team_id, role_name, location_id FROM team_location_roles` - Team-to-location roles
+** `SELECT team_id, customer_employee_id FROM team_members` - Team memberships
+** Purpose: Provide authorization facts to Oso for policy evaluation
+
+==== Consistency Guarantees
+
+* *Eventual Consistency*: Role changes may take 100ms-2s to propagate from Customer Service
+* *At-Least-Once Delivery*: Events may be processed multiple times; uses `ON CONFLICT DO NOTHING` for idempotency
+* *Ordering*: Events from same aggregate (customer) are processed in order
+* *Resilience*: If event processing fails, Eventuate automatically retries
+
+=== Deployment
+
+* *Port*: 8080 (internally), 3001 (Docker exposed)
+* *Container Image*: Built using Docker multi-stage build
+* *Environment Variables*:
+** `SPRING_DATASOURCE_URL` - PostgreSQL connection URL
+** `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` - Database credentials
+** `EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS` - Kafka bootstrap servers
+** `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` - IAM Service URL
+** `OSO_URL` - Oso Cloud/Dev Server URL
+** `OSO_API_KEY` - Oso Cloud authentication token
+** `CUSTOMER_SERVICE_URL` - Customer Service base URL (for proxy)
+** `OTEL_EXPORTER_OTLP_ENDPOINT` - OpenTelemetry collector endpoint
+
+=== Testing Strategy
+
+* *Unit Tests*: Test domain logic for arm/disarm operations
+* *Integration Tests*: Test database persistence, API endpoints, and authorization
+* *Event Handler Tests*: Test location role replica event processing
+* *Authorization Tests*: Verify Oso policy enforcement for arm/disarm operations
+* *Command Handler Tests*: Test saga command handlers
+
+=== Key Design Patterns
+
+* *Transactional Outbox Pattern* - Ensures reliable event publishing
+* *Event Sourcing* - Rebuilds local state from Customer Service events
+* *CQRS* - Separates command and query responsibilities
+* *Replica Pattern* - Maintains local copy of remote data for performance
+* *Idempotent Consumer* - Uses `received_messages` table to prevent duplicate event processing
+* *Command Handler Pattern* - Processes saga commands asynchronously

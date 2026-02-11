@@ -1,0 +1,37 @@
+=== User Story: List Customers
+
+[source,gherkin]
+----
+Feature: List Customers
+  As an authenticated user
+  I want to view all customer organizations
+  So that I can see which companies are registered in the system
+
+  Scenario: Successfully retrieve customer list
+    Given I am authenticated
+    And the following customers exist:
+      | customerId | name             |
+      | 1          | Acme Corporation |
+      | 2          | Beta Industries  |
+      | 3          | Gamma LLC        |
+    When I submit a request to list all customers
+    Then I receive a 200 OK response
+    And the response contains 3 customers
+    And the customers are:
+      | customerId | name             |
+      | 1          | Acme Corporation |
+      | 2          | Beta Industries  |
+      | 3          | Gamma LLC        |
+
+  Scenario: Retrieve empty customer list
+    Given I am authenticated
+    And no customers exist in the system
+    When I submit a request to list all customers
+    Then I receive a 200 OK response
+    And the response contains an empty array
+
+  Scenario: Attempt to list customers without authentication
+    Given I am not authenticated
+    When I submit a request to list all customers
+    Then I receive a 401 Unauthorized response
+----

@@ -1,0 +1,5 @@
+facts:
+
+sql_types:
+  Location: integer
+  SecuritySystem: integer

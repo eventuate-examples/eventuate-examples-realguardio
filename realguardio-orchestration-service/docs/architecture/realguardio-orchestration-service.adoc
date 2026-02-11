@@ -1,0 +1,162 @@
+== Orchestration Service
+
+The Orchestration Service coordinates distributed transactions across multiple microservices using the Saga pattern. It ensures data consistency in distributed operations without requiring distributed ACID transactions.
+
+=== Responsibilities
+
+* Orchestrate distributed transactions using saga pattern
+* Manage saga state and progression through steps
+* Handle saga failures and execute compensating transactions
+* Coordinate command/reply interactions across services
+* Provide REST API for initiating sagas
+* Ensure eventual consistency across service boundaries
+
+=== Subdomains
+
+This service contains the following subdomain:
+
+* **Orchestration** - Coordinates distributed transactions across services using the Saga pattern
+
+include::subdomains/orchestration.adoc[leveloffset=+1]
+
+=== Inbound Dependencies
+
+==== Synchronous (REST API)
+
+* `POST /securitysystems` - Initiate security system creation saga
+** Request Body: `{"locationId": Long}`
+** Returns: `CreateSecuritySystemResponse` with `securitySystemId`
+** Process: Validates location exists, then creates security system for it
+
+=== Outbound Dependencies
+
+==== Asynchronous (Commands via Kafka)
+
+Sends saga commands to:
+
+* *Customer Service*:
+** `ValidateLocationCommand` - Validate location exists and retrieve details
+
+* *Security System Service*:
+** `CreateSecuritySystemCommand` - Create security system for validated location
+
+All commands follow request/reply pattern with 30-second timeout.
+
+=== Technology Stack
+
+* *Framework*: Spring Boot 3.4.5
+* *Language*: Java 17
+* *Persistence*: Spring Data JPA with Hibernate
+* *Database*: PostgreSQL (port 5434)
+* *Saga Framework*: Eventuate TRAM Sagas with Simple DSL
+* *Messaging*: Eventuate TRAM over Apache Kafka
+* *Security*: Spring Security OAuth2 Resource Server
+* *Observability*: Micrometer, OpenTelemetry
+
+=== Saga Definitions
+
+==== CreateSecuritySystemSaga
+
+*Purpose*: Creates a security system for an existing location after validating the location exists.
+
+|===
+|Step |Participant |Transaction |Compensating Transaction
+
+|1
+|Customer Service
+|`ValidateLocationCommand`
+|— (read-only)
+
+|2
+|Security System Service
+|`CreateSecuritySystemCommand`
+|— (no rollback needed)
+|===
+
+*Saga State*:
+
+Persisted in the orchestration service database to ensure reliability:
+
+* Current step
+* Saga data (locationId, customerId, locationName, securitySystemId)
+* Completion status
+
+=== Data Model
+
+==== Key Entities
+
+* `SagaInstance` - Eventuate framework entity storing saga state
+** Fields: `sagaId`, `sagaType`, `stateName`, `lastRequestId`, `sagaData` (JSON)
+** Managed by Eventuate TRAM Sagas framework
+
+* `SagaInstanceParticipants` - Tracks saga participant invocations
+** Links saga instances to command invocations
+
+==== Database Schema
+
+* Database name: `orchestration_service`
+* Schema: `public`
+* Tables managed by Eventuate: `saga_instance`, `saga_instance_participants`
+
+=== Module Structure
+
+The service is organized into multiple Gradle submodules:
+
+* `orchestration-sagas` - Saga definitions using Eventuate Simple DSL
+* `orchestration-domain` - Domain models and saga data classes
+* `orchestration-restapi` - REST controllers for initiating sagas
+* `orchestration-main` - Spring Boot application main class
+* `customer-service-api` - Shared API contracts for Customer Service commands/replies
+* `security-system-service-api` - Shared API contracts for Security System Service commands/replies
+
+=== Security
+
+==== Authentication
+* Uses JWT Bearer tokens issued by IAM Service
+* Validates tokens via IAM Service JWKS endpoint
+* Configured as OAuth2 Resource Server
+
+==== Authorization
+* Currently requires authenticated user to initiate sagas
+* Could be extended with role-based checks (e.g., only REALGUARDIO_ADMIN can create security systems)
+
+=== Deployment
+
+* *Port*: 8080 (internally), 3003 (Docker exposed)
+* *Container Image*: Built using Docker multi-stage build
+* *Environment Variables*:
+** `SPRING_DATASOURCE_URL` - PostgreSQL connection URL
+** `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` - Database credentials
+** `EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS` - Kafka bootstrap servers
+** `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` - IAM Service URL
+** `OTEL_EXPORTER_OTLP_ENDPOINT` - OpenTelemetry collector endpoint
+
+=== Testing Strategy
+
+* *Saga Integration Tests*: Test complete saga flows with mock command handlers
+* *Compensation Tests*: Verify compensating transactions execute on failure
+* *Timeout Tests*: Ensure sagas handle command timeouts correctly
+* *REST API Tests*: Test saga initiation endpoints
+
+=== Error Handling
+
+* *Command Failures*: Trigger compensating transactions
+* *Timeouts*: 30-second timeout per saga step, triggers compensation
+* *Persistence Failures*: Eventuate framework ensures saga state is durable
+* *Kafka Unavailability*: Commands are retried automatically by TRAM framework
+
+=== Saga Pattern Benefits
+
+* *Eventual Consistency*: Maintains consistency across services without distributed locks
+* *Resilience*: Each service can fail independently; saga coordinates recovery
+* *Observability*: Saga state provides clear view of distributed transaction progress
+* *Compensation*: Automatic rollback on failures maintains system integrity
+* *Scalability*: Asynchronous processing doesn't block threads
+
+=== Key Design Patterns
+
+* *Saga Orchestration Pattern* - Central coordinator manages distributed transaction
+* *Command Pattern* - Encapsulates service actions as commands
+* *Compensating Transaction Pattern* - Undoes partial work on failure
+* *Durable State Pattern* - Persists saga state for reliability
+* *Request/Reply Pattern* - Asynchronous command handling with replies

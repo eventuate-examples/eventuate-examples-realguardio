@@ -1,0 +1,180 @@
+== Scenario: Create Customer
+
+=== Overview
+
+This scenario describes how a system administrator creates a new customer organization with an initial administrator employee. The operation involves creating the customer record, creating an organization, creating the initial administrator employee, creating a user account in the IAM Service for the administrator, and synchronizing authorization facts to Oso Cloud.
+
+=== Sequence Diagram
+
+[plantuml]
+....
+@startuml
+actor "Admin" as Admin
+participant "BFF" as BFF
+participant "Customer\nService" as Customer
+participant "IAM Service" as IAM
+database "Kafka" as Kafka
+participant "Oso Integration\nService" as Oso
+database "Oso Cloud" as OsoCloud
+
+Admin -> BFF: POST /api/customers\n{name: "Acme Corp",\ninitialAdministrator: {\n  name: "John Doe",\n  emailAddress: "john@acme.com"\n}}
+activate BFF
+
+BFF -> Customer: POST /customers\n{name, initialAdministrator}\n+ Bearer token
+activate Customer
+
+Customer -> IAM: Validate JWT token\n(via JWKS endpoint)
+activate IAM
+IAM --> Customer: Token valid\n{userId, roles: [REALGUARDIO_ADMIN]}
+deactivate IAM
+
+Customer -> Customer: Check user has\nREALGUARDIO_ADMIN role
+
+alt User is REALGUARDIO_ADMIN
+    Customer -> Customer: Create Organization entity\n{organizationId, name}
+
+    Customer -> Customer: Create Customer entity\n{customerId, name, organizationId}
+
+    Customer -> Customer: Create Member entity\n{memberId, name, emailAddress}
+
+    Customer -> Customer: Create CustomerEmployee entity\n{customerId, memberId}
+
+    ' User account creation in IAM Service
+    Customer -> IAM: POST /oauth2/token\ngrant_type=client_credentials\nAuthorization: Basic (client_id:client_secret)
+    activate IAM
+    IAM -> IAM: Validate client credentials
+    IAM --> Customer: 200 OK\n{access_token: JWT}
+    deactivate IAM
+
+    Customer -> IAM: POST /api/users\n{username: "john@acme.com",\npassword: "{noop}password",\nroles: ["REALGUARDIO_CUSTOMER_EMPLOYEE"]}\nAuthorization: Bearer <client_token>
+    activate IAM
+    IAM -> IAM: Create user account
+    IAM --> Customer: 201 Created\n{userId, username}
+    deactivate IAM
+
+    Customer -> Customer: Assign COMPANY_ROLE_ADMIN\nto initial administrator
+
+    Customer -> Customer: Persist Customer, Organization,\nMember, CustomerEmployee
+
+    Customer -> Kafka: CustomerEmployeeAssignedCustomerRole event
+
+    Customer --> BFF: 201 Created\n{customer, initialAdmin}
+    deactivate Customer
+
+    BFF --> Admin: Success: Customer created\nwith initial administrator
+    deactivate BFF
+
+    ' Event processing
+    Kafka -> Oso: CustomerEmployeeAssignedCustomerRole event
+    activate Oso
+    Oso -> OsoCloud: Insert fact:\nhas_role(CustomerEmployee, "COMPANY_ROLE_ADMIN", Customer)
+    deactivate Oso
+
+else User is not REALGUARDIO_ADMIN
+    Customer --> BFF: 403 Forbidden
+    deactivate Customer
+    BFF --> Admin: Error: Access denied
+    deactivate BFF
+end
+
+@enduml
+....
+
+=== Description
+
+The sequence of events is:
+
+. The Admin user submits a request via the BFF UI to create a new customer organization, providing the customer name and the initial administrator's details (name and email address).
+
+. The BFF sends a POST request to the Customer Service at `/customers` with the customer name and initial administrator details, authenticated with the admin's JWT bearer token.
+
+. The Customer Service validates the JWT token with the IAM Service's JWKS endpoint to verify its authenticity and extract the user's roles.
+
+. The IAM Service confirms the token is valid and returns the user's ID and roles, including `REALGUARDIO_ADMIN`.
+
+. The Customer Service checks if the authenticated user has the `REALGUARDIO_ADMIN` role required to create customers.
+
+. *If the user is a REALGUARDIO_ADMIN*:
+.. The Customer Service creates a new Organization entity to represent the organizational structure for this customer.
+.. The Customer Service creates a Customer entity with the provided name, linked to the organization.
+.. The Customer Service creates a Member entity for the initial administrator with the provided name and email address.
+.. The Customer Service creates a CustomerEmployee entity linking the member to the customer.
+.. The Customer Service requests a client credentials access token from the IAM Service by sending a POST request to `/oauth2/token` with `grant_type=client_credentials`, authenticating with client ID (`realguardio-client`) and client secret via HTTP Basic authentication.
+.. The IAM Service validates the client credentials and returns a JWT access token for service-to-service authentication.
+.. The Customer Service calls the IAM Service's `/api/users` endpoint to create a user account for the initial administrator, sending the administrator's email as the username, a default password, and the role `REALGUARDIO_CUSTOMER_EMPLOYEE`, authenticated with the client credentials token.
+.. The IAM Service creates the user account and returns confirmation with the user details.
+.. The Customer Service assigns the `COMPANY_ROLE_ADMIN` role to the initial administrator employee, granting them permission to manage the customer organization.
+.. All entities are persisted to the database.
+.. The Customer Service publishes a `CustomerEmployeeAssignedCustomerRole` event indicating the administrator role assignment.
+.. The Customer Service returns a 201 Created response to the BFF with both the customer and initial administrator details.
+
+. The BFF displays a success message to the admin indicating the customer was created with an initial administrator.
+
+. The Oso Integration Service consumes the `CustomerEmployeeAssignedCustomerRole` event from Kafka.
+
+. The Oso Integration Service inserts a `has_role(CustomerEmployee, "COMPANY_ROLE_ADMIN", Customer)` fact into Oso Cloud, granting the initial administrator permission to manage the entire customer organization.
+
+. *If the user is not a REALGUARDIO_ADMIN*:
+.. The Customer Service returns a 403 Forbidden response.
+.. The BFF displays an error message indicating the user lacks permission to create customers.
+
+=== Authorization Requirements
+
+To create a customer:
+
+* The requesting user must have the `REALGUARDIO_ADMIN` role in their JWT token.
+* This is enforced through Spring Security's `@PreAuthorize("hasRole('REALGUARDIO_ADMIN')")` annotation on the REST endpoint.
+* Only system administrators can create new customer organizations.
+
+The initial administrator receives:
+
+* The `REALGUARDIO_CUSTOMER_EMPLOYEE` role in the IAM Service, enabling them to log in.
+* The `COMPANY_ROLE_ADMIN` role within the customer organization, granting them full administrative privileges for that customer.
+
+=== Data Synchronization
+
+The operation demonstrates the application's data synchronization strategy:
+
+. *Source of Truth*: Customer Service database is the source of truth for customer, organization, and employee data.
+
+. *Event Publishing*: Domain events are published to Kafka.
+
+. *Authorization Sync*: Oso Integration Service keeps Oso Cloud synchronized with customer, employee, and role data.
+
+. *Eventual Consistency*: All systems eventually converge to the same state, though there may be a brief delay (typically milliseconds to seconds).
+
+=== Key Characteristics
+
+* *Role-Based Access Control*: Only system admins (REALGUARDIO_ADMIN) can create customers
+* *Atomic Customer Creation*: Creating a customer automatically creates an organization, initial administrator employee, and user account
+* *Service-to-Service Authentication*: Customer Service uses OAuth2 client credentials grant to authenticate with IAM Service for user account creation
+* *User Account Provisioning*: The initial administrator user account is automatically created in IAM Service, enabling immediate login
+* *Multi-Tenant Architecture*: Each customer has its own organization with isolated data and role assignments
+* *Event-Driven Synchronization*: All state changes synchronized via events to Oso Cloud
+* *Auditability*: All customer and employee creations recorded as events
+
+=== Error Scenarios
+
+* *Invalid Token*: If the JWT token is invalid, the service returns 401 Unauthorized at step 3.
+
+* *Insufficient Permissions*: If the user is not a REALGUARDIO_ADMIN, the service returns 403 Forbidden at step 5.
+
+* *IAM Service Client Credentials Failure*: If the Customer Service cannot obtain a client credentials token from IAM Service (invalid client ID/secret, IAM Service unavailable), the customer creation fails and returns 500 Internal Server Error or 503 Service Unavailable.
+
+* *IAM Service User Creation Failure*: If the IAM Service `/api/users` call fails (duplicate username, IAM Service error, validation failure), the entire customer creation fails. The transaction is rolled back, and no customer or employee records are created.
+
+* *Duplicate Customer Name*: If a customer with the same name already exists, the service may return 409 Conflict (depending on validation rules).
+
+* *Invalid Email Address*: If the initial administrator's email address is invalid, the service returns 400 Bad Request with validation errors.
+
+* *Kafka Unavailable*: Events are stored in the outbox table; Eventuate CDC retries publishing when Kafka becomes available.
+
+* *Oso Cloud Unavailable*: The Oso Integration Service retries event processing; authorization may use stale data temporarily until events are processed.
+
+=== Relationship to Other Scenarios
+
+This scenario is related to:
+
+* *Create Customer Employee* - Shows how to add additional employees to an existing customer (the initial administrator can use this flow to add more employees).
+* *OAuth2 Login* - The initial administrator can log in using the credentials created during this flow.
+* *Assign Location Role* - After creating the customer, the administrator can create locations and assign location-specific roles to employees.

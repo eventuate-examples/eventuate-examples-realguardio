@@ -1,0 +1,16 @@
+dependencies {
+    implementation project(":security-system-service-api")
+    implementation project(":customer-service-api")
+    
+    implementation "io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl-starter"
+    implementation "io.eventuate.tram.core:eventuate-tram-spring-jdbc-kafka"
+    implementation "io.eventuate.tram.core:eventuate-tram-spring-flyway"
+    runtimeOnly "io.eventuate.tram.sagas:eventuate-tram-sagas-spring-flyway"
+    implementation 'org.flywaydb:flyway-database-postgresql:11.8.2'
+
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "io.eventuate.tram.sagas:eventuate-tram-sagas-spring-testing-support"
+    testImplementation "io.eventuate.tram.core:eventuate-tram-spring-in-memory"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}

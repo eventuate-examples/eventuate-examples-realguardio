@@ -1,0 +1,9 @@
+dependencies {
+    implementation "io.eventuate.tram.core:eventuate-tram-spring-commands"
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+    
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "org.assertj:assertj-core"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}

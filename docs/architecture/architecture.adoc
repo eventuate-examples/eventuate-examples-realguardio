@@ -1,0 +1,67 @@
+= RealGuardIO Architecture Documentation
+:toc:
+:toclevels: 5
+:toc-placement!:
+:sectnums:
+
+toc::[]
+
+== Introduction
+
+RealGuardIO is a microservices-based security system management application that demonstrates modern architectural patterns including:
+
+* Event-driven architecture with Apache Kafka and Eventuate TRAM
+* Distributed transactions using the Saga pattern
+* Policy-based authorization with Oso Cloud
+* OAuth2/JWT authentication
+* Transactional outbox pattern for reliable event publishing
+* Distributed tracing with OpenTelemetry and Jaeger
+* Backend-for-Frontend (BFF) pattern with Next.js
+
+The application allows users to manage customers, employees, locations, and security systems with fine-grained, policy-based access control.
+
+== Technology Stack
+
+=== Backend Services
+
+* *Framework*: Spring Boot 3.4.5
+* *Language*: Java 17
+* *Persistence*: Spring Data JPA with Hibernate
+* *Database*: PostgreSQL
+* *Messaging*: Eventuate TRAM, Apache Kafka
+* *Sagas*: Eventuate TRAM Sagas with Simple DSL
+* *Security*: Spring Security with OAuth2 Resource Server
+* *Observability*: Micrometer, OpenTelemetry, Jaeger
+
+=== Frontend
+
+* *Framework*: Next.js 15.2.2
+* *Language*: TypeScript
+* *UI Library*: React 19
+* *Authentication*: next-auth v4
+* *HTTP Client*: Axios
+* *Styling*: Tailwind CSS
+* *Observability*: OpenTelemetry API
+
+=== Infrastructure
+
+* *Build Tool*: Gradle (multi-module projects)
+* *Containerization*: Docker
+* *Orchestration*: Docker Compose
+* *Message Broker*: Apache Kafka (KRaft mode)
+* *Authorization*: Oso Cloud
+* *Tracing*: Jaeger
+
+include::system-context.adoc[]
+
+include::architecture-overview.adoc[]
+
+include::domains/domains.adoc[]
+
+include::requirements/requirements.adoc[]
+
+include::services/services.adoc[]
+
+include::scenarios/scenarios.adoc[]
+
+include::security/security.adoc[]

@@ -1,0 +1,167 @@
+== Scenario: Assign Location Role
+
+=== Overview
+
+This scenario describes how a customer administrator assigns a location-based role to an employee. Location roles grant employees permissions to perform specific actions on security systems at that location.
+
+=== Authorization
+
+*Spring Security*: The requesting user must have `REALGUARDIO_CUSTOMER_EMPLOYEE` global role in their JWT token.
+
+NOTE: Additional authorization (e.g., verifying the user has `COMPANY_ROLE_ADMIN` in the customer) is not yet implemented. See `// Security-todo` in `CustomerService.assignLocationRole()`.
+
+=== Sequence Diagram
+
+[plantuml]
+....
+@startuml
+actor "Customer\nAdmin" as Admin
+participant "BFF" as BFF
+participant "Customer\nService" as Customer
+participant "IAM Service" as IAM
+database "Kafka" as Kafka
+participant "Oso Integration\nService" as Oso
+database "Oso Cloud" as OsoCloud
+participant "Security System\nService\n(Location Roles Replica)" as Replica
+
+Admin -> BFF: PUT /api/customers/{id}/location-roles\n{employeeId, locationId, role}
+activate BFF
+
+BFF -> Customer: PUT /customers/{customerId}/location-roles\n{employeeId, locationId, role}\n+ Bearer token
+activate Customer
+
+Customer -> IAM: Validate JWT token\n(via JWKS endpoint)
+activate IAM
+IAM --> Customer: Token valid\n{userId, roles: [REALGUARDIO_CUSTOMER_EMPLOYEE]}
+deactivate IAM
+
+Customer -> Customer: Check user has\nREALGUARDIO_CUSTOMER_EMPLOYEE role\n(Spring Security)
+
+alt User has required role
+    Customer -> Customer: Validate location belongs to customer
+
+    Customer -> Customer: Create CustomerEmployeeLocationRole\n{customerId, employeeId, locationId, role}
+
+    Customer -> Customer: Persist CustomerEmployeeLocationRole
+
+    Customer -> Kafka: CustomerEmployeeAssignedLocationRole event
+
+    Customer --> BFF: 200 OK\n{employeeId, locationId, role}
+    deactivate Customer
+
+    BFF --> Admin: Success: Role assigned
+    deactivate BFF
+
+    ' Event processing
+    Kafka -> Oso: CustomerEmployeeAssignedLocationRole event
+    activate Oso
+    Oso -> OsoCloud: Insert fact:\nhas_role(CustomerEmployee, role, Location)
+    deactivate Oso
+
+    Kafka -> Replica: CustomerEmployeeAssignedLocationRole event
+    activate Replica
+    Replica -> Replica: Replicate role assignment\nto local database
+    note right: Enables Security System Service\nto make authorization decisions\nwith local data
+    deactivate Replica
+
+else User lacks required role
+    Customer --> BFF: 403 Forbidden
+    deactivate Customer
+    BFF --> Admin: Error: Access denied
+    deactivate BFF
+end
+
+@enduml
+....
+
+=== Description
+
+The sequence of events is:
+
+. The Customer Admin submits a request via the BFF UI to assign a location role to an employee, providing the employee ID, location ID, and role name.
+
+. The BFF sends a PUT request to the Customer Service at `/customers/{customerId}/location-roles` with the role assignment details and the admin's JWT bearer token.
+
+. The Customer Service validates the JWT token with the IAM Service's JWKS endpoint to verify its authenticity and extract the user's roles.
+
+. The IAM Service confirms the token is valid and returns the user's ID and roles, including `REALGUARDIO_CUSTOMER_EMPLOYEE`.
+
+. The Customer Service verifies the user has the `REALGUARDIO_CUSTOMER_EMPLOYEE` global role (Spring Security).
+
+. *If the user has the required role*:
+.. The Customer Service validates that the specified location belongs to the customer to prevent unauthorized role assignments.
+.. The Customer Service creates a CustomerEmployeeLocationRole entity representing the role assignment.
+.. The role assignment is persisted to the database.
+.. The Customer Service publishes a `CustomerEmployeeAssignedLocationRole` event to Kafka.
+.. The Customer Service returns a 200 OK response confirming the role assignment.
+
+. The BFF displays a success message to the admin.
+
+. The Oso Integration Service consumes the `CustomerEmployeeAssignedLocationRole` event from Kafka.
+
+. The Oso Integration Service inserts a `has_role(CustomerEmployee, role, Location)` fact into Oso Cloud, granting the employee the specified permission at that location.
+
+. The Security System Service's Location Roles Replica module also consumes the `CustomerEmployeeAssignedLocationRole` event.
+
+. The Location Roles Replica stores a local copy of the role assignment in the Security System Service's database, enabling the service to make authorization decisions without cross-service calls.
+
+. *If the user lacks the required role*:
+.. The Customer Service returns a 403 Forbidden response.
+.. The BFF displays an error message indicating the user lacks permission to assign roles.
+
+=== Authorization Requirements
+
+See <<Authorization>> above.
+
+=== Available Location Roles
+
+* `SECURITY_SYSTEM_VIEWER` - Can view security system status at the location
+* `SECURITY_SYSTEM_ARMER` - Can arm security systems at the location
+* `SECURITY_SYSTEM_DISARMER` - Can disarm security systems at the location
+
+=== Data Synchronization
+
+The operation demonstrates the application's data synchronization strategy:
+
+. *Source of Truth*: Customer Service database is the source of truth for role assignments.
+
+. *Event Publishing*: Domain events are published to Kafka.
+
+. *Authorization Sync*: Oso Integration Service keeps Oso Cloud synchronized with role data.
+
+. *Read Replica*: Security System Service maintains a read replica of role assignments for:
+** Reduced latency (no cross-service calls)
+** Improved resilience (works even if Customer Service is down)
+** Simplified queries (local database joins)
+
+. *Eventual Consistency*: All systems eventually converge to the same state, though there may be a brief delay (typically milliseconds to seconds).
+
+=== Key Characteristics
+
+* *Spring Security Authorization*: Requires global role (`REALGUARDIO_CUSTOMER_EMPLOYEE`)
+* *Location-Based Authorization*: Roles are assigned per location, not globally
+* *Event-Driven Synchronization*: Authorization state synchronized via events to Oso Cloud and Security System Service
+* *Multiple Consumers*: Events consumed by both Oso Integration Service and Security System Service
+* *Idempotent Processing*: Event handlers ensure duplicate events don't cause issues
+
+=== Error Scenarios
+
+* *Invalid Token*: If the JWT token is invalid, the service returns 401 Unauthorized.
+
+* *Insufficient Permissions*: If the user lacks `REALGUARDIO_CUSTOMER_EMPLOYEE` global role, the service returns 403 Forbidden.
+
+* *Location Not Found*: If the location ID doesn't exist or doesn't belong to the customer, the service returns 404 Not Found.
+
+* *Employee Not Found*: If the employee ID doesn't exist or doesn't belong to the customer, the service returns 404 Not Found.
+
+* *Invalid Role*: If the role name is not a valid location role, the service returns 400 Bad Request.
+
+* *Kafka Unavailable*: Events are stored in the outbox table; Eventuate CDC retries publishing when Kafka becomes available.
+
+* *Oso Cloud Unavailable*: The Oso Integration Service retries event processing; authorization may use stale data temporarily.
+
+=== Related Scenarios
+
+* link:create-customer-employee.adoc[Create Customer Employee] - Create an employee before assigning roles
+* link:arm-security-system.adoc[Arm Security System] - Shows how the `SECURITY_SYSTEM_ARMER` role is used
+* link:list-security-systems.adoc[List Security Systems] - Shows how location roles filter visible security systems

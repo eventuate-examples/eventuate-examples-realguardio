@@ -1,0 +1,166 @@
+== Scenario: Create Security System
+
+=== Overview
+
+This scenario describes the distributed transaction for creating a security system for an existing location. The operation spans multiple services and is coordinated by the CreateSecuritySystemSaga orchestrator.
+
+=== Event Publishing by Profile
+
+The `SecuritySystemAssignedToLocation` event publishing behavior varies based on Spring Profiles:
+
+[cols="2,3"]
+|===
+|Profile(s) |Event Publishing Behavior
+
+|_(none)_ or `UseRolesReplica`
+|`SecuritySystemAssignedToLocation` event is published (default policy)
+
+|`UseOsoService`
+|`SecuritySystemAssignedToLocation` event is published; Oso Integration Service consumes it to sync the SecuritySystem-Location relationship to Oso Cloud
+
+|`UseOsoService` + `OsoLocalSecuritySystemLocation`
+|`SecuritySystemAssignedToLocation` event is *suppressed*; SecuritySystem-Location relationships are resolved locally using the Security System Service database
+|===
+
+NOTE: The `SecuritySystemLocationEventPublishingPolicy` interface controls this behavior. With `OsoLocalSecuritySystemLocation`, the `LocalSecuritySystemLocationEventPublishingPolicy` suppresses event publishing because Oso Cloud does not need the SecuritySystem-Location relationship—it is resolved locally during authorization checks.
+
+=== Prerequisites
+
+Before creating a security system, a Location must already exist. Locations are created via the Customer Service's `POST /customers/{customerId}/locations` endpoint.
+
+=== Sequence Diagram
+
+[plantuml]
+....
+@startuml
+actor User
+participant "BFF" as BFF
+participant "Orchestration\nService" as Orchestration
+participant "Customer\nService" as Customer
+participant "Security System\nService" as SecuritySystem
+participant "Oso Integration\nService" as Oso
+database "Kafka" as Kafka
+database "Oso Cloud" as OsoCloud
+
+User -> BFF: POST /api/securitysystems\n{locationId}
+activate BFF
+
+BFF -> Orchestration: POST /securitysystems\n{locationId}\n+ Bearer token
+activate Orchestration
+
+Orchestration -> Orchestration: Create CreateSecuritySystemSaga
+
+Orchestration -> Kafka: ValidateLocationCommand\n{locationId}
+
+Kafka -> Customer: ValidateLocationCommand
+activate Customer
+
+Customer -> Customer: Look up Location by ID
+Customer -> Kafka: LocationValidated\n{locationId, locationName, customerId}
+deactivate Customer
+
+Kafka -> Orchestration: LocationValidated
+activate Orchestration
+
+Orchestration -> Orchestration: Update saga state\n(locationName, customerId received)
+Orchestration -> Kafka: CreateSecuritySystemCommand\n{locationId, locationName}
+deactivate Orchestration
+
+Kafka -> SecuritySystem: CreateSecuritySystemCommand
+activate SecuritySystem
+
+SecuritySystem -> SecuritySystem: Create SecuritySystem entity\n(state=DISARMED, locationId set)
+SecuritySystem -> SecuritySystem: Persist SecuritySystem
+
+alt UseOsoService without OsoLocalSecuritySystemLocation
+    SecuritySystem -> Kafka: SecuritySystemAssignedToLocation event
+    note right: Published to sync\nSecuritySystem-Location\nrelationship to Oso Cloud
+end
+
+SecuritySystem -> Kafka: SecuritySystemCreated\n{securitySystemId}
+deactivate SecuritySystem
+
+Kafka -> Orchestration: SecuritySystemCreated\n{securitySystemId}
+
+Orchestration -> Orchestration: Mark saga as completed
+
+Orchestration --> BFF: 201 Created\n{securitySystemId}
+deactivate Orchestration
+
+BFF --> User: Success: Security system created
+deactivate BFF
+
+' Event processing by Oso Integration Service (only with UseOsoService, without OsoLocalSecuritySystemLocation)
+alt UseOsoService without OsoLocalSecuritySystemLocation
+    Kafka -> Oso: SecuritySystemAssignedToLocation event
+    activate Oso
+    Oso -> OsoCloud: Insert fact:\nhas_relation(SecuritySystem, "location", Location)
+    deactivate Oso
+end
+
+@enduml
+....
+
+=== Description
+
+The sequence of events is:
+
+. The User submits a request to create a security system via the BFF UI, providing the location ID.
+
+. The BFF proxies the request to the Orchestration Service's `/securitysystems` endpoint, attaching the user's JWT bearer token for authentication.
+
+. The Orchestration Service creates a new instance of the CreateSecuritySystemSaga. The HTTP request blocks while the saga executes (with a 30-second timeout).
+
+. The Orchestration Service sends a ValidateLocationCommand to the Customer Service via Kafka.
+
+. The Customer Service receives the command, looks up the Location by ID, and returns a LocationValidated reply containing the `locationId`, `locationName`, and `customerId`.
+
+. The Orchestration Service receives the reply, updates the saga state with the location details, and proceeds to the next step.
+
+. The Orchestration Service sends a CreateSecuritySystemCommand to the Security System Service, including the `locationId` and `locationName`.
+
+. The Security System Service receives the command, creates a new SecuritySystem entity in DISARMED state with the locationId reference, and persists it to the database.
+
+. *(With `UseOsoService` without `OsoLocalSecuritySystemLocation`)*: The Security System Service publishes a `SecuritySystemAssignedToLocation` event to Kafka.
++
+NOTE: With `OsoLocalSecuritySystemLocation` profile, this event is suppressed because SecuritySystem-Location relationships are resolved locally.
+
+. The Security System Service sends a SecuritySystemCreated reply containing the `securitySystemId` back to the Orchestration Service.
+
+. The Orchestration Service receives the reply, marks the saga as successfully completed, and returns a 201 Created response with the `securitySystemId` to the BFF.
+
+. The BFF returns success to the user.
+
+. *(With `UseOsoService` without `OsoLocalSecuritySystemLocation`)*: The Oso Integration Service consumes the `SecuritySystemAssignedToLocation` event from Kafka and inserts a `has_relation(SecuritySystem, "location", Location)` fact into Oso Cloud, linking the security system to its location.
+
+. Authorization policies can now be enforced for the newly created security system based on location-based roles.
+
+=== Failure Handling
+
+==== Location Not Found
+
+If the location does not exist:
+
+. The Customer Service returns a LocationNotFound reply.
+. The Orchestration Service marks the saga as failed.
+. The controller returns a 404 Not Found response to the client.
+
+==== Location Already Has Security System
+
+If the location already has a security system (unique constraint violation):
+
+. The Security System Service returns a LocationAlreadyHasSecuritySystem reply.
+. The Orchestration Service marks the saga as failed.
+. The controller returns a 409 Conflict response to the client.
+
+=== Key Characteristics
+
+* *Location-First Flow*: Location must exist before creating a security system
+* *Asynchronous Processing*: The BFF returns immediately; saga execution happens in the background
+* *Eventual Consistency*: All services eventually converge to a consistent state
+* *Reliable Messaging*: Commands and events use Kafka with at-least-once delivery
+* *No Compensation Needed*: Validation is read-only; creation failure doesn't require rollback
+* *Distributed Tracing*: OpenTelemetry traces provide end-to-end visibility
+* *Idempotency*: Services handle duplicate messages gracefully
+* *Unique Constraint*: Each location can have at most one security system
+

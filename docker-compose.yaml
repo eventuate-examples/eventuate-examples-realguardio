@@ -1,48 +1,131 @@
 services:
+  customer-service-db:
+    image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgresuser
+      POSTGRES_PASSWORD: postgrespw
+      POSTGRES_DB: eventuate
+  security-system-service-db:
+    image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgresuser
+      POSTGRES_PASSWORD: postgrespw
+      POSTGRES_DB: eventuate
+  orchestration-service-db:
+    image: eventuateio/eventuate-vanilla-postgres:0.21.0.BUILD-SNAPSHOT
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgresuser
+      POSTGRES_PASSWORD: postgrespw
+      POSTGRES_DB: eventuate
   jaeger:
     image: jaegertracing/jaeger:2.6.0
     ports:
       - "16686:16686" # Jaeger UI
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
     environment:
       COLLECTOR_ZIPKIN_HTTP_PORT: 9411
 
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      # KRaft mode configuration
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      
+      # Listeners configuration
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://kafka:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      
+      # Log directories
+      KAFKA_LOG_DIRS: '/var/lib/kafka/data'
+      
+      # Cluster ID (must be set for KRaft mode)
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qg'
+      
+      # Other settings
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+
   realguardio-iam-service:
+    image: eventuate-examples-realguardio-realguardio-iam-service:latest
     build:
       context: ./realguardio-iam-service
+      pull: true
       args:
         baseImageVersion: 0.1.0.RELEASE
         serviceImageVersion: 0.1.0-SNAPSHOT
     ports:
       - "9000:9000"
     environment:
-      SPRING_PROFILES_ACTIVE: realguardio
+      SPRING_PROFILES_ACTIVE: realguardio,UserDatabase
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
       OTEL_PROPAGATORS: tracecontext
     depends_on:
       - jaeger
 
+  oso-service:
+    image: public.ecr.aws/osohq/dev-server:latest
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./realguardio-oso-integration-service/policies/main.polar:/policies/main.polar
+    command: ["--watch-for-changes", "/policies/main.polar"]
+    # healthcheck:
+    #   test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 5
   realguardio-security-system-service:
+    image: eventuate-examples-realguardio-realguardio-security-system-service:latest
     build:
-      context: ./realguardio-security-system-service
-      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      context: ./
+      dockerfile: realguardio-security-system-service/Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
       args:
         baseImageVersion: 0.1.0.RELEASE
         serviceImageVersion: 0.1.0-SNAPSHOT
     ports:
-      - "3001:3001"
+      - "3001:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,UseOsoService
+      EVENTUATE_DATABASE_SCHEMA: public
+      SPRING_DATASOURCE_URL: jdbc:postgresql://security-system-service-db:5432/eventuate
+      SPRING_DATASOURCE_USERNAME: postgresuser
+      SPRING_DATASOURCE_PASSWORD: postgrespw
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
       OTEL_PROPAGATORS: tracecontext
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CUSTOMER_SERVICE_URL: http://realguardio-customer-service:8080
+      OSO_URL: ${OSO_URL:-http://oso-service:8080}
+      OSO_AUTH: ${OSO_AUTH:-e_0123456789_12345_osotesttoken01xiIn}
     depends_on:
+      - security-system-service-db
+      - kafka
       - jaeger
       - realguardio-iam-service
-
+      - oso-service
   realguardio-bff:
+    image: eventuate-examples-realguardio-realguardio-bff:latest
     build:
       context: ./realguardio-bff
     ports:
@@ -50,27 +133,173 @@ services:
     environment:
       OAUTH_CLIENT_ID: realguardio-client
       OAUTH_CLIENT_SECRET: secret-rg
-
       OAUTH_AUTHORIZATION_URL: http://localhost:9000/oauth2/authorize
-
       OAUTH_USER_INFO_URL: http://realguardio-iam-service:9000/oauth2/userinfo
       OAUTH_TOKEN_URL: http://realguardio-iam-service:9000/oauth2/token
       OAUTH_ISSUER_URL: http://realguardio-iam-service:9000
       OAUTH_JWKS_URL: http://realguardio-iam-service:9000/oauth2/jwks
-
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: dummy_secret_key_for_testing_purposes_only
-
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
       OTEL_TRACES_EXPORTER: otlp
       OTEL_SERVICE_NAME: realguardio-bff
       OTEL_PROPAGATORS: tracecontext
-
-      SECURITY_SYSTEMS_API_URL: http://realguardio-security-system-service:3001
+      SECURITY_SYSTEMS_API_URL: http://realguardio-security-system-service:8080
       NEXT_OTEL_VERBOSE: 1
       OTEL_TRACES_SAMPLER: always_on
       OTEL_LOG_LEVEL: info
-
     depends_on:
       - realguardio-iam-service
       - realguardio-security-system-service
+  realguardio-customer-service:
+    image: eventuate-examples-realguardio-realguardio-customer-service:latest
+    build:
+      context: ./
+      dockerfile: realguardio-customer-service/Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      args:
+        baseImageVersion: 0.1.0.RELEASE
+        serviceImageVersion: 0.1.0-SNAPSHOT
+    ports:
+      - "3002:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker,UseOsoService
+      EVENTUATE_DATABASE_SCHEMA: public
+      SPRING_DATASOURCE_URL: jdbc:postgresql://customer-service-db:5432/eventuate
+      SPRING_DATASOURCE_USERNAME: postgresuser
+      SPRING_DATASOURCE_PASSWORD: postgrespw
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
+      OTEL_PROPAGATORS: tracecontext
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OSO_URL: ${OSO_URL:-http://oso-service:8080}
+      OSO_AUTH: ${OSO_AUTH:-e_0123456789_12345_osotesttoken01xiIn}
+    depends_on:
+      - customer-service-db
+      - kafka
+      - jaeger
+      - realguardio-iam-service
+      - oso-service
+  realguardio-orchestration-service:
+    image: eventuate-examples-realguardio-realguardio-orchestration-service:latest
+    build:
+      context: ./realguardio-orchestration-service
+      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      args:
+        baseImageVersion: 0.1.0.RELEASE
+        serviceImageVersion: 0.1.0-SNAPSHOT
+    ports:
+      - "3003:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EVENTUATE_DATABASE_SCHEMA: public
+      SPRING_DATASOURCE_URL: jdbc:postgresql://orchestration-service-db:5432/eventuate
+      SPRING_DATASOURCE_USERNAME: postgresuser
+      SPRING_DATASOURCE_PASSWORD: postgrespw
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://realguardio-iam-service:9000/oauth2/jwks
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://${JWT_ISSUER_HOST:-realguardio-iam-service}:9000
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
+      OTEL_PROPAGATORS: tracecontext
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      - orchestration-service-db
+      - kafka
+      - jaeger
+      - realguardio-iam-service
+
+  realguardio-oso-integration-service:
+    image: eventuate-examples-realguardio-realguardio-oso-integration-service:latest
+    build:
+      context: ./realguardio-oso-integration-service
+      dockerfile: Dockerfile${DOCKERFILE_SUFFIX:--multi-stage}
+      args:
+        baseImageVersion: 0.1.0.RELEASE
+        serviceImageVersion: 0.1.0-SNAPSHOT
+    ports:
+      - "3004:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OSO_URL: ${OSO_URL:-http://oso-service:8080}
+      OSO_AUTH: ${OSO_AUTH:-e_0123456789_12345_osotesttoken01xiIn}
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      MANAGEMENT_TRACING_ENABLED: "true"
+      OTEL_PROPAGATORS: tracecontext
+    depends_on:
+      - kafka
+      - jaeger
+      - oso-service
+
+  cdc:
+    image: eventuateio/eventuate-cdc-service:0.19.0.BUILD-SNAPSHOT
+    ports:
+      - "8099:8080"
+    environment:
+      EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # Kafka leadership configuration
+      SPRING_PROFILES_ACTIVE: "KafkaLeadership"
+      
+      # Customer database pipeline
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_READER: reader1
+      EVENTUATE_CDC_PIPELINE_PIPELINE1_EVENTUATEDATABASESCHEMA: public
+      
+      # Security system database pipeline  
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_READER: reader2
+      EVENTUATE_CDC_PIPELINE_PIPELINE2_EVENTUATEDATABASESCHEMA: public
+      
+      # Orchestration database pipeline
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_TYPE: eventuate-tram
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_READER: reader3
+      EVENTUATE_CDC_PIPELINE_PIPELINE3_EVENTUATEDATABASESCHEMA: public
+      
+      # Reader 1 - Customer database
+      EVENTUATE_CDC_READER_READER1_TYPE: postgres-wal
+      EVENTUATE_CDC_READER_READER1_DATASOURCEURL: jdbc:postgresql://customer-service-db:5432/eventuate
+      EVENTUATE_CDC_READER_READER1_DATASOURCEUSERNAME: postgresuser
+      EVENTUATE_CDC_READER_READER1_DATASOURCEPASSWORD: postgrespw
+      EVENTUATE_CDC_READER_READER1_DATASOURCEDRIVERCLASSNAME: org.postgresql.Driver
+      EVENTUATE_CDC_READER_READER1_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/customer
+      EVENTUATE_CDC_READER_READER1_OFFSETSTORAGETOPICNAME: customer_schema.cdc_offset_store
+      EVENTUATE_CDC_READER_READER1_OUTBOXID: "1"
+      EVENTUATE_CDC_READER_READER1_MONITORINGSCHEMA: public
+
+      # Reader 2 - Security system database
+      EVENTUATE_CDC_READER_READER2_TYPE: postgres-wal
+      EVENTUATE_CDC_READER_READER2_DATASOURCEURL: jdbc:postgresql://security-system-service-db:5432/eventuate
+      EVENTUATE_CDC_READER_READER2_DATASOURCEUSERNAME: postgresuser
+      EVENTUATE_CDC_READER_READER2_DATASOURCEPASSWORD: postgrespw
+      EVENTUATE_CDC_READER_READER2_DATASOURCEDRIVERCLASSNAME: org.postgresql.Driver
+      EVENTUATE_CDC_READER_READER2_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/security-system
+      EVENTUATE_CDC_READER_READER2_OFFSETSTORAGETOPICNAME: securitysystem_schema.cdc_offset_store
+      EVENTUATE_CDC_READER_READER2_OUTBOXID: "2"
+      EVENTUATE_CDC_READER_READER2_MONITORINGSCHEMA: public
+      
+      # Reader 3 - Orchestration database
+      EVENTUATE_CDC_READER_READER3_TYPE: postgres-wal
+      EVENTUATE_CDC_READER_READER3_DATASOURCEURL: jdbc:postgresql://orchestration-service-db:5432/eventuate
+      EVENTUATE_CDC_READER_READER3_DATASOURCEUSERNAME: postgresuser
+      EVENTUATE_CDC_READER_READER3_DATASOURCEPASSWORD: postgrespw
+      EVENTUATE_CDC_READER_READER3_DATASOURCEDRIVERCLASSNAME: org.postgresql.Driver
+      EVENTUATE_CDC_READER_READER3_LEADERSHIPLOCKPATH: /eventuate/cdc/leader/orchestration
+      EVENTUATE_CDC_READER_READER3_OFFSETSTORAGETOPICNAME: orchestration_schema.cdc_offset_store
+      EVENTUATE_CDC_READER_READER3_OUTBOXID: "3"
+      EVENTUATE_CDC_READER_READER3_MONITORINGSCHEMA: public
+      
+      
+    depends_on:
+      - kafka
+      - customer-service-db
+      - security-system-service-db
+      - orchestration-service-db
+      - realguardio-customer-service
+      - realguardio-security-system-service
+      - realguardio-orchestration-service
