@@ -20,8 +20,7 @@ public class OsoServiceConfiguration {
   @Bean
   public Oso oso(@Value("${oso.url}") String osoUrl,
                  @Value("${oso.auth}") String osoAuth) {
-      var optionsBuilder = new OsoClientOptions.Builder()
-              .withFallbackUri(URI.create(osoUrl));
+      var optionsBuilder = new OsoClientOptions.Builder();
       if (localAuthorizationConfigFileSupplier != null) {
           optionsBuilder.withDataBindingsPath(localAuthorizationConfigFileSupplier.get());
       }

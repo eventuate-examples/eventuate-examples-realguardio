@@ -55,13 +55,13 @@ public class LocalAuthorizationIntegrationTest {
 
     @Test
     public void testLocalAuthorization() {
-        realGuardOsoFactManager.createRoleInCustomer("alice", "acme", RolesAndPermissions.SECURITY_SYSTEM_ARMER);
+        realGuardOsoFactManager.createRoleInCustomer("alice", "acme", RolesAndPermissions.SECURITY_SYSTEM_VIEWER);
         realGuardOsoFactManager.createLocationForCustomer("99", "acme");
         realGuardOsoFactManager.createLocationForCustomer("101", "acme");
         realGuardOsoFactManager.assignSecuritySystemToLocation("202", "99");
         realGuardOsoFactManager.assignSecuritySystemToLocation("203", "101");
 
-        var sql = realGuardOsoAuthorizer.listLocal("alice", RolesAndPermissions.ARM, "SecuritySystem", "ss_id");
+        var sql = realGuardOsoAuthorizer.listLocal("alice", RolesAndPermissions.VIEW, "SecuritySystem", "ss_id");
         assertThat(sql).isNotNull();
         System.out.println(sql);
     }
