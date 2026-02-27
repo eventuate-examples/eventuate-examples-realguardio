@@ -37,9 +37,9 @@ class LocalCustomerActionAuthorizerTest {
     void shouldAllowActionWhenUserHasRequiredRole() {
         when(userNameSupplier.getCurrentUserEmail()).thenReturn(USER_EMAIL);
         when(customerEmployeeRepository.findRolesInCustomer(CUSTOMER_ID, USER_EMAIL))
-                .thenReturn(Set.of(RolesAndPermissions.COMPANY_ROLE_ADMIN));
+                .thenReturn(Set.of(RolesAndPermissions.Roles.COMPANY_ROLE_ADMIN));
 
-        authorizer.verifyCanDo(CUSTOMER_ID, RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE);
+        authorizer.isAllowed(RolesAndPermissions.Permissions.CREATE_CUSTOMER_EMPLOYEE, CUSTOMER_ID);
     }
 
     @Test
@@ -48,7 +48,7 @@ class LocalCustomerActionAuthorizerTest {
         when(customerEmployeeRepository.findRolesInCustomer(CUSTOMER_ID, USER_EMAIL))
                 .thenReturn(Set.of("SOME_OTHER_ROLE"));
 
-        assertThatThrownBy(() -> authorizer.verifyCanDo(CUSTOMER_ID, RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE))
+        assertThatThrownBy(() -> authorizer.isAllowed(RolesAndPermissions.Permissions.CREATE_CUSTOMER_EMPLOYEE, CUSTOMER_ID))
                 .isInstanceOf(NotAuthorizedException.class);
     }
 
@@ -58,13 +58,13 @@ class LocalCustomerActionAuthorizerTest {
         when(customerEmployeeRepository.findRolesInCustomer(CUSTOMER_ID, USER_EMAIL))
                 .thenReturn(Set.of());
 
-        assertThatThrownBy(() -> authorizer.verifyCanDo(CUSTOMER_ID, RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE))
+        assertThatThrownBy(() -> authorizer.isAllowed(RolesAndPermissions.Permissions.CREATE_CUSTOMER_EMPLOYEE, CUSTOMER_ID))
                 .isInstanceOf(NotAuthorizedException.class);
     }
 
     @Test
     void shouldThrowNotAuthorizedExceptionWhenPermissionNotRecognized() {
-        assertThatThrownBy(() -> authorizer.verifyCanDo(CUSTOMER_ID, "unknownPermission"))
+        assertThatThrownBy(() -> authorizer.isAllowed("unknownPermission", CUSTOMER_ID))
                 .isInstanceOf(NotAuthorizedException.class);
 
         verifyNoInteractions(userNameSupplier);

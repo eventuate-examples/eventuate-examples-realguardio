@@ -77,7 +77,7 @@ public class CustomerService {
         // Create initial admin without authorization check
         CustomerEmployee admin = createCustomerEmployeeInternal(customer.getId(), initialAdministrator);
         
-        assignRoleInternal(customer.getId(), admin.getId(), RolesAndPermissions.COMPANY_ROLE_ADMIN);
+        assignRoleInternal(customer.getId(), admin.getId(), RolesAndPermissions.Roles.COMPANY_ROLE_ADMIN);
         
         return new CustomerAndCustomerEmployee(customer, admin);
     }
@@ -99,7 +99,7 @@ public class CustomerService {
     public CustomerEmployee createCustomerEmployee(Long customerId, PersonDetails personDetails) {
         Customer customer = customerRepository.findRequiredById(customerId);
 
-        customerActionAuthorizer.verifyCanDo(customerId, RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE);
+        customerActionAuthorizer.isAllowed(RolesAndPermissions.Permissions.CREATE_CUSTOMER_EMPLOYEE, customerId);
 
         return createCustomerEmployeeInternal(customerId, personDetails);
     }
@@ -111,7 +111,7 @@ public class CustomerService {
 
         Set<String> currentUserRoles = customerEmployeeRepository.findRolesInCustomer(customerId, currentUserEmail);
 
-        if (!currentUserRoles.contains(RolesAndPermissions.COMPANY_ROLE_ADMIN)) {
+        if (!currentUserRoles.contains(RolesAndPermissions.Roles.COMPANY_ROLE_ADMIN)) {
             throw new NotAuthorizedException("Only company admins can create new employees");
         }
         return currentMember;
@@ -160,7 +160,7 @@ public class CustomerService {
      */
     @PreAuthorize("hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
     public Location createLocationForCustomer(Long customerId, String name) {
-        customerActionAuthorizer.verifyCanDo(customerId, RolesAndPermissions.CREATE_LOCATION);
+        customerActionAuthorizer.isAllowed(RolesAndPermissions.Permissions.CREATE_LOCATION, customerId);
         return createLocation(customerId, name);
     }
 

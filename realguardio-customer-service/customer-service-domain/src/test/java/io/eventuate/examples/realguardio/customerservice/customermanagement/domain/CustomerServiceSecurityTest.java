@@ -77,7 +77,7 @@ public class CustomerServiceSecurityTest {
         Set<String> roles = customerService.getCustomerEmployeeRoles(
             result.customer().getId(),
             result.initialAdministrator().getId());
-        assertThat(roles).contains(RolesAndPermissions.COMPANY_ROLE_ADMIN);
+        assertThat(roles).contains(RolesAndPermissions.Roles.COMPANY_ROLE_ADMIN);
     }
 
     @Test

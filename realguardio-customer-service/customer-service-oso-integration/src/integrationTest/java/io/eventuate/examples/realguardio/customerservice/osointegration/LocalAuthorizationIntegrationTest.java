@@ -55,10 +55,10 @@ public class LocalAuthorizationIntegrationTest {
 
     @Test
     public void testLocalAuthorization() {
-        realGuardOsoFactManager.createRoleInCustomer("alice@example.com", "101", RolesAndPermissions.COMPANY_ROLE_ADMIN);
-        realGuardOsoFactManager.createRoleInCustomer("alice@example.com", "102", RolesAndPermissions.COMPANY_ROLE_ADMIN);
+        realGuardOsoFactManager.createRoleInCustomer("alice@example.com", "101", RolesAndPermissions.Roles.COMPANY_ROLE_ADMIN);
+        realGuardOsoFactManager.createRoleInCustomer("alice@example.com", "102", RolesAndPermissions.Roles.COMPANY_ROLE_ADMIN);
 
-        var sql = realGuardOsoAuthorizer.listLocal("alice@example.com", RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE, "Customer", "customer_id");
+        var sql = realGuardOsoAuthorizer.listLocal("alice@example.com", RolesAndPermissions.Permissions.CREATE_CUSTOMER_EMPLOYEE, "Customer", "customer_id");
         assertThat(sql).isNotNull();
         System.out.println(sql);
     }

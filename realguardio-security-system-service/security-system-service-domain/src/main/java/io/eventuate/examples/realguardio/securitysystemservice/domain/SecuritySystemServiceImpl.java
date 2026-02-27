@@ -17,7 +17,6 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     private static final Logger logger = LoggerFactory.getLogger(SecuritySystemServiceImpl.class);
 
     private final SecuritySystemRepository securitySystemRepository;
-    private final CustomerServiceClient customerServiceClient;
     private final UserNameSupplier userNameSupplier;
     private final SecuritySystemActionAuthorizer securitySystemActionAuthorizer;
     private final SecuritySystemFinder securitySystemFinder;
@@ -25,23 +24,12 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     private final SecuritySystemLocationEventPublishingPolicy eventPublishingPolicy;
 
     public SecuritySystemServiceImpl(SecuritySystemRepository securitySystemRepository,
-                                    CustomerServiceClient customerServiceClient,
-                                    UserNameSupplier userNameSupplier,
+                                     UserNameSupplier userNameSupplier,
                                     SecuritySystemActionAuthorizer securitySystemActionAuthorizer,
                                     SecuritySystemFinder securitySystemFinder,
                                     SecuritySystemEventPublisher securitySystemEventPublisher,
                                     SecuritySystemLocationEventPublishingPolicy eventPublishingPolicy) {
-        if (securitySystemRepository == null) {
-            throw new IllegalArgumentException("securitySystemRepository cannot be null");
-        }
-        if (customerServiceClient == null) {
-            throw new IllegalArgumentException("customerServiceClient cannot be null");
-        }
-        if (userNameSupplier == null) {
-            throw new IllegalArgumentException("userNameSupplier cannot be null");
-        }
         this.securitySystemRepository = securitySystemRepository;
-        this.customerServiceClient = customerServiceClient;
         this.userNameSupplier = userNameSupplier;
         this.securitySystemActionAuthorizer = securitySystemActionAuthorizer;
         this.securitySystemFinder = securitySystemFinder;
@@ -73,10 +61,8 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
     public Optional<SecuritySystem> findById(Long id) {
         Optional<SecuritySystem> securitySystem = securitySystemRepository.findById(id);
 
-        // Check location-based authorization for customer employees
-        if (userNameSupplier.isCustomerEmployee() && securitySystem.map(ss -> ss.getLocationId() != null).orElse(false)) {
-            securitySystemActionAuthorizer.verifyCanDo(id, RolesAndPermissions.VIEW);
-        }
+        if (securitySystem.map(ss -> ss.getLocationId() != null).orElse(false))
+            securitySystemActionAuthorizer.isAllowed(RolesAndPermissions.VIEW, id);
         return securitySystem;
     }
 
@@ -112,12 +98,10 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         if (securitySystem.getLocationId() == null) {
             throw new BadRequestException("Security system not properly configured: missing location");
         }
-        
-        // Check location-based authorization for customer employees
-        if (userNameSupplier.isCustomerEmployee()) {
-            securitySystemActionAuthorizer.verifyCanDo(id, RolesAndPermissions.ARM);
-        }
-        
+
+        if (userNameSupplier.isCustomerEmployee())
+            securitySystemActionAuthorizer.isAllowed(RolesAndPermissions.ARM, id);
+
         securitySystem.arm();
         return securitySystemRepository.save(securitySystem);
     }
@@ -130,12 +114,10 @@ public class SecuritySystemServiceImpl implements SecuritySystemService {
         if (securitySystem.getLocationId() == null) {
             throw new BadRequestException("Security system not properly configured: missing location");
         }
-        
-        // Check location-based authorization for customer employees
-        if (userNameSupplier.isCustomerEmployee()) {
-            securitySystemActionAuthorizer.verifyCanDo(id, RolesAndPermissions.DISARM);
-        }
-        
+
+        if (userNameSupplier.isCustomerEmployee())
+            securitySystemActionAuthorizer.isAllowed(RolesAndPermissions.DISARM, id);
+
         securitySystem.disarm();
         return securitySystemRepository.save(securitySystem);
     }

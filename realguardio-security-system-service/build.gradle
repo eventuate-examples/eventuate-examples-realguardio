@@ -58,6 +58,8 @@ subprojects {
 		}
 }
 
+apply plugin: JavaQualityConventionPlugin
+
 project(':security-system-service-main') {
 	apply plugin: 'org.springframework.boot'
 	

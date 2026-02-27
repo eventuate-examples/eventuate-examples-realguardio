@@ -83,7 +83,7 @@ public class CustomerServiceInProcessComponentTest extends AbstractCustomerServi
 		realGuardOsoFactManager.createRoleInCustomer(
 				adminUser.email(),
 				String.valueOf(customerSummary.customerId()),
-				RolesAndPermissions.COMPANY_ROLE_ADMIN);
+				RolesAndPermissions.Roles.COMPANY_ROLE_ADMIN);
 
 		String companyAdminAccessToken = JwtTokenHelper.getJwtTokenForUser(iamService.getFirstMappedPort(), null, adminUser.email(), "password");
 

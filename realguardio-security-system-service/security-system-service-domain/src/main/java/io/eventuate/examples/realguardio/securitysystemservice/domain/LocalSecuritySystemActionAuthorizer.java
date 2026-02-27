@@ -10,44 +10,40 @@ import java.util.Set;
 
 @Component
 @Profile("!UseOsoService")
-public class LocalSecuritySystemActionAuthorizer implements SecuritySystemActionAuthorizer {
+public class LocalSecuritySystemActionAuthorizer extends AbstractSecuritySystemActionAuthorizer {
 
   private static final Logger logger = LoggerFactory.getLogger(LocalSecuritySystemActionAuthorizer.class);
 
   private final SecuritySystemRepository securitySystemRepository;
   private final CustomerServiceClient customerServiceClient;
-  private final UserNameSupplier userNameSupplier;
 
   public LocalSecuritySystemActionAuthorizer(CustomerServiceClient customerServiceClient, SecuritySystemRepository securitySystemRepository, UserNameSupplier userNameSupplier) {
+    super(userNameSupplier);
     this.customerServiceClient = customerServiceClient;
     this.securitySystemRepository = securitySystemRepository;
-    this.userNameSupplier = userNameSupplier;
   }
 
 
   @Override
-  public void verifyCanDo(long securitySystemId, String permission) {
-        validateLocationPermission(securitySystemId, RolesAndPermissions.rolesForPermission(permission));
+  protected void isAllowedForCustomerEmployee(String permission, long securitySystemId) {
+      Set<String> requiredRoles = RolesAndPermissions.rolesForPermission(permission);
+      SecuritySystem securitySystem = securitySystemRepository.findById(securitySystemId)
+          .orElseThrow(() -> new NotFoundException("Security system not found: " + (Long) securitySystemId));
+
+      Long locationId = securitySystem.getLocationId();
+
+      String userId = userNameSupplier.getCurrentUserName();
+
+      Set<String> rolesAtLocation = customerServiceClient.getUserRolesAtLocation(userId, locationId);
+
+      if (Collections.disjoint(rolesAtLocation, requiredRoles)) {
+        logger.warn("User {} lacks {} permission for location {}. Only has {}", userId, requiredRoles, locationId, rolesAtLocation);
+        throw new ForbiddenException(
+            String.format("User %s lacks %s permission for location %d. Only has %s",
+                    userId, requiredRoles, locationId, rolesAtLocation)
+        );
+      }
   }
 
-
- private void validateLocationPermission(Long securitySystemID, Set<String> requiredRoles) {
-    SecuritySystem securitySystem = securitySystemRepository.findById(securitySystemID)
-        .orElseThrow(() -> new NotFoundException("Security system not found: " + securitySystemID));
-
-    Long locationId = securitySystem.getLocationId();
-
-    String userId = userNameSupplier.getCurrentUserName();
-
-    Set<String> rolesAtLocation = customerServiceClient.getUserRolesAtLocation(userId, locationId);
-
-    if (Collections.disjoint(rolesAtLocation, requiredRoles)) {
-      logger.warn("User {} lacks {} permission for location {}. Only has {}", userId, requiredRoles, locationId, rolesAtLocation);
-      throw new ForbiddenException(
-          String.format("User %s lacks %s permission for location %d. Only has %s",
-                  userId, requiredRoles, locationId, rolesAtLocation)
-      );
-    }
-  }
 
 }

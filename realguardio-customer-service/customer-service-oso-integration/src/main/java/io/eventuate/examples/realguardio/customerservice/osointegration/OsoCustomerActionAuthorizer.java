@@ -23,7 +23,7 @@ public class OsoCustomerActionAuthorizer implements CustomerActionAuthorizer {
 
 
   @Override
-  public void verifyCanDo(long customerId, String permission) {
+  public void isAllowed(String permission, long customerId) {
 
     String userId = userNameSupplier.getCurrentUserEmail();
     if (!isAuthorized(userId, permission, String.valueOf(customerId))) {

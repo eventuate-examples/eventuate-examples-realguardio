@@ -95,6 +95,8 @@ public class OsoLocalSecuritySystemActionAuthorizerIntegrationTest {
         securitySystem.setLocationId(locationId);
         securitySystem = securitySystemRepository.save(securitySystem);
 
+        when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
+
         // Create Location-Customer relation in Oso Cloud
         realGuardOsoFactManager.createLocationForCustomer(locationIdString, company);
         realGuardOsoFactManager.createLocationForCustomer(locationId2, company);
@@ -113,7 +115,7 @@ public class OsoLocalSecuritySystemActionAuthorizerIntegrationTest {
 
         // This should succeed - user has DISARMER role at the location, and the
         // SecuritySystem-Location relationship is resolved via local data bindings
-        securitySystemActionAuthorizer.verifyCanDo(securitySystem.getId(), "disarm");
+        securitySystemActionAuthorizer.isAllowed("disarm", securitySystem.getId());
     }
 
     @Test
@@ -121,7 +123,7 @@ public class OsoLocalSecuritySystemActionAuthorizerIntegrationTest {
         // User has no role at this location
         when(userNameSupplier.getCurrentUserName()).thenReturn(customerEmployeeEmail);
 
-        assertThatThrownBy(() -> securitySystemActionAuthorizer.verifyCanDo(securitySystem.getId(), "disarm"))
+        assertThatThrownBy(() -> securitySystemActionAuthorizer.isAllowed("disarm", securitySystem.getId()))
                 .isInstanceOf(ForbiddenException.class);
     }
 
@@ -135,7 +137,7 @@ public class OsoLocalSecuritySystemActionAuthorizerIntegrationTest {
         when(userNameSupplier.getCurrentUserName()).thenReturn(customerEmployeeEmail);
 
         // User has role at a different location, not the one the security system is at
-        assertThatThrownBy(() -> securitySystemActionAuthorizer.verifyCanDo(securitySystem.getId(), "disarm"))
+        assertThatThrownBy(() -> securitySystemActionAuthorizer.isAllowed("disarm", securitySystem.getId()))
                 .isInstanceOf(ForbiddenException.class);
     }
 }

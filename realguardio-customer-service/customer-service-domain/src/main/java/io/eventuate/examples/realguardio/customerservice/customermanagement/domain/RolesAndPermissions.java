@@ -7,13 +7,17 @@ import java.util.stream.Collectors;
 
 public class RolesAndPermissions {
 
-    public static final String COMPANY_ROLE_ADMIN = "COMPANY_ROLE_ADMIN";
+    public static class Roles {
+        public static final String COMPANY_ROLE_ADMIN = "COMPANY_ROLE_ADMIN";
+    }
 
-    public static final String CREATE_CUSTOMER_EMPLOYEE = "createCustomerEmployee";
-    public static final String CREATE_LOCATION = "createLocation";
+    public static class Permissions {
+        public static final String CREATE_CUSTOMER_EMPLOYEE = "createCustomerEmployee";
+        public static final String CREATE_LOCATION = "createLocation";
+    }
 
     public static final Map<String, Set<String>> rolesToPermissions = Map.of(
-            COMPANY_ROLE_ADMIN, Set.of(CREATE_CUSTOMER_EMPLOYEE, CREATE_LOCATION)
+            Roles.COMPANY_ROLE_ADMIN, Set.of(Permissions.CREATE_CUSTOMER_EMPLOYEE, Permissions.CREATE_LOCATION)
     );
 
     public static final Map<String, Set<String>> permissionsToRoles = invertMap(rolesToPermissions);

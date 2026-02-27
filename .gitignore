@@ -1,3 +1,4 @@
+**/.hitl
 logs
 pids
 .next
@@ -10,6 +11,4 @@ _download
 build.log
 wip-docs
 build
-**/.claude/issues
-**/.claude/sessions
 *SessionID.txt

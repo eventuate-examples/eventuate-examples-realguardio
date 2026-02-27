@@ -113,7 +113,7 @@ class CustomerServiceTest {
     PersonDetails retrievedAdminDetails = createdCustomer.findEmployeeDetails(initialAdmin);
     assertThat(retrievedAdminDetails).isEqualTo(initialAdminDetails);
 
-    createdCustomer.assertThatCustomerEmployeeRoles(initialAdmin).containsExactly(RolesAndPermissions.COMPANY_ROLE_ADMIN);
+    createdCustomer.assertThatCustomerEmployeeRoles(initialAdmin).containsExactly(RolesAndPermissions.Roles.COMPANY_ROLE_ADMIN);
   }
 
 
@@ -242,7 +242,7 @@ class CustomerServiceTest {
 
     customer.assertEmployeeLocationRoles(marySmith, location).containsExactly(SECURITY_SYSTEM_ARMER_ROLE);
 
-    verify(customerActionAuthorizer).verifyCanDo(customer.customer().getId(), RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE);
+    verify(customerActionAuthorizer).isAllowed(RolesAndPermissions.Permissions.CREATE_CUSTOMER_EMPLOYEE, customer.customer().getId());
 
   }
 
@@ -256,7 +256,7 @@ class CustomerServiceTest {
 
     loggedInUser.withUser(customer1);
 
-    doThrow(new NotAuthorizedException("message")).when(customerActionAuthorizer).verifyCanDo(customer1.customer().getId(), RolesAndPermissions.CREATE_CUSTOMER_EMPLOYEE);
+    doThrow(new NotAuthorizedException("message")).when(customerActionAuthorizer).isAllowed(RolesAndPermissions.Permissions.CREATE_CUSTOMER_EMPLOYEE, customer1.customer().getId());
 
     // When & Then
 
@@ -335,7 +335,7 @@ class CustomerServiceTest {
     assertThat(location.getName()).isEqualTo(locationName);
     assertThat(location.getCustomerId()).isEqualTo(customer.customer().getId());
 
-    verify(customerActionAuthorizer).verifyCanDo(customer.customer().getId(), RolesAndPermissions.CREATE_LOCATION);
+    verify(customerActionAuthorizer).isAllowed(RolesAndPermissions.Permissions.CREATE_LOCATION, customer.customer().getId());
   }
 
   @Test

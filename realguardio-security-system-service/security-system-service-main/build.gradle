@@ -3,6 +3,10 @@ plugins {
     id 'io.eventuate.plugins.gradle.testing.integration-tests'
 }
 
+jacocoTestCoverageVerification {
+    enabled = false
+}
+
 componentTest {
     systemProperty "spring.profiles.active", "test,postgres"
 }

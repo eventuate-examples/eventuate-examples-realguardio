@@ -25,7 +25,7 @@ public class LocalCustomerActionAuthorizer implements CustomerActionAuthorizer {
     }
 
     @Override
-    public void verifyCanDo(long customerId, String permission) {
+    public void isAllowed(String permission, long customerId) {
         Set<String> requiredRoles = RolesAndPermissions.rolesForPermission(permission);
         if (requiredRoles == null)
             throw new NotAuthorizedException("Don't recognize permission: %s".formatted(permission));

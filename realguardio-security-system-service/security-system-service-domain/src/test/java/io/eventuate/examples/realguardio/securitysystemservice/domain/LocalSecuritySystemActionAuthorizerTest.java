@@ -40,6 +40,7 @@ class LocalSecuritySystemActionAuthorizerTest {
     setId(securitySystem, systemId);
     securitySystem.setLocationId(locationId);
 
+    when(userNameSupplier.isCustomerEmployee()).thenReturn(true);
     when(userNameSupplier.getCurrentUserName()).thenReturn(userId);
     when(securitySystemRepository.findById(systemId)).thenReturn(Optional.of(securitySystem));
   }
@@ -51,7 +52,7 @@ class LocalSecuritySystemActionAuthorizerTest {
     when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
         .thenReturn(Set.of(RolesAndPermissions.SECURITY_SYSTEM_DISARMER, "VIEW_ALERTS"));
 
-    localSecuritySystemActionAuthorizer.verifyCanDo(systemId, RolesAndPermissions.DISARM);
+    localSecuritySystemActionAuthorizer.isAllowed(RolesAndPermissions.DISARM, systemId);
   }
 
   @Test
@@ -60,7 +61,7 @@ class LocalSecuritySystemActionAuthorizerTest {
     when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
         .thenReturn(Set.of("VIEW_ALERTS"));
 
-    assertThatThrownBy(() -> localSecuritySystemActionAuthorizer.verifyCanDo(systemId, RolesAndPermissions.DISARM))
+    assertThatThrownBy(() -> localSecuritySystemActionAuthorizer.isAllowed(RolesAndPermissions.DISARM, systemId))
         .isInstanceOf(ForbiddenException.class);
   }
 
@@ -70,7 +71,7 @@ class LocalSecuritySystemActionAuthorizerTest {
     when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
         .thenReturn(Set.of(RolesAndPermissions.SECURITY_SYSTEM_ARMER, "VIEW_ALERTS"));
 
-    localSecuritySystemActionAuthorizer.verifyCanDo(systemId, RolesAndPermissions.ARM);
+    localSecuritySystemActionAuthorizer.isAllowed(RolesAndPermissions.ARM, systemId);
   }
 
   @Test
@@ -79,7 +80,7 @@ class LocalSecuritySystemActionAuthorizerTest {
     when(customerServiceClient.getUserRolesAtLocation(userId, locationId))
         .thenReturn(Set.of("VIEW_ALERTS"));
 
-    assertThatThrownBy(() -> localSecuritySystemActionAuthorizer.verifyCanDo(systemId, RolesAndPermissions.ARM))
+    assertThatThrownBy(() -> localSecuritySystemActionAuthorizer.isAllowed(RolesAndPermissions.ARM, systemId))
         .isInstanceOf(ForbiddenException.class);
   }
 
