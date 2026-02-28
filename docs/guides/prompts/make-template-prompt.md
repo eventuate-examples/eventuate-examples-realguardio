@@ -1,0 +1,1 @@
+ Create a @docs/guides/guide-template.md that is a template showing the structure of a guide 

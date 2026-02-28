@@ -1,0 +1,27 @@
+@startuml
+title Populating Oso Cloud with Facts
+
+box "Customer Service"
+  participant "CustomerService" as CS
+  participant "CustomerEventPublisher" as CEP
+end box
+
+participant "Kafka" as K
+
+box "Oso Integration Service"
+  participant "CustomerEventConsumer" as CEC
+  participant "RealGuardOsoFactManager" as FM
+  participant "OsoService" as OS
+end box
+
+participant "Oso Cloud" as OSO
+
+CS -> CS : assignLocationRole()
+CS -> CEP : publish(CustomerEmployeeAssignedLocationRole)
+CEP -> K : send event
+K -> CEC : consume event
+CEC -> FM : createRoleAtLocation()
+FM -> OS : createRole()
+OS -> OSO : oso.insert(has_role(...))
+
+@enduml

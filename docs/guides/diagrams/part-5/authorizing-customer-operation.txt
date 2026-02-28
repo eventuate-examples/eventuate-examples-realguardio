@@ -1,0 +1,24 @@
+@startuml
+title Authorizing a Customer Operation
+
+participant "Client" as C
+
+box "Customer Service"
+  participant "CustomerService" as CS
+  participant "OsoCustomerActionAuthorizer" as Auth
+end box
+
+participant "Oso Cloud" as OSO
+
+C -> CS : createCustomerEmployee(customerId, ...)
+CS -> Auth : isAllowed("createCustomerEmployee", customerId)
+Auth -> OSO : oso.authorize(\n  CustomerEmployee{userId},\n  "createCustomerEmployee",\n  Customer{customerId})
+OSO --> Auth : true / false
+alt authorized
+  CS -> CS : create employee
+  CS --> C : CustomerEmployee
+else not authorized
+  Auth --> C : 403 Forbidden
+end
+
+@enduml
