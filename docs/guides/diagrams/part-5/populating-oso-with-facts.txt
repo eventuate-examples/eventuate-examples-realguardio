@@ -1,7 +1,10 @@
 @startuml
 title Populating Oso Cloud with Facts
 
+participant "Client" as C
+
 box "Customer Service"
+  participant "CustomerController" as CTL
   participant "CustomerService" as CS
   participant "CustomerEventPublisher" as CEP
 end box
@@ -16,7 +19,8 @@ end box
 
 participant "Oso Cloud" as OSO
 
-CS -> CS : assignLocationRole()
+C -> CTL : POST /customers/{id}/locations/{locId}/roles
+CTL -> CS : assignLocationRole()
 CS -> CEP : publish(CustomerEmployeeAssignedLocationRole)
 CEP -> K : send event
 K -> CEC : consume event

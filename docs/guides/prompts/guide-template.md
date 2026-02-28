@@ -107,12 +107,20 @@ This port has N implementations, selected by <mechanism>:
 
 ## Service Collaboration
 
-Each scenario has a PlantUML sequence diagram in `diagrams/part-N/<scenario>.txt`. Diagrams should use `box` to group participants by service:
+Each scenario has a PlantUML sequence diagram in `diagrams/part-N/<scenario>.txt`. Diagram guidelines:
+
+* Start with a `Client` participant representing the external caller
+* Include the inbound adapter class that handles the client request
+* A service's database belongs inside the service's `box`
+* Use `box` to group participants by the runtime service they execute in
 
 ```plantuml
+participant "Client" as C
+
 box "Service Name"
+  participant "InboundAdapter" as IA
   participant "ClassName" as alias
-  participant "ClassName" as alias
+  database "Service DB" as DB
 end box
 ```
 

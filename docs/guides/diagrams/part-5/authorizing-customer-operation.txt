@@ -4,21 +4,31 @@ title Authorizing a Customer Operation
 participant "Client" as C
 
 box "Customer Service"
+  participant "CustomerController" as CTL
   participant "CustomerService" as CS
   participant "OsoCustomerActionAuthorizer" as Auth
+  participant "RealGuardOsoAuthorizer" as RGA
+  participant "OsoService" as OS
 end box
 
 participant "Oso Cloud" as OSO
 
-C -> CS : createCustomerEmployee(customerId, ...)
+C -> CTL : POST /customers/{id}/employees
+CTL -> CS : createCustomerEmployee(customerId, ...)
 CS -> Auth : isAllowed("createCustomerEmployee", customerId)
-Auth -> OSO : oso.authorize(\n  CustomerEmployee{userId},\n  "createCustomerEmployee",\n  Customer{customerId})
-OSO --> Auth : true / false
+Auth -> RGA : isAuthorized(userId, "createCustomerEmployee",\n"Customer", customerId)
+RGA -> OS : authorize("CustomerEmployee", userId,\n"createCustomerEmployee", "Customer", customerId)
+OS -> OSO : oso.authorize(...)
+OSO --> OS : true / false
+OS --> RGA : true / false
+RGA --> Auth : true / false
 alt authorized
   CS -> CS : create employee
-  CS --> C : CustomerEmployee
+  CS --> CTL : CustomerEmployee
+  CTL --> C : CustomerEmployee
 else not authorized
-  Auth --> C : 403 Forbidden
+  Auth --> CTL : ForbiddenException
+  CTL --> C : 403 Forbidden
 end
 
 @enduml

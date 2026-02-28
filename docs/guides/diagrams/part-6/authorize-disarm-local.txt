@@ -1,0 +1,40 @@
+@startuml
+title Authorizing a Disarm Using authorizeLocal()
+
+participant "Client" as C
+
+box "Security System Service"
+  participant "SecuritySystemController" as CTL
+  participant "SecuritySystemServiceImpl" as SSI
+  participant "OsoLocalSecuritySystem\nActionAuthorizer" as LOCAL
+  participant "RealGuardOsoAuthorizer" as AUTH
+  participant "OsoService" as OS
+  database "Security System DB" as DB
+end box
+
+participant "Oso Cloud" as OSO
+
+C -> CTL : PUT /securitysystems/{id} (disarm)
+CTL -> SSI : disarm(id)
+SSI -> LOCAL : isAllowed("disarm", securitySystemId)
+LOCAL -> AUTH : authorizeLocal(userId, "disarm",\n"SecuritySystem", securitySystemId)
+AUTH -> OS : authorizeLocal("CustomerEmployee", userId,\n"disarm", "SecuritySystem", securitySystemId)
+OS -> OSO : oso.authorizeLocal(...)
+OSO --> OS : SQL SELECT query
+OS --> AUTH : sqlQuery
+AUTH --> LOCAL : sqlQuery
+LOCAL -> DB : execute sqlQuery
+DB --> LOCAL : true/false
+
+alt authorized
+  LOCAL --> SSI : return (no exception)
+  SSI -> SSI : securitySystem.disarm()
+  SSI --> CTL : SecuritySystem
+  CTL --> C : SecuritySystem JSON
+else not authorized
+  LOCAL --> SSI : throw ForbiddenException
+  SSI --> CTL : ForbiddenException
+  CTL --> C : 403 Forbidden
+end
+
+@enduml

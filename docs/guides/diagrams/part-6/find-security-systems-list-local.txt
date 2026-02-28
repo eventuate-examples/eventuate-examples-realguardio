@@ -1,0 +1,35 @@
+@startuml
+title Finding Security Systems Using listLocal()
+
+participant "Client" as C
+
+box "Security System Service"
+  participant "SecuritySystemController" as CTL
+  participant "SecuritySystemServiceImpl" as SSI
+  participant "SecuritySystemFinderUsingRepositoryWithOso" as FINDER
+  participant "SecuritySystemRepositoryWithOsoImpl" as REPO
+  participant "RealGuardOsoAuthorizer" as AUTH
+  participant "OsoService" as OS
+  database "Security System DB" as DB
+end box
+
+participant "Oso Cloud" as OSO
+
+C -> CTL : GET /securitysystems
+CTL -> SSI : findAll()
+SSI -> FINDER : findAllAccessible(userName)
+FINDER -> REPO : findAllAccessible(userName)
+REPO -> AUTH : listLocal(userName, "view", "SecuritySystem", "ss.id")
+AUTH -> OS : listLocal("CustomerEmployee", userId, "view", "SecuritySystem", "ss.id")
+OS -> OSO : oso.listLocal(...)
+OSO --> OS : SQL WHERE clause fragment
+OS --> AUTH : filterSql
+AUTH --> REPO : filterSql
+REPO -> DB : SELECT ... FROM security_system ss\nWHERE <filterSql>
+DB --> REPO : filtered results
+REPO --> FINDER : List<SecuritySystemProjection>
+FINDER --> SSI : List<SecuritySystemProjection>
+SSI --> CTL : List<SecuritySystemWithActions>
+CTL --> C : SecuritySystems JSON
+
+@enduml

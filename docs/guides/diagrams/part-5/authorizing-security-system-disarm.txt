@@ -4,21 +4,31 @@ title Authorizing a Security System Disarm
 participant "Client" as C
 
 box "Security System Service"
+  participant "SecuritySystemController" as CTL
   participant "SecuritySystemServiceImpl" as SSS
   participant "OsoSecuritySystemActionAuthorizer" as Auth
+  participant "RealGuardOsoAuthorizer" as RGA
+  participant "OsoService" as OS
 end box
 
 participant "Oso Cloud" as OSO
 
-C -> SSS : disarm(securitySystemId)
+C -> CTL : PUT /securitysystems/{id} (disarm)
+CTL -> SSS : disarm(securitySystemId)
 SSS -> Auth : isAllowed("disarm", securitySystemId)
-Auth -> OSO : oso.authorize(\n  CustomerEmployee{userId},\n  "disarm",\n  SecuritySystem{securitySystemId})
-OSO --> Auth : true / false
+Auth -> RGA : isAuthorized(userId, "disarm",\n"SecuritySystem", securitySystemId)
+RGA -> OS : authorize("CustomerEmployee", userId,\n"disarm", "SecuritySystem", securitySystemId)
+OS -> OSO : oso.authorize(...)
+OSO --> OS : true / false
+OS --> RGA : true / false
+RGA --> Auth : true / false
 alt authorized
   SSS -> SSS : securitySystem.disarm()
-  SSS --> C : SecuritySystem (DISARMED)
+  SSS --> CTL : SecuritySystem
+  CTL --> C : SecuritySystem (DISARMED)
 else not authorized
-  Auth --> C : 403 Forbidden
+  Auth --> CTL : ForbiddenException
+  CTL --> C : 403 Forbidden
 end
 
 @enduml
