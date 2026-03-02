@@ -1,0 +1,42 @@
+@startuml
+title Login: Authorization Code Flow with PKCE
+
+actor "User" as U
+
+box "BFF (Next.js)"
+  participant "Header.tsx" as HDR
+  participant "NextAuth\n[...nextauth]/route.ts" as NA
+  participant "authOptions.ts\njwtCallback" as JWT
+end box
+
+participant "IAM Service\n(Spring Authorization Server)" as IAM
+
+U -> HDR : Click "Login"
+HDR -> NA : signIn('oauth2-pkce')
+
+NA -> IAM : GET /oauth2/authorize\n?response_type=code\n&code_challenge=<S256>\n&scope=openid
+IAM -> U : Redirect to login page
+U -> IAM : Enter credentials\n(user1 / password)
+IAM -> NA : Redirect with authorization code\n/api/auth/callback/oauth2-pkce?code=...
+
+NA -> IAM : POST /oauth2/token\n(code + code_verifier\n+ client credentials)
+IAM --> NA : access_token, refresh_token,\nid_token, expires_at
+
+NA -> IAM : GET /oauth2/userinfo
+IAM --> NA : { sub, name, authorities }
+
+NA -> JWT : jwtCallback(account, profile)
+note right of JWT
+  Stores in NextAuth JWT cookie:
+  - accessToken
+  - refreshToken
+  - idToken
+  - expires_at
+  - authorities
+end note
+JWT --> NA : encrypted session cookie
+
+NA --> HDR : Set-Cookie (session)
+HDR -> U : "Welcome, user1" + Sign Out button
+
+@enduml

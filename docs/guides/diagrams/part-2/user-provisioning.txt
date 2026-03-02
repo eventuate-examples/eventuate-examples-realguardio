@@ -1,0 +1,28 @@
+@startuml
+title User Provisioning via IAM Service
+
+participant "Client" as C
+
+box "Customer Service"
+  participant "CustomerController" as CTL
+  participant "CustomerService" as CS
+  participant "UserServiceImpl" as USR
+end box
+
+participant "IAM Service" as IAM
+
+C -> CTL : POST /customers\n(with employee email)
+CTL -> CS : createCustomer(...)
+CS -> USR : createCustomerEmployeeUser(email)
+
+USR -> IAM : POST /oauth2/token\ngrant_type=client_credentials\nAuthorization: Basic <realguardio-client:secret-rg>
+IAM --> USR : client_credentials access_token
+
+USR -> IAM : POST /api/users\nAuthorization: Bearer <token>\n{ username, password,\nroles: ["REALGUARDIO_CUSTOMER_EMPLOYEE"] }
+IAM --> USR : 200 OK (user created)
+
+USR --> CS : void
+CS --> CTL : Customer
+CTL --> C : Customer JSON
+
+@enduml

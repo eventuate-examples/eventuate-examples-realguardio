@@ -1,0 +1,30 @@
+@startuml
+title Token Refresh
+
+participant "Browser" as C
+
+box "BFF (Next.js)"
+  participant "securitysystems\nroute.ts" as ROUTE
+  participant "authOptions.ts\njwtCallback" as JWT
+end box
+
+participant "IAM Service" as IAM
+
+C -> ROUTE : GET /api/securitysystems\n(session cookie)
+ROUTE -> JWT : getToken()
+
+JWT -> JWT : Check: Date.now() >= expires_at?
+note right of JWT
+  Access token has expired
+  (TTL = 2 minutes)
+end note
+
+JWT -> IAM : POST /oauth2/token\ngrant_type=refresh_token\n&refresh_token=<token>\nAuthorization: Basic <client credentials>
+IAM --> JWT : new access_token,\nexpires_in, refresh_token
+
+JWT -> JWT : makeNewToken()\nUpdate accessToken, expires_at,\npreserve refreshToken if not rotated
+JWT --> ROUTE : updated token with\nnew accessToken
+
+ROUTE -> ROUTE : Forward request\nwith new accessToken
+
+@enduml

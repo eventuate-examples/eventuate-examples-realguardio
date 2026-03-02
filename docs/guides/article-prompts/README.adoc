@@ -1,0 +1,5 @@
+= Using these prompts
+
+Run Claude Code and enter
+
+> Generate a guide using @docs/guides/article-prompts/part-6-prompt.md  

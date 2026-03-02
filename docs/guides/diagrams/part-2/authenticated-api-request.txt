@@ -1,0 +1,37 @@
+@startuml
+title Authenticated API Request
+
+participant "Browser" as C
+
+box "BFF (Next.js)"
+  participant "securitysystems\nroute.ts" as ROUTE
+end box
+
+box "Security System Service"
+  participant "SecurityFilterChain" as SFC
+  participant "CustomJwtAuthentication\nConverter" as CONV
+  participant "SecuritySystem\nController" as CTL
+end box
+
+participant "IAM Service\n(JWKS Endpoint)" as IAM
+
+C -> ROUTE : GET /api/securitysystems\n(session cookie)
+ROUTE -> ROUTE : getToken()\nextract accessToken\nfrom NextAuth JWT cookie
+
+ROUTE -> SFC : GET /securitysystems\nAuthorization: Bearer <accessToken>
+
+SFC -> IAM : GET /oauth2/jwks\n(cached after first call)
+IAM --> SFC : { keys: [RS256 public key] }
+
+SFC -> SFC : Validate JWT signature\nVerify issuer, expiration
+
+SFC -> CONV : convert(jwt)
+CONV -> CONV : Extract "authorities" claim\nMap to ROLE_REALGUARDIO_ADMIN, etc.
+CONV --> SFC : JwtAuthenticationToken
+
+SFC -> CTL : @PreAuthorize("hasRole('REALGUARDIO_ADMIN')\nor hasRole('REALGUARDIO_CUSTOMER_EMPLOYEE')")
+CTL --> SFC : SecuritySystems JSON
+SFC --> ROUTE : 200 OK + JSON
+ROUTE --> C : SecuritySystems JSON
+
+@enduml
