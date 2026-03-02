@@ -22,7 +22,7 @@ class JwtProviderImplTest {
     @Test
     void shouldReturnJwtTokenWhenAuthenticationIsPresent() {
         // Given
-        String tokenValue = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        String tokenValue = "test-token-value";
         
         SecurityContext securityContext = mock(SecurityContext.class);
         Authentication authentication = mock(Authentication.class);

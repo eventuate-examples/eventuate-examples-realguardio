@@ -56,7 +56,7 @@ class CustomerServiceClientImplTest {
         // Given
         String userId = "123";
         Long locationId = 456L;
-        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        String jwtToken = "Bearer test-token-value";
         
         Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
@@ -82,7 +82,7 @@ class CustomerServiceClientImplTest {
         // Given
         String userId = "123";
         Long locationId = 999L;
-        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        String jwtToken = "Bearer test-token-value";
         
         Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
@@ -107,7 +107,7 @@ class CustomerServiceClientImplTest {
         // Given
         String userId = "123";
         Long locationId = 456L;
-        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        String jwtToken = "Bearer test-token-value";
         
         Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
@@ -132,7 +132,7 @@ class CustomerServiceClientImplTest {
         // Given
         String userId = "123";
         Long locationId = 456L;
-        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        String jwtToken = "Bearer test-token-value";
         
         Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
@@ -157,7 +157,7 @@ class CustomerServiceClientImplTest {
         // Given
         String userId = "123";
         Long locationId = 456L;
-        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        String jwtToken = "Bearer test-token-value";
         
         Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
@@ -200,7 +200,7 @@ class CustomerServiceClientImplTest {
         // Given
         String userId = "123";
         Long locationId = 456L;
-        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        String jwtToken = "Bearer test-token-value";
         
         Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
@@ -223,7 +223,7 @@ class CustomerServiceClientImplTest {
         // Given
         String userId = "123";
         Long locationId = 456L;
-        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        String jwtToken = "Bearer test-token-value";
         
         Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
@@ -248,7 +248,7 @@ class CustomerServiceClientImplTest {
         // Given
         String userId = "123";
         Long locationId = 456L;
-        String jwtToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...";
+        String jwtToken = "Bearer test-token-value";
         
         Mockito.when(jwtProvider.getCurrentJwtToken()).thenReturn(jwtToken);
         
