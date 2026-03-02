@@ -6,15 +6,16 @@ This project is part of http://eventuate.io[Eventuate], which is a microservices
 
 = RealGuardIO - a fictional commercial real estate security system platform.
 
-This project is a fictional commercial real estate security system platform. 
+This project is a fictional commercial real estate security system platform.
+
 It's the sample application for a series of articles about authentication and authorization in microservices:
 
 1. https://microservices.io/post/architecture/2025/04/25/microservices-authn-authz-part-1-introduction.html[Overview of authentication and authorization in a microservice architecture]
 2. https://microservices.io/post/architecture/2025/05/28/microservices-authn-authz-part-2-authentication.html[Implementing authentication]
 3. https://microservices.io/post/architecture/2025/07/22/microservices-authn-authz-part-3-jwt-authorization.html[Implementing JWT-based authorization]
 4. https://microservices.io/post/architecture/2025/09/16/microservices-authn-authz-part-4-authorization-using-fetch-and-replicate.html[Implementing authorization using fetch and replicate]
-5. https://microservices.io/post/architecture/2025/12/09/microservices-authn-authz-part-5-using-an-authorization-service.html[Implementing complex authorization using Oso Cloud - part 1]
-6. Implementing complex authorization using Oso Cloud - part 2
+5. https://microservices.io/post/architecture/2025/12/09/microservices-authn-authz-part-5-using-an-authorization-service.html[Implementing complex authorization using Oso Cloud]
+6. https://microservices.io/post/architecture/2026/02/13/microservices-authn-authz-part-6-oso-local-authorization.html[Implementing complex authorization using Oso Cloud local authorization]
 
 == Application architecture
 
@@ -41,9 +42,13 @@ In addition, there are several supporting services:
 
 The application uses the https://www.osohq.com/docs[Oso Cloud authorization service] as the centralized authorization service.
 
-== Code tours
+== Code guides
 
-Coming soon.
+There are the following code guides for each of the articles with more on the way:
+
+* link:./docs/guides/part-2-authentication-code-guide.md[Part 2 - Implementing authentication]
+* link:./docs/guides/part-5-oso-cloud-authorization-code-guide.md[Part 5 - Implementing complex authorization using Oso Cloud]
+* link:docs/guides/part-6-oso-cloud-local-authorization-code-guide.md[Part 6 - Implementing complex authorization using Oso Cloud local authorization]
 
 == Running the application
 
