@@ -24,6 +24,10 @@ Always invoke the relevant skill before performing these actions:
 
 - Prefer intention-revealing method names over comments. If you find yourself writing a comment to explain what code does, extract it into a method whose name conveys the intent.
 
+## Code Health
+
+Before committing code changes, read and follow [CODE_SCENE.md](CODE_SCENE.md) for Code Health safeguard and refactoring instructions.
+
 ## Tool Selection
 
 Before running any Bash command, ask: "Is there a specialized tool for this?"
