@@ -4,6 +4,7 @@
 # has_relation(Location{"loc1"}, "customer", Customer{"acme"})
 # has_relation(SecuritySystem{"ss1"}, "location", Location{"loc1"});
 
+# shellcheck source=./set-oso-env.sh
 source ./set-oso-env.sh
 
 oso-cloud tell has_role CustomerEmployee:alice SECURITY_SYSTEM_DISARMER Customer:acme

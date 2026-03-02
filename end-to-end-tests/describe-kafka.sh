@@ -16,7 +16,7 @@ fi
 echo "Using Kafka container: $KAFKA_CONTAINER"
 
 # Get the network that Kafka is connected to
-KAFKA_NETWORK=$(docker inspect $KAFKA_CONTAINER --format '{{range $net, $conf := .NetworkSettings.Networks}}{{$net}}{{end}}' | head -1)
+KAFKA_NETWORK=$(docker inspect "$KAFKA_CONTAINER" --format '{{range $net, $conf := .NetworkSettings.Networks}}{{$net}}{{end}}' | head -1)
 
 if [ -z "$KAFKA_NETWORK" ]; then
     echo "Error: Could not determine Kafka container network"
@@ -26,9 +26,9 @@ fi
 echo "Kafka is on network: $KAFKA_NETWORK"
 
 # Get Kafka hostname/alias from the network
-KAFKA_HOSTNAME=$(docker inspect $KAFKA_CONTAINER --format "{{range .NetworkSettings.Networks}}{{index .Aliases 1}}{{end}}")
+KAFKA_HOSTNAME=$(docker inspect "$KAFKA_CONTAINER" --format "{{range .NetworkSettings.Networks}}{{index .Aliases 1}}{{end}}")
 if [ -z "$KAFKA_HOSTNAME" ]; then
-    KAFKA_HOSTNAME=$(docker inspect $KAFKA_CONTAINER --format "{{range .NetworkSettings.Networks}}{{index .Aliases 0}}{{end}}")
+    KAFKA_HOSTNAME=$(docker inspect "$KAFKA_CONTAINER" --format "{{range .NetworkSettings.Networks}}{{index .Aliases 0}}{{end}}")
 fi
 
 if [ -z "$KAFKA_HOSTNAME" ]; then
@@ -45,23 +45,23 @@ KAFKA_TOOLS_IMAGE="confluentinc/cp-kafka:latest"
 
 echo "KAFKA TOPICS:"
 echo "-------------"
-docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-    kafka-topics --bootstrap-server $KAFKA_HOSTNAME:9093 --list
+docker run --rm --network "$KAFKA_NETWORK" "$KAFKA_TOOLS_IMAGE" \
+    kafka-topics --bootstrap-server "$KAFKA_HOSTNAME":9093 --list
 
 echo
 echo "TOPIC DETAILS:"
 echo "--------------"
-TOPICS=$(docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-    kafka-topics --bootstrap-server $KAFKA_HOSTNAME:9093 --list 2>/dev/null)
+TOPICS=$(docker run --rm --network "$KAFKA_NETWORK" "$KAFKA_TOOLS_IMAGE" \
+    kafka-topics --bootstrap-server "$KAFKA_HOSTNAME":9093 --list 2>/dev/null)
 
-if [ ! -z "$TOPICS" ]; then
+if [ -n "$TOPICS" ]; then
     for topic in $TOPICS; do
         # Remove any carriage returns from topic names
-        topic=$(echo $topic | tr -d '\r')
-        if [ ! -z "$topic" ]; then
+        topic=$(echo "$topic" | tr -d '\r')
+        if [ -n "$topic" ]; then
             echo "Topic: $topic"
-            docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-                kafka-topics --bootstrap-server $KAFKA_HOSTNAME:9093 --describe --topic $topic
+            docker run --rm --network "$KAFKA_NETWORK" "$KAFKA_TOOLS_IMAGE" \
+                kafka-topics --bootstrap-server "$KAFKA_HOSTNAME":9093 --describe --topic "$topic"
             echo
         fi
     done
@@ -72,23 +72,23 @@ fi
 echo
 echo "CONSUMER GROUPS:"
 echo "----------------"
-docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-    kafka-consumer-groups --bootstrap-server $KAFKA_HOSTNAME:9093 --list
+docker run --rm --network "$KAFKA_NETWORK" "$KAFKA_TOOLS_IMAGE" \
+    kafka-consumer-groups --bootstrap-server "$KAFKA_HOSTNAME":9093 --list
 
 echo
 echo "CONSUMER GROUP DETAILS:"
 echo "-----------------------"
-GROUPS=$(docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-    kafka-consumer-groups --bootstrap-server $KAFKA_HOSTNAME:9093 --list 2>/dev/null | grep -v '^[[:space:]]*$')
+CONSUMER_GROUPS=$(docker run --rm --network "$KAFKA_NETWORK" "$KAFKA_TOOLS_IMAGE" \
+    kafka-consumer-groups --bootstrap-server "$KAFKA_HOSTNAME":9093 --list 2>/dev/null | grep -v '^[[:space:]]*$')
 
-if [ ! -z "$GROUPS" ]; then
-    echo "$GROUPS" | while IFS= read -r group; do
+if [ -n "$CONSUMER_GROUPS" ]; then
+    echo "$CONSUMER_GROUPS" | while IFS= read -r group; do
         # Remove any carriage returns and whitespace from group names
         group=$(echo "$group" | tr -d '\r' | xargs)
-        if [ ! -z "$group" ] && [ "$group" != "" ]; then
+        if [ -n "$group" ] && [ "$group" != "" ]; then
             echo "Consumer Group: $group"
-            docker run --rm --network $KAFKA_NETWORK $KAFKA_TOOLS_IMAGE \
-                kafka-consumer-groups --bootstrap-server $KAFKA_HOSTNAME:9093 --describe --group "$group"
+            docker run --rm --network "$KAFKA_NETWORK" "$KAFKA_TOOLS_IMAGE" \
+                kafka-consumer-groups --bootstrap-server "$KAFKA_HOSTNAME":9093 --describe --group "$group"
             echo
         fi
     done

@@ -10,7 +10,7 @@ has_uncommitted_changes() {
     cd "$dir"
     # Check for uncommitted changes (staged, unstaged, or untracked files)
     # Exclude docs/architecture directories since they don't need gradle checks
-    if git status --porcelain | grep "$dir" | grep -v "docs/architecture" | grep -q .; then
+    if git status --porcelain | grep -- "$dir" | grep -v "docs/architecture" | grep -q .; then
         return 0  # Has changes
     else
         return 1  # No changes

@@ -73,11 +73,11 @@ fi
 NEW_SERVICE_DIR="$SCRIPT_DIR/realguardio-$SERVICE_NAME"
 # Extract entity name from service name (e.g., customer-service -> Customer)
 # Use awk for better cross-platform compatibility
-ENTITY_BASE=$(echo "$SERVICE_NAME" | sed 's/-service$//')
+ENTITY_BASE="${SERVICE_NAME%-service}"
 ENTITY_NAME=$(echo "$ENTITY_BASE" | awk -F'-' '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)} 1' OFS='')
-ENTITY_NAME_LOWERCASE=$(echo "$ENTITY_BASE" | sed 's/-//g')
+ENTITY_NAME_LOWERCASE="${ENTITY_BASE//-/}"
 SERVICE_NAME_CAMELCASE=$(echo "$SERVICE_NAME" | awk -F'-' '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)} 1' OFS='')
-SERVICE_NAME_PACKAGE=$(echo "$SERVICE_NAME" | sed 's/-//g')
+SERVICE_NAME_PACKAGE="${SERVICE_NAME//-/}"
 SERVICE_PORT=""  # Will be set by update_docker_compose
 
 log "Creating new service: $SERVICE_NAME"
@@ -101,43 +101,44 @@ fi
 copy_and_transform() {
     local src="$1"
     local dest="$2"
-    local relative_path="${src#$TEMPLATE_DIR/}"
-    
-    dest=$(echo "$dest" | sed "s/security-system-service/$SERVICE_NAME/g")
-    dest=$(echo "$dest" | sed "s/securitysystemservice/$SERVICE_NAME_PACKAGE/g")
+    dest="${dest//security-system-service/$SERVICE_NAME}"
+    dest="${dest//securitysystemservice/$SERVICE_NAME_PACKAGE}"
     
     if [ -d "$src" ]; then
         if [ "$DRY_RUN" = true ]; then
-            dry_run_log "Create directory: ${dest#$SCRIPT_DIR/}"
+            dry_run_log "Create directory: ${dest#"$SCRIPT_DIR"/}"
         else
             mkdir -p "$dest"
         fi
         
         for item in "$src"/*; do
             if [ -e "$item" ]; then
-                local basename=$(basename "$item")
+                local basename
+                basename=$(basename "$item")
                 if [[ ! "$basename" =~ ^(build|bin|\.gradle|\.idea|out|target|\.git)$ ]]; then
                     copy_and_transform "$item" "$dest/$basename"
                 fi
             fi
         done
-        
+
         for item in "$src"/.[^.]*; do
             if [ -e "$item" ]; then
-                local basename=$(basename "$item")
+                local basename
+                basename=$(basename "$item")
                 if [[ ! "$basename" =~ ^(\.gradle|\.idea|\.git)$ ]]; then
                     copy_and_transform "$item" "$dest/$basename"
                 fi
             fi
         done
     elif [ -f "$src" ]; then
-        local filename=$(basename "$src")
+        local filename
+        filename=$(basename "$src")
         
         case "$filename" in
             gradle-wrapper.jar)
                 # Special case: copy gradle-wrapper.jar without transformation
                 if [ "$DRY_RUN" = true ]; then
-                    dry_run_log "Create file: ${dest#$SCRIPT_DIR/} (binary file)"
+                    dry_run_log "Create file: ${dest#"$SCRIPT_DIR"/} (binary file)"
                 else
                     mkdir -p "$(dirname "$dest")"
                     cp "$src" "$dest"
@@ -154,16 +155,16 @@ copy_and_transform() {
         
         # Rename files that contain SecuritySystem in their name
         local new_filename="$filename"
-        new_filename=$(echo "$new_filename" | sed "s/SecuritySystemService/${SERVICE_NAME_CAMELCASE}/g")
-        new_filename=$(echo "$new_filename" | sed "s/SecuritySystem/${ENTITY_NAME}/g")
+        new_filename="${new_filename//SecuritySystemService/$SERVICE_NAME_CAMELCASE}"
+        new_filename="${new_filename//SecuritySystem/$ENTITY_NAME}"
         dest="$(dirname "$dest")/$new_filename"
         
         if [ "$DRY_RUN" = true ]; then
-            dry_run_log "Create file: ${dest#$SCRIPT_DIR/}"
+            dry_run_log "Create file: ${dest#"$SCRIPT_DIR"/}"
             
             if [[ "$filename" =~ \.(java|gradle|properties|xml|yaml|yml|json)$ ]] || [ "$filename" = "settings.gradle" ] || [[ "$filename" =~ ^Dockerfile ]]; then
                 if grep -q "security-system-service\|securitysystemservice\|SecuritySystem\|security_system" "$src" 2>/dev/null; then
-                    dry_run_log "  - Transform package/class/entity names in: ${dest#$SCRIPT_DIR/}"
+                    dry_run_log "  - Transform package/class/entity names in: ${dest#"$SCRIPT_DIR"/}"
                 fi
             fi
         else
@@ -180,7 +181,7 @@ copy_and_transform() {
                     -e "s/SecuritySystem/${ENTITY_NAME}/g" \
                     -e "s/securitySystem/${ENTITY_NAME_LOWERCASE}/g" \
                     -e "s/security_system/${ENTITY_NAME_LOWERCASE}/g" \
-                    -e "s/SECURITY_SYSTEM/$(echo $ENTITY_NAME | tr '[:lower:]' '[:upper:]')/g" \
+                    -e "s/SECURITY_SYSTEM/$(echo "$ENTITY_NAME" | tr '[:lower:]' '[:upper:]')/g" \
                     "$src" > "$dest"
             else
                 cp "$src" "$dest"
@@ -231,7 +232,8 @@ update_docker_compose() {
     done
     
     # Create a temporary file for the new service configuration
-    local temp_service_file=$(mktemp)
+    local temp_service_file
+    temp_service_file=$(mktemp)
     
     # Extract and transform the security-system-service configuration
     # Note: Keep the database URL pointing to 'securitysystem' database (shared database)
@@ -273,7 +275,7 @@ else
         
         # Build the bootJar for the main module
         log "Building bootJar for $SERVICE_NAME-main..."
-        if ./gradlew :$SERVICE_NAME-main:bootJar; then
+        if ./gradlew :"$SERVICE_NAME"-main:bootJar; then
             log "BootJar built successfully!"
         else
             error "Failed to build bootJar. Check the build output for errors."

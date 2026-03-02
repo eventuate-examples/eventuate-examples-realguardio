@@ -26,6 +26,7 @@ query_success() {
     echo 
 }
 
+# shellcheck source=./set-oso-env.sh
 source ./set-oso-env.sh
 
 query_success has_permission CustomerEmployee:alice String:disarm SecuritySystem:ss1

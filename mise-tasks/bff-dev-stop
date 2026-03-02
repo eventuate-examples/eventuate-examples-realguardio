@@ -2,7 +2,7 @@
 
 DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-$DIR/_stop.sh bff-dev
+"$DIR/_stop.sh" bff-dev
 
 if [ -n "$(lsof -ti:3000)" ]; then
     echo still running on port 3000 

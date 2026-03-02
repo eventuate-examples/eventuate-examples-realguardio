@@ -2,6 +2,7 @@
 
 ./start-oso-dev-server.sh
 
+# shellcheck source=./set-oso-env.sh
 source ./set-oso-env.sh
 
 echo "Waiting for OSO server to be ready at $OSO_URL..."
