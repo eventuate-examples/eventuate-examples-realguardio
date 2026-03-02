@@ -1,0 +1,42 @@
+@startuml
+
+participant "Client" as C
+
+box "Security System Service"
+  participant "SecuritySystemController" as SSC
+  participant "SecuritySystemServiceImpl" as SSVC
+  participant "LocalSecuritySystem\nActionAuthorizer" as AUTH
+  participant "CustomerServiceClientImpl\n(fetch)" as CSC
+  database "Security System DB" as SSDB
+end box
+
+box "Customer Service"
+  participant "LocationRoleController" as LRC
+  participant "LocationRoleServiceImpl" as LRS
+  database "Customer DB" as CDB
+end box
+
+C -> SSC : PUT /securitysystems/{id}\nAuthorization: Bearer <JWT>
+SSC -> SSVC : disarm(id)
+SSVC -> SSDB : findById(id)
+SSDB --> SSVC : SecuritySystem\n(locationId)
+
+SSVC -> AUTH : isAllowed("disarm", id)
+AUTH -> SSDB : findById(id)
+SSDB --> AUTH : SecuritySystem\n(locationId)
+AUTH -> CSC : getUserRolesAtLocation(\nuserId, locationId)
+
+CSC -> LRC : GET /locations/{locationId}/roles\nAuthorization: Bearer <JWT>
+LRC -> LRS : getUserRolesAtLocation(locationId)
+LRS -> CDB : findDirectRoles +\nfindTeamRoles
+CDB --> LRS : roles
+LRS --> LRC : roles
+LRC --> CSC : RolesResponse
+CSC --> AUTH : Set<String> roles
+AUTH -> AUTH : verify roles\ncontain DISARMER
+
+SSVC -> SSVC : securitySystem.disarm()
+SSVC -> SSDB : save(securitySystem)
+SSVC --> SSC : SecuritySystem
+
+@enduml

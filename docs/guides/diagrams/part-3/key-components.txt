@@ -1,0 +1,39 @@
+@startuml
+
+skinparam componentStyle rectangle
+
+cloud "IAM Service" as iam
+
+rectangle "BFF (Next.js)" as bff {
+  component "NextAuth\n(authOptions.ts)" as nextauth
+  component "API Routes\n(route.ts)" as routes
+}
+
+rectangle "Customer Service" as cs {
+  component "CustomerController" as cc
+  component "CustomerService" as csvc
+  component "CustomerActionAuthorizer" as cauth
+  database "Customer DB" as cdb
+}
+
+rectangle "Security System Service" as sss {
+  component "SecuritySystemController" as ssc
+  component "SecuritySystemServiceImpl" as ssvc
+  component "SecuritySystemActionAuthorizer" as ssauth
+  component "CustomerServiceClient" as csclient
+  database "Security System DB" as ssdb
+}
+
+nextauth --> iam : "OAuth 2.0\n(PKCE, tokens)"
+routes --> ssc : "REST\n(Bearer JWT)"
+routes --> cc : "REST\n(Bearer JWT)"
+ssc --> ssvc
+ssvc --> ssauth
+ssauth --> csclient
+csclient --> cc : "REST\n(Bearer JWT)"
+cc --> csvc
+csvc --> cauth
+cauth --> cdb
+ssvc --> ssdb
+
+@enduml

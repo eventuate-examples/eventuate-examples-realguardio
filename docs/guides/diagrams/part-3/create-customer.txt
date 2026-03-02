@@ -1,0 +1,27 @@
+@startuml
+
+participant "Client" as C
+
+box "BFF (Next.js)"
+  participant "route.ts" as BFF
+end box
+
+box "Customer Service"
+  participant "CustomerController" as CC
+  participant "CustomerService" as CSVC
+  database "Customer DB" as CDB
+end box
+
+C -> BFF : POST /api/customers
+BFF -> CC : POST /customers\nAuthorization: Bearer <JWT>
+
+CC -> CC : @PreAuthorize\n("hasRole('REALGUARDIO_ADMIN')")
+CC -> CSVC : createCustomer(name,\ninitialAdministrator)
+CSVC -> CDB : save(Customer)
+CSVC -> CDB : save(CustomerEmployee)
+CSVC -> CDB : assignRole(\nCOMPANY_ROLE_ADMIN)
+CSVC --> CC : CustomerAndCustomerEmployee
+CC --> BFF : 200 OK
+BFF --> C : CustomerAndCustomerEmployee
+
+@enduml

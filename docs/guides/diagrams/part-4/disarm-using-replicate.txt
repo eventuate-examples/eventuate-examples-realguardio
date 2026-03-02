@@ -1,0 +1,35 @@
+@startuml
+
+participant "Client" as C
+
+box "Security System Service"
+  participant "SecuritySystemController" as SSC
+  participant "SecuritySystemServiceImpl" as SSVC
+  participant "LocalSecuritySystem\nActionAuthorizer" as AUTH
+  participant "CustomerServiceClient\nReplicaImpl\n(replicate)" as CSC
+  participant "LocationRoles\nReplicaService" as LRRS
+  database "Security System DB" as SSDB
+  database "Replica DB\n(location roles)" as RDB
+end box
+
+C -> SSC : PUT /securitysystems/{id}\nAuthorization: Bearer <JWT>
+SSC -> SSVC : disarm(id)
+SSVC -> SSDB : findById(id)
+SSDB --> SSVC : SecuritySystem\n(locationId)
+
+SSVC -> AUTH : isAllowed("disarm", id)
+AUTH -> SSDB : findById(id)
+SSDB --> AUTH : SecuritySystem\n(locationId)
+AUTH -> CSC : getUserRolesAtLocation(\nuserId, locationId)
+CSC -> LRRS : findLocationRoles(\nuserId, locationId)
+LRRS -> RDB : SELECT ... WHERE\nuser_name = ? AND\nlocation_id = ?
+RDB --> LRRS : LocationRole[]
+LRRS --> CSC : LocationRole[]
+CSC --> AUTH : Set<String> roles
+AUTH -> AUTH : verify roles\ncontain DISARMER
+
+SSVC -> SSVC : securitySystem.disarm()
+SSVC -> SSDB : save(securitySystem)
+SSVC --> SSC : SecuritySystem
+
+@enduml

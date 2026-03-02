@@ -1,0 +1,41 @@
+@startuml
+
+participant "Admin" as A
+
+box "Customer Service"
+  participant "CustomerService" as CSVC
+  participant "CustomerEventPublisher" as CEP
+  database "Customer DB" as CDB
+end box
+
+participant "Message Broker\n(Kafka)" as MB
+
+box "Security System Service"
+  participant "CustomerEmployeeLocation\nEventConsumer" as EC
+  participant "LocationRoles\nReplicaService" as LRRS
+  database "Replica DB\n(location roles)" as RDB
+end box
+
+== Assign Location Role ==
+
+A -> CSVC : assignLocationRole(\ncustomerId, employeeId,\nlocationId, roleName)
+CSVC -> CDB : save(\nCustomerEmployeeLocationRole)
+CSVC -> CEP : publish(\nCustomerEmployeeAssignedLocationRole)
+CEP -> MB : publish event
+
+MB -> EC : handleCustomerEmployee\nAssignedLocationRole(event)
+EC -> LRRS : saveLocationRole(\nuserName, locationId,\nroleName)
+LRRS -> RDB : INSERT INTO\ncustomer_employee_location_role
+
+== Create Location ==
+
+A -> CSVC : createLocation(\ncustomerId, name)
+CSVC -> CDB : save(Location)
+CSVC -> CEP : publish(\nLocationCreatedForCustomer)
+CEP -> MB : publish event
+
+MB -> EC : handleLocationCreated\nForCustomer(event)
+EC -> LRRS : saveLocation(\nlocationId, customerId)
+LRRS -> RDB : INSERT INTO locations
+
+@enduml

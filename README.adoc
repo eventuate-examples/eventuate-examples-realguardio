@@ -47,8 +47,10 @@ The application uses the https://www.osohq.com/docs[Oso Cloud authorization serv
 There are the following code guides for each of the articles with more on the way:
 
 * link:./docs/guides/part-2-authentication-code-guide.md[Part 2 - Implementing authentication]
+* link:./docs/guides/part-3-jwt-authorization-code-guide.md[Part 3 - Implementing JWT-based authorization]
+* link:./docs/guides/part-4-fetch-and-replicate-authorization-code-guide.md[Part 4 - Implementing authorization using fetch and replicate]
 * link:./docs/guides/part-5-oso-cloud-authorization-code-guide.md[Part 5 - Implementing complex authorization using Oso Cloud]
-* link:docs/guides/part-6-oso-cloud-local-authorization-code-guide.md[Part 6 - Implementing complex authorization using Oso Cloud local authorization]
+* link:./docs/guides/part-6-oso-cloud-local-authorization-code-guide.md[Part 6 - Implementing complex authorization using Oso Cloud local authorization]
 
 == Running the application
 

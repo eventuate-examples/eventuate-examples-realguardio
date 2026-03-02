@@ -1,0 +1,40 @@
+@startuml
+
+skinparam componentStyle rectangle
+
+rectangle "Customer Service" as cs {
+  component "CustomerService" as csvc
+  component "CustomerEventPublisher" as cep
+  database "Customer DB" as cdb
+}
+
+rectangle "Security System Service" as sss {
+  component "SecuritySystemServiceImpl" as ssvc
+  component "SecuritySystemActionAuthorizer" as ssauth
+  component "CustomerServiceClient\n<<port>>" as csc
+  component "CustomerServiceClientImpl\n(fetch)" as cschttp
+  component "CustomerServiceClientReplicaImpl\n(replicate)" as cscrep
+  component "CustomerEmployeeLocation\nEventConsumer" as evtc
+  component "LocationRolesReplicaService" as lrrs
+  database "Security System DB" as ssdb
+  database "Replica DB\n(location roles)" as rdb
+}
+
+csvc --> cdb
+csvc --> cep
+
+cep -[#blue]-> evtc : "async\npub/sub\n(Eventuate TRAM)"
+
+ssvc --> ssauth
+ssauth --> csc
+csc <|.. cschttp : <<Profile !UseRolesReplica>>
+csc <|.. cscrep : <<Profile UseRolesReplica>>
+cschttp --> cs : "REST\n(Bearer JWT)"
+cscrep --> lrrs
+lrrs --> rdb
+
+evtc --> lrrs
+
+ssvc --> ssdb
+
+@enduml
