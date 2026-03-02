@@ -13,7 +13,13 @@ This guide maps these concepts to the services, modules within those services, t
 
 ## Key Components
 
-The key components of the authentication feature are:
+The following diagram shows the key components of the authentication feature.
+
+![Key Components](diagrams/part-2/key-components.png)
+
+<!-- Source: diagrams/part-2/key-components.txt (PlantUML) -->
+
+The responsibilities of each component are as follows:
 
 * **IAM Service** - An infrastructure service built on Spring Authorization Server that centralizes authentication
   * Issues OAuth 2.0 access tokens, ID tokens, and refresh tokens

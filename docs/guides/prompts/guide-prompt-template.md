@@ -7,7 +7,9 @@ Do the following:
 1. Read the article
 2. Analyze the architecture to determine how the concepts in the article are implemented by the architecture elements
 3. Create/Rewrite @docs/guides/article-part-N-code-guide.md - the guide should follow @docs/guides/prompts/guide-template.md
-4. For each multi-service scenario in the Service Collaboration section, create a PlantUML sequence diagram in `docs/guides/diagrams/part-N/<scenario>.txt`
+4. Create PlantUML diagrams in `docs/guides/diagrams/part-N/`:
+   * A component diagram `key-components.txt` for the Key Components section, showing the components and their interactions
+   * A sequence diagram `<scenario>.txt` for each multi-service scenario in the Service Collaboration section
 5. Verify that:
    * Every architectural element mentioned in the guide (services, modules, classes, interfaces, adapters, configuration files) exists in the codebase
    * Every link resolves to an existing file

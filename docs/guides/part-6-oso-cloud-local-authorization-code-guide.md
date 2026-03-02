@@ -14,7 +14,13 @@ This guide maps the article's concepts to the architectural elements that implem
 
 ## Key Components
 
-The key components of the Oso Cloud local authorization feature are:
+The following diagram shows the key components of the Oso Cloud local authorization feature.
+
+![Key Components](diagrams/part-6/key-components.png)
+
+<!-- Source: diagrams/part-6/key-components.txt (PlantUML) -->
+
+The responsibilities of each component are as follows:
 
 * **Oso Cloud** - An external cloud-based authorization service
   * Generates SQL fragments from its Polar policy and stored facts, combined with locally defined fact mappings

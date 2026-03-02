@@ -11,7 +11,13 @@ This guide maps the concepts from the article to the architectural elements that
 
 ## Key Components
 
-The key components of the Oso Cloud integration are:
+The following diagram shows the key components of the Oso Cloud integration.
+
+![Key Components](diagrams/part-5/key-components.png)
+
+<!-- Source: diagrams/part-5/key-components.txt (PlantUML) -->
+
+The responsibilities of each component are as follows:
 
 * **Oso Cloud** - An external cloud-based authorization service
   * Stores the Polar policy that defines actors, resources, roles, and permissions

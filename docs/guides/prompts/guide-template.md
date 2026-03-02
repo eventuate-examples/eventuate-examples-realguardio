@@ -10,7 +10,45 @@ Brief description of what the article demonstrates and how this guide maps artic
 
 ## Key Components
 
-The key components of the <feature> are:
+The following diagram shows the key components of the <feature>.
+
+![Key Components](diagrams/part-N/key-components.png)
+
+<!-- Source: diagrams/part-N/key-components.txt (PlantUML) -->
+
+A PlantUML component diagram in `diagrams/part-N/key-components.txt` showing the key components and their interactions. Diagram guidelines:
+
+* Use `cloud` for external services
+* Use `component` within a `package` or `rectangle` for each microservice
+* Use `database` for each service's data store
+* Label arrows with the interaction style (e.g., "REST", "async pub/sub", "events")
+* Place shared library classes inside the service `rectangle` where they run at runtime, not in the service where their source is defined
+* Group related components visually
+
+```plantuml
+@startuml
+
+cloud "<External Service>" as ext
+
+rectangle "<Service A>" as svcA {
+  component "Domain" as svcA_domain
+  database "DB" as svcA_db
+}
+
+rectangle "<Service B>" as svcB {
+  component "Domain" as svcB_domain
+  database "DB" as svcB_db
+}
+
+svcA_domain --> ext : REST
+svcA_domain --> svcA_db
+svcA_domain --> svcB_domain : async pub/sub
+svcB_domain --> svcB_db
+
+@enduml
+```
+
+The responsibilities of each component are as follows:
 
 * **<External Service>** - An external cloud-based service that ...
   * Sub-bullet describing a responsibility

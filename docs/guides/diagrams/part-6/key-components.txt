@@ -1,0 +1,21 @@
+@startuml
+
+cloud "Oso Cloud" as oso
+
+rectangle "Security System Service" as sss {
+  component "SecuritySystemServiceImpl\n(Domain)" as domain
+  component "RealGuardOsoAuthorizer\n/ OsoService\n(oso-service library)" as osoService
+  component "SecuritySystemRepositoryWithOsoImpl\n(Persistence)" as repo
+  component "OsoLocalSecuritySystemActionAuthorizer\n(Oso Integration)" as localAuth
+  database "Security System DB" as db
+}
+
+domain --> repo : findAllAccessible()\nvia SecuritySystemFinder port
+domain --> localAuth : isAllowed()\nvia SecuritySystemActionAuthorizer port
+repo --> osoService : listLocal()
+localAuth --> osoService : authorizeLocal()
+osoService --> oso : REST API
+repo --> db : SQL query\nwith Oso filter
+localAuth --> db : SQL query\nfrom authorizeLocal()
+
+@enduml

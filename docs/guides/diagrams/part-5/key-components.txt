@@ -1,0 +1,41 @@
+@startuml
+
+cloud "Oso Cloud" as oso
+
+rectangle "Oso Integration Service" as ois {
+  component "Event Subscribers\n(Inbound Adapter)" as eventSubs
+  component "RealGuardOsoFactManager\n(Domain)" as factMgr
+  component "OsoService\n(Outbound Adapter)" as osoSvcOis
+}
+
+rectangle "Customer Service" as cs {
+  component "CustomerService\n(Domain)" as csDomain
+  component "OsoCustomerActionAuthorizer\n(Outbound Adapter)" as csOso
+  component "OsoService\n(shared library)" as osoSvcCs
+  database "Customer DB" as csDb
+}
+
+rectangle "Security System Service" as sss {
+  component "SecuritySystemServiceImpl\n(Domain)" as sssDomain
+  component "OsoSecuritySystemActionAuthorizer\n(Outbound Adapter)" as sssOso
+  component "OsoService\n(shared library)" as osoSvcSss
+  database "Security System DB" as sssDb
+}
+
+csDomain --> csDb
+csDomain --> csOso : authorize via port
+csOso --> osoSvcCs
+osoSvcCs --> oso : REST API
+csDomain ..> eventSubs : async pub/sub\n(domain events)
+
+sssDomain --> sssDb
+sssDomain --> sssOso : authorize via port
+sssOso --> osoSvcSss
+osoSvcSss --> oso : REST API
+sssDomain ..> eventSubs : async pub/sub\n(domain events)
+
+eventSubs --> factMgr
+factMgr --> osoSvcOis
+osoSvcOis --> oso : REST API
+
+@enduml

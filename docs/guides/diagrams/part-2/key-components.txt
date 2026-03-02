@@ -1,0 +1,34 @@
+@startuml
+
+cloud "IAM Service\n(Spring Authorization Server)" as iam
+
+rectangle "BFF (Next.js)" as bff {
+  component "NextAuth\n(OAuth 2.0 Client)" as nextauth
+  component "API Routes" as routes
+}
+
+rectangle "Security System Service" as sss {
+  component "SecurityFilterChain\n(Resource Server)" as sssFilter
+  component "Domain" as sssDomain
+  database "Security System DB" as sssDb
+}
+
+rectangle "Customer Service" as cs {
+  component "SecurityFilterChain\n(Resource Server)" as csFilter
+  component "Domain" as csDomain
+  database "Customer DB" as csDb
+}
+
+nextauth --> iam : OAuth 2.0\nAuthorization Code + PKCE
+nextauth --> iam : Token Refresh
+routes --> sssFilter : REST + Bearer JWT
+routes --> csFilter : REST + Bearer JWT
+sssFilter --> iam : JWKS (cached)
+csFilter --> iam : JWKS (cached)
+sssFilter --> sssDomain
+sssDomain --> sssDb
+csFilter --> csDomain
+csDomain --> csDb
+csDomain --> iam : client_credentials\n(user provisioning)
+
+@enduml
