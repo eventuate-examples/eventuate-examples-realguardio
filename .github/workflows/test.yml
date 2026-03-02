@@ -15,6 +15,20 @@ env:
   GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES: 15
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install gitleaks
+      run: |
+        curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz | tar xz
+        sudo mv gitleaks /usr/local/bin/
+
+    - name: Run gitleaks
+      run: gitleaks detect --source . --verbose
+
   test:
     runs-on: ubuntu-8-core
 
