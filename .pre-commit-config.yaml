@@ -1,6 +1,19 @@
 repos:
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
   - repo: local
     hooks:
+      - id: run-codescene
+        name: Run CodeScene
+        entry: codescene-precommit.sh
+        language: script
+        pass_filenames: false
       - id: precommit-check
         name: Run precommit.sh checks
         entry: ./precommit.sh
