@@ -1,12 +1,12 @@
 package io.realguardio.orchestration.restapi;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.realguardio.orchestration.restapi.dto.CreateSecuritySystemRequest;
 import io.realguardio.orchestration.sagas.LocationAlreadyHasSecuritySystemException;
 import io.realguardio.orchestration.sagas.SecuritySystemSagaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;

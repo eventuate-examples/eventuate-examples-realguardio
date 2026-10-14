@@ -20,11 +20,11 @@ dependencies {
     implementation project(":customer-service-oso-integration")
 
 
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-aspectj'
     
     runtimeOnly 'org.postgresql:postgresql'
     
@@ -42,18 +42,18 @@ dependencies {
     testImplementation project(':test-utils')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
-    testImplementation 'org.testcontainers:postgresql'
-    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     
     componentTestImplementation project(':customer-service-api-messaging')
     componentTestImplementation 'io.realguardio.osointegration:oso-service:0.1.0-SNAPSHOT'
     componentTestImplementation 'io.realguardio.osointegration:oso-service-test-container:0.1.0-SNAPSHOT'
 
     componentTestImplementation 'org.springframework.boot:spring-boot-starter-test'
-    componentTestImplementation 'io.rest-assured:rest-assured'
+    componentTestImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
     componentTestImplementation 'org.postgresql:postgresql'
-    componentTestImplementation 'org.testcontainers:postgresql'
-    componentTestImplementation 'org.testcontainers:junit-jupiter'
+    componentTestImplementation 'org.testcontainers:testcontainers-postgresql'
+    componentTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     componentTestImplementation "io.eventuate.examples.spring-authorization-server:authorization-server-test-containers:$eventuateExamplesSpringAuthorizationServerVersion"
     componentTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers"
     componentTestImplementation "io.eventuate.common:eventuate-common-testcontainers"
@@ -67,10 +67,13 @@ dependencies {
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-outbox"
 
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    integrationTestImplementation 'org.springframework.boot:spring-boot-resttestclient'
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-restclient'
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     integrationTestImplementation 'org.postgresql:postgresql'
-    integrationTestImplementation 'org.testcontainers:postgresql'
-    integrationTestImplementation 'org.testcontainers:junit-jupiter'
+    integrationTestImplementation 'org.testcontainers:testcontainers-postgresql'
+    integrationTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     integrationTestImplementation "io.eventuate.examples.spring-authorization-server:authorization-server-test-containers:$eventuateExamplesSpringAuthorizationServerVersion"
     integrationTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers"
 

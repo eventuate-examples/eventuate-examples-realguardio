@@ -3,7 +3,7 @@ package io.eventuate.examples.realguardio.customerservice.api.messaging.commands
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationNotFound;
 import io.eventuate.examples.realguardio.customerservice.api.messaging.replies.LocationValidated;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -5,7 +5,7 @@ import io.eventuate.examples.realguardio.customerservice.customermanagement.doma
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.domain.Organization;
 import io.eventuate.examples.realguardio.customerservice.organizationmanagement.repository.OrganizationRepository;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication

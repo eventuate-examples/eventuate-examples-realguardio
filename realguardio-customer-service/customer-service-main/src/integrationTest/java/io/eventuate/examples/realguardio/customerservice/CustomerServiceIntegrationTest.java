@@ -6,6 +6,7 @@ import io.eventuate.examples.realguardio.customerservice.commondomain.EmailAddre
 import io.eventuate.examples.realguardio.customerservice.customermanagement.Customers;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerAndCustomerEmployee;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerEmployee;
+import io.eventuate.examples.realguardio.customerservice.restapi.CreateLocationResponse;
 import io.eventuate.examples.realguardio.customerservice.testutils.Uniquifier;
 import io.eventuate.examples.springauthorizationserver.testcontainers.AuthorizationServerContainerForLocalTests;
 import io.eventuate.messaging.kafka.testcontainers.EventuateKafkaNativeCluster;
@@ -15,25 +16,18 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+import org.springframework.http.*;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.lifecycle.Startables;
 
-import java.nio.file.Path;
-
-import io.eventuate.examples.realguardio.customerservice.restapi.CreateLocationResponse;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 class CustomerServiceIntegrationTest {
 
   private static final Logger logger = org.slf4j.LoggerFactory.getLogger(CustomerServiceIntegrationTest.class);
@@ -55,7 +49,7 @@ class CustomerServiceIntegrationTest {
       .withReuse(true)
       ;
 
-  static AuthorizationServerContainerForLocalTests     iamService = new AuthorizationServerContainerForLocalTests(Path.of("../../realguardio-iam-service/Dockerfile"))
+  static AuthorizationServerContainerForLocalTests     iamService = new AuthorizationServerContainerForLocalTests()
       .withUserDb()
       .withReuse(true)
       .withNetworkAliases("database")

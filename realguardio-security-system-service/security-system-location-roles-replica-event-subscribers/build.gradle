@@ -30,10 +30,10 @@ dependencies {
     integrationTestImplementation 'io.eventuate.util:eventuate-util-test'
     integrationTestImplementation 'org.assertj:assertj-core'
     integrationTestImplementation 'org.awaitility:awaitility'
-    integrationTestImplementation 'org.testcontainers:postgresql'
+    integrationTestImplementation 'org.testcontainers:testcontainers-postgresql'
     integrationTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-consumer-kafka"
 
     integrationTestRuntimeOnly 'org.postgresql:postgresql'
     integrationTestRuntimeOnly 'io.eventuate.tram.core:eventuate-tram-spring-flyway'
-    integrationTestRuntimeOnly 'org.flywaydb:flyway-database-postgresql:11.8.2'
+    integrationTestRuntimeOnly 'org.flywaydb:flyway-database-postgresql'
 }

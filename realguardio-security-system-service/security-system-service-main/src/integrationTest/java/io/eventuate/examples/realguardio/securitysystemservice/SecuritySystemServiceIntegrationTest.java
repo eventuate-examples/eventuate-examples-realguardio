@@ -13,7 +13,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -21,11 +22,10 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.lifecycle.Startables;
 
-import java.nio.file.Path;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 class SecuritySystemServiceIntegrationTest {
 
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(SecuritySystemServiceIntegrationTest.class);
@@ -64,7 +64,7 @@ class SecuritySystemServiceIntegrationTest {
         .withReuse(true)
         ;
 
-    static AuthorizationServerContainerForLocalTests iamService = new AuthorizationServerContainerForLocalTests(Path.of("../../realguardio-iam-service/Dockerfile"))
+    static AuthorizationServerContainerForLocalTests iamService = new AuthorizationServerContainerForLocalTests()
         .withUserDb()
         .withReuse(true)
         .withNetworkAliases("database")

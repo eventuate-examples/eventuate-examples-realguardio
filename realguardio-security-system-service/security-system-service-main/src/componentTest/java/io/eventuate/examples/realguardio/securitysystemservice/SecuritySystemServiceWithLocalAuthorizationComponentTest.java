@@ -25,8 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
+import org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -65,7 +65,7 @@ public class SecuritySystemServiceWithLocalAuthorizationComponentTest {
 	private String replyTo;
 
 	@Configuration
-	@EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class, FlywayAutoConfiguration.class})
+	@EnableAutoConfiguration(exclude = {DataJpaRepositoriesAutoConfiguration.class, FlywayAutoConfiguration.class})
 	@Import({
 			CommandOutboxTestSupportConfiguration.class,
 			OsoServiceConfiguration.class

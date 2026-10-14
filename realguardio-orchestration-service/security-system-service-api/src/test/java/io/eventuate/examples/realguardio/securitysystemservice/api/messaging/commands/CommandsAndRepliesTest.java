@@ -1,6 +1,6 @@
 package io.eventuate.examples.realguardio.securitysystemservice.api.messaging.commands;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

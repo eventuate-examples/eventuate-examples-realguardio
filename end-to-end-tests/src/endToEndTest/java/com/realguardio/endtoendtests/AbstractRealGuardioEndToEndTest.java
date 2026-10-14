@@ -1,7 +1,8 @@
 package com.realguardio.endtoendtests;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.realguardio.endtoendtests.dto.CreateCustomerRequest;
 import com.realguardio.endtoendtests.dto.CreateCustomerResponse;
 import com.realguardio.endtoendtests.dto.CreateLocationRequest;
@@ -43,12 +44,13 @@ public abstract class AbstractRealGuardioEndToEndTest {
     
 
     protected static void configureRestAssured() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper objectMapper = JsonMapper.builder()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .build();
         
         RestAssured.config = RestAssuredConfig.config()
             .objectMapperConfig(ObjectMapperConfig.objectMapperConfig()
-                .jackson2ObjectMapperFactory((cls, charset) -> objectMapper));
+                .jackson3ObjectMapperFactory((cls, charset) -> objectMapper));
     }
     
     @BeforeEach

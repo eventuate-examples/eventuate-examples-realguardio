@@ -45,48 +45,48 @@ if (System.getenv("GRADLE_CACHE_CHANGING_VERSIONS_IN_MINUTES") != null)
 
 dependencies {
     // Test Framework
-    endToEndTestImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    endToEndTestImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"
     endToEndTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     
     // RestAssured for API Testing
-    endToEndTestImplementation 'io.rest-assured:rest-assured:5.3.2'
+    endToEndTestImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
     
     // Testcontainers
-    endToEndTestImplementation 'org.testcontainers:testcontainers:1.19.1'
-    endToEndTestImplementation 'org.testcontainers:junit-jupiter:1.19.1'
+    endToEndTestImplementation "org.testcontainers:testcontainers:$testContainersVersion"
+    endToEndTestImplementation "org.testcontainers:testcontainers-junit-jupiter:$testContainersVersion"
     
     // Eventuate Testcontainers support
-    endToEndTestImplementation platform('io.eventuate.platform:eventuate-platform-dependencies:2025.1.BUILD-SNAPSHOT')
+    endToEndTestImplementation platform("io.eventuate.platform:eventuate-platform-dependencies:$eventuatePlatformVersion")
     endToEndTestImplementation 'io.eventuate.common:eventuate-common-testcontainers'
     endToEndTestImplementation 'io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers'
     endToEndTestImplementation "io.eventuate.platform.testcontainer.support:eventuate-platform-testcontainer-support-service:$eventuatePlatformTestContainerSupportVersion"
     endToEndTestImplementation "io.eventuate.cdc:eventuate-cdc-testcontainers"
 
-    endToEndTestImplementation "io.eventuate.examples.spring-authorization-server:authorization-server-test-containers:0.1.0.BUILD-SNAPSHOT"
-    endToEndTestImplementation 'org.springframework.boot:spring-boot-starter-webflux:3.4.1'
+    endToEndTestImplementation "io.eventuate.examples.spring-authorization-server:authorization-server-test-containers:$eventuateExamplesSpringAuthorizationServerVersion"
+    endToEndTestImplementation "org.springframework.boot:spring-boot-starter-webflux:$springBootVersion"
     endToEndTestImplementation 'io.realguardio.osointegration:oso-service-test-container:0.1.0-SNAPSHOT'
 
     // Logging
-    endToEndTestImplementation 'org.slf4j:slf4j-api:2.0.9'
-    endToEndTestImplementation 'ch.qos.logback:logback-classic:1.4.11'
+    endToEndTestImplementation "org.slf4j:slf4j-api:$slf4jVersion"
+    endToEndTestImplementation "ch.qos.logback:logback-classic:$logbackVersion"
     
     // Assertions
-    endToEndTestImplementation 'org.assertj:assertj-core:3.24.2'
+    endToEndTestImplementation "org.assertj:assertj-core:$assertjVersion"
     
     // Awaitility for polling/waiting
-    endToEndTestImplementation 'org.awaitility:awaitility:4.2.0'
+    endToEndTestImplementation "org.awaitility:awaitility:$awaitilityVersion"
     
     // JSON Processing
-    endToEndTestImplementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+    endToEndTestImplementation "tools.jackson.core:jackson-databind:$jacksonVersion"
     
     // Unit testing for DTOs
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'org.assertj:assertj-core:3.24.2'
-    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+    testImplementation "org.assertj:assertj-core:$assertjVersion"
+    testImplementation "tools.jackson.core:jackson-databind:$jacksonVersion"
 
     // Main dependencies for DTOs
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+    implementation "tools.jackson.core:jackson-databind:$jacksonVersion"
 }
 
 task endToEndTest(type: Test) {

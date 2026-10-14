@@ -14,7 +14,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter"
     implementation "io.eventuate.tram.core:eventuate-tram-spring-consumer-kafka"
     runtimeOnly 'org.springframework.boot:spring-boot-starter-actuator'
-    runtimeOnly 'org.springframework.boot:spring-boot-starter-web'
+    runtimeOnly 'org.springframework.boot:spring-boot-starter-webmvc'
 
     // Micrometer and OpenTelemetry dependencies for distributed tracing
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'
@@ -28,8 +28,8 @@ dependencies {
     componentTestImplementation project(':oso-service-test-container')
     componentTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     componentTestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
-    componentTestImplementation 'io.rest-assured:rest-assured'
-    componentTestImplementation 'org.testcontainers:junit-jupiter'
+    componentTestImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
+    componentTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     componentTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers"
     componentTestImplementation "io.eventuate.common:eventuate-common-testcontainers"
     componentTestImplementation "io.eventuate.tram.core:eventuate-tram-spring-testing-support-kafka-producer"

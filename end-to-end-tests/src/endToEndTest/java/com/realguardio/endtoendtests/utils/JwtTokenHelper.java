@@ -1,7 +1,7 @@
 package com.realguardio.endtoendtests.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.slf4j.Logger;
@@ -103,7 +103,7 @@ public class JwtTokenHelper {
         try {
             TokenResponse tokenResponse = objectMapper.readValue(tokenResponseBody, TokenResponse.class);
             return tokenResponse.accessToken();
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException("Failed to parse token response", e);
         }
     }

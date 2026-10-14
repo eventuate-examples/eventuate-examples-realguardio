@@ -3,9 +3,10 @@ package io.eventuate.examples.realguardio.customerservice.restapi;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.LocationRoleService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Set;
@@ -15,13 +16,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = LocationRoleController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
+@WebMvcTest(value = LocationRoleController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class, ServletWebSecurityAutoConfiguration.class})
 class LocationRoleControllerTest {
     
     @Autowired
     private MockMvc mockMvc;
     
-    @MockBean
+    @MockitoBean
     private LocationRoleService locationRoleService;
     
     @Test

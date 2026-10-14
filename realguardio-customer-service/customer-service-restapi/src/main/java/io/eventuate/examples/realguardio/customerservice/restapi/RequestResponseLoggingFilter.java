@@ -24,12 +24,13 @@ import java.util.stream.Stream;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestResponseLoggingFilter extends OncePerRequestFilter {
   private static final Logger log = LoggerFactory.getLogger(RequestResponseLoggingFilter.class);
+  private static final int UNLIMITED_REQUEST_CACHE = Integer.MAX_VALUE;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
+    ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request, UNLIMITED_REQUEST_CACHE);
     ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
 
     try {

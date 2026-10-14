@@ -2,7 +2,7 @@ package io.eventuate.examples.realguardio.customerservice.customermanagement.per
 
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.Customer;
 import io.eventuate.examples.realguardio.customerservice.customermanagement.domain.CustomerRepository;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 

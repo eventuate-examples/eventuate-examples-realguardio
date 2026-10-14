@@ -16,7 +16,7 @@ dependencies {
     implementation project(":orchestration-domain")
     implementation project(":orchestration-restapi")
     
-    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.springframework.boot:spring-boot-starter-webmvc"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
     implementation "io.eventuate.tram.sagas:eventuate-tram-sagas-spring-orchestration-simple-dsl-starter"
@@ -35,10 +35,10 @@ dependencies {
     componentTestImplementation project(':security-system-service-api')
     componentTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     componentTestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
-    componentTestImplementation 'io.rest-assured:rest-assured'
+    componentTestImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
     componentTestImplementation 'org.postgresql:postgresql'
-    componentTestImplementation 'org.testcontainers:postgresql'
-    componentTestImplementation 'org.testcontainers:junit-jupiter'
+    componentTestImplementation 'org.testcontainers:testcontainers-postgresql'
+    componentTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     componentTestImplementation "io.eventuate.examples.spring-authorization-server:authorization-server-test-containers:$eventuateExamplesSpringAuthorizationServerVersion"
     componentTestImplementation "io.eventuate.messaging.kafka:eventuate-messaging-kafka-testcontainers"
     componentTestImplementation "io.eventuate.common:eventuate-common-testcontainers"

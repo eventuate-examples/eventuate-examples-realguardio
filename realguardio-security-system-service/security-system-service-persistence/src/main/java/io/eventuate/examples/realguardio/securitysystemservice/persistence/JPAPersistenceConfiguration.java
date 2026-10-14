@@ -4,7 +4,7 @@ import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySy
 import io.eventuate.examples.realguardio.securitysystemservice.domain.SecuritySystemRepository;
 import io.eventuate.examples.realguardio.securitysystemservice.persistence.finder.oso.SecuritySystemFinderUsingRepositoryWithOsoConfiguration;
 import io.eventuate.examples.realguardio.securitysystemservice.persistence.finder.repository.SecuritySystemFinderUsingRepositoryConfiguration;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;

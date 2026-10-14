@@ -13,5 +13,5 @@ dependencies {
     testImplementation 'org.assertj:assertj-core'
 
     integrationTestImplementation 'io.realguardio.osointegration:oso-service-test-container:0.1.0-SNAPSHOT'
-    integrationTestImplementation 'org.testcontainers:junit-jupiter'
+    integrationTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 }
